@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arbitration Auction</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Roboto',sans-serif;background:var(--espn-bg-page);color:var(--espn-text-primary);font-size:16px}
+    .header{background:var(--espn-red);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+    .header-title{font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.5rem;color:#fff;text-transform:uppercase}
+    .user-info{display:flex;align-items:center;gap:14px;color:#fff;font-size:14px}
+    .role-badge{background:rgba(255,255,255,.2);padding:5px 12px;border-radius:4px;font-size:12px;font-weight:600}
+    .role-badge.commish{background:var(--espn-orange)}
+    .nav{background:var(--espn-nav-dark);height:50px;display:flex;align-items:center;padding:0 28px}
+    .nav-left{display:flex;align-items:center;gap:24px}
+    .nav-tabs{display:flex;gap:6px;margin-left:auto}
+    .nav-tab{color:rgba(255,255,255,.6);font-size:14px;padding:10px 20px;cursor:pointer;border-radius:6px 6px 0 0}
+    .nav-tab:hover{background:rgba(255,255,255,.1)}
+    .nav-tab.active{background:var(--espn-bg-page);color:var(--espn-text-primary)}
+    .league-name{font-family:'Roboto Condensed',sans-serif;font-size:1.2rem;color:#fff;font-weight:700}
+    .nav-info{color:rgba(255,255,255,.6);font-size:14px}
+    .sync-status{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 12px;background:rgba(0,0,0,.2);border-radius:4px;cursor:pointer}
+    .sync-dot{width:10px;height:10px;border-radius:50%}
+    .sync-dot.ok{background:#4ade80}
+    .sync-dot.pending{background:var(--espn-orange);animation:pulse 1s infinite}
+    .sync-dot.error{background:var(--espn-error)}
+    .app-container{display:grid;grid-template-columns:280px 1fr 240px;min-height:calc(100vh - 110px)}
+    .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto}
+    .sidebar-title{font-size:12px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-nav-dark);padding:12px 16px;position:sticky;top:0;z-index:10}
+    .arb-group-header{background:var(--espn-bg-table-header);padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border)}
+    .player-queue-item{padding:12px 16px;border-bottom:1px solid var(--espn-border);font-size:14px}
+    .player-queue-item.current{background:#e3f2fd;border-left:4px solid var(--espn-blue)}
+    .player-queue-item.own-player{background:#fff3cd}
+    .player-queue-item.won-player{background:#d4edda}
+    .player-queue-item.completed{opacity:.5}
+    .player-queue-header{display:flex;justify-content:space-between;margin-bottom:4px}
+    .player-queue-name{font-weight:600;font-size:14px;color:var(--espn-blue)}
+    .arb-badge{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#fff}
+    .arb-badge.arb-3{background:var(--espn-red)}
+    .arb-badge.arb-2{background:var(--espn-orange)}
+    .arb-badge.arb-1{background:var(--espn-success)}
+    .player-queue-details{font-size:12px;color:var(--espn-text-secondary);display:flex;justify-content:space-between}
+    .prebid-input{display:flex;align-items:center;gap:6px;margin-top:6px}
+    .prebid-input input{width:60px;padding:6px 8px;font-size:13px;border:1px solid var(--espn-border);border-radius:4px;text-align:right}
+    .prebid-input label{font-size:12px;color:var(--espn-text-muted)}
+    .result-badge{font-size:11px;padding:3px 8px;border-radius:4px;margin-top:6px;display:inline-block}
+    .result-badge.keep{background:#d4edda;color:#155724}
+    .result-badge.stick{background:#cce5ff;color:#004085}
+    .result-badge.self-stick{background:#f8d7da;color:#721c24}
+    .undo-btn{font-size:10px;padding:3px 8px;background:var(--espn-text-muted);color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px}
+    .main-stage{padding:24px;background:var(--espn-bg-page);overflow-y:auto}
+    .player-card{background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;max-width:780px;margin:0 auto 24px}
+    .player-card-header{background:linear-gradient(135deg,var(--espn-nav-dark),#3a3a3a);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0}
+    .player-card-header .player-name{font-family:'Roboto Condensed',sans-serif;font-size:2rem;font-weight:700;color:#fff}
+    .player-card-header .player-meta{color:rgba(255,255,255,.7);font-size:15px;margin-top:4px}
+    .player-card-header .arb-badge{font-size:16px;padding:10px 16px}
+    .player-card-body{padding:20px 24px}
+    .info-row{display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--espn-border)}
+    .info-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase}
+    .info-value{font-weight:600;color:var(--espn-blue);font-size:16px}
+    .stats-line{background:var(--espn-bg-table-header);border-radius:6px;padding:12px 16px;margin-top:12px;font-size:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .stats-line .stat{display:inline-flex;align-items:center;gap:4px}
+    .stats-line .stat-lbl{color:var(--espn-text-muted);font-size:11px;text-transform:uppercase}
+    .stats-line .stat-val{font-weight:600;font-size:15px}
+    .stats-line .sep{color:#ccc}
+    .stats-line .total{margin-left:auto;font-weight:700;color:var(--espn-blue);font-size:16px}
+    .points-box{background:linear-gradient(135deg,var(--espn-success),#009944);border-radius:6px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;color:#fff;margin-top:16px}
+    .points-label{font-family:'Roboto Condensed',sans-serif;font-size:16px;text-transform:uppercase;font-weight:600}
+    .points-value{font-family:'Roboto Condensed',sans-serif;font-size:2.4rem;font-weight:700}
+    .timer-section{text-align:center;max-width:780px;margin:0 auto 24px;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:24px}
+    .timer-display{font-family:'Roboto Condensed',sans-serif;font-size:4.5rem;font-weight:700}
+    .timer-display.warning{color:var(--espn-orange)}
+    .timer-display.danger{color:var(--espn-red);animation:pulse .5s infinite}
+    @keyframes pulse{50%{opacity:.5}}
+    .bid-status{max-width:780px;margin:0 auto 24px;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px}
+    .bid-status-header{background:var(--espn-bg-table-header);padding:12px 20px;font-size:12px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border)}
+    .bid-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--espn-border)}
+    .bid-status-item{background:var(--espn-bg-card);padding:12px;text-align:center;font-size:13px}
+    .bid-status-item.submitted{background:#d4edda}
+    .bid-status-item.owner{background:#e0e0e0}
+    .bid-status-item.tied{background:#fff3cd}
+    .bid-status-item .checkmark{color:var(--espn-success);font-weight:700}
+    .your-bid-section{max-width:780px;margin:0 auto 24px;background:var(--espn-bg-card);border:3px solid var(--espn-blue);border-radius:8px;padding:20px}
+    .your-bid-section.submitted{border-color:var(--espn-success)}
+    .your-bid-section h3{font-family:'Roboto Condensed',sans-serif;font-size:1.1rem;text-transform:uppercase;color:var(--espn-blue);margin-bottom:12px}
+    .your-bid-section.submitted h3{color:var(--espn-success)}
+    .bid-options{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+    .bid-option{flex:1;min-width:100px}
+    .bid-option label{display:block;font-size:11px;color:var(--espn-text-muted);text-transform:uppercase;margin-bottom:6px}
+    .bid-option input{width:100%;padding:14px;font-size:1.3rem;font-family:'Roboto Condensed',sans-serif;font-weight:700;text-align:center;border:1px solid var(--espn-border);border-radius:6px}
+    .bid-option input:focus{outline:none;border-color:var(--espn-blue)}
+    .prebid-value{background:var(--espn-bg-table-header);padding:14px;border-radius:6px;text-align:center;font-family:'Roboto Condensed',sans-serif;font-size:1.3rem;font-weight:700;cursor:pointer;border:3px solid transparent}
+    .prebid-value.selected{border-color:var(--espn-blue)}
+    .max-bid-info{background:#e3f2fd;border-radius:6px;padding:10px;margin-top:12px;font-size:13px;color:var(--espn-blue);text-align:center}
+    .bid-error{color:var(--espn-error);font-size:13px;margin-top:10px;text-align:center}
+    .reveal-section{max-width:780px;margin:0 auto 24px}
+    .reveal-card{background:var(--espn-bg-card);border:3px solid var(--espn-red);border-radius:8px;padding:24px;text-align:center;margin-bottom:16px}
+    .reveal-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase}
+    .reveal-amount{font-family:'Roboto Condensed',sans-serif;font-size:3.5rem;font-weight:700;color:var(--espn-red);margin:8px 0}
+    .reveal-bidder{font-size:15px;color:var(--espn-text-secondary)}
+    .prices-row{display:flex;justify-content:center;gap:40px;margin-top:20px;padding-top:20px;border-top:1px solid var(--espn-border)}
+    .price-box{text-align:center}
+    .price-box .price-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase}
+    .price-box .price-value{font-family:'Roboto Condensed',sans-serif;font-size:1.8rem;font-weight:700}
+    .price-box.keep .price-value{color:var(--espn-success)}
+    .price-box.stick .price-value{color:var(--espn-blue)}
+    .decision-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;font-size:14px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif}
+    .btn:disabled{opacity:.4;cursor:not-allowed}
+    .btn-primary{background:var(--espn-red);color:#fff}
+    .btn-secondary{background:var(--espn-bg-table-header);color:var(--espn-text-primary);border:1px solid var(--espn-border)}
+    .btn-blue{background:var(--espn-blue);color:#fff}
+    .btn-decision{flex:1;max-width:160px;padding:18px 14px;flex-direction:column;gap:4px}
+    .btn-keep{background:var(--espn-success);color:#fff}
+    .btn-stick{background:var(--espn-blue);color:#fff}
+    .btn-self-stick{background:#6f42c1;color:#fff}
+    .btn-years{font-size:11px;opacity:.8}
+    .sidebar-right{background:var(--espn-bg-card);border-left:1px solid var(--espn-border);overflow-y:auto}
+    .budget-item{padding:12px 14px;border-bottom:1px solid var(--espn-border);font-size:13px}
+    .budget-item.current-user{background:#e3f2fd}
+    .budget-item.is-commish{border-left:3px solid var(--espn-orange)}
+    .budget-team-name{font-weight:600;display:flex;justify-content:space-between;margin-bottom:4px}
+    .budget-available{color:var(--espn-success)}
+    .budget-details{display:flex;justify-content:space-between;font-size:11px;color:var(--espn-text-muted);margin-bottom:4px}
+    .budget-bar{height:6px;background:var(--espn-bg-page);border-radius:3px}
+    .budget-bar-fill{height:100%;background:var(--espn-blue);border-radius:3px}
+    .budget-bar-fill.low{background:var(--espn-orange)}
+    .budget-bar-fill.critical{background:var(--espn-error)}
+    .commish-star{color:var(--espn-orange);margin-left:4px}
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000}
+    .modal{background:var(--espn-bg-card);border-radius:8px;width:90%;max-width:500px}
+    .modal-header{background:var(--espn-nav-dark);color:#fff;padding:18px 24px;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.2rem}
+    .modal-body{padding:24px}
+    .form-group{margin-bottom:18px}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--espn-text-secondary);text-transform:uppercase;margin-bottom:8px}
+    .form-group input,.form-group select{width:100%;padding:14px 16px;font-size:16px;border:1px solid var(--espn-border);border-radius:6px}
+    .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--espn-blue)}
+    .form-error{color:var(--espn-error);font-size:13px;margin-top:6px}
+    .history-container{padding:24px;max-width:1400px;margin:0 auto}
+    .history-table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:8px;overflow:hidden}
+    .history-table th{background:var(--espn-nav-dark);color:#fff;padding:14px 12px;text-align:left;font-size:12px;text-transform:uppercase;position:sticky;top:0}
+    .history-table td{padding:12px;border-bottom:1px solid var(--espn-border)}
+    .history-table .team-bid{text-align:right;font-family:'Roboto Condensed',sans-serif;font-size:13px}
+    .celebration-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;overflow:hidden}
+    .celebration-text{font-family:'Roboto Condensed',sans-serif;font-size:3.5rem;font-weight:700;text-transform:uppercase;animation:popIn .5s ease-out;z-index:10}
+    .celebration-text.keep{color:var(--espn-success)}
+    .celebration-text.stick{color:#ff4444}
+    .celebration-text.self-stick{color:#8b5cf6}
+    .celebration-details{font-size:1.4rem;color:#ccc;margin-top:16px;text-align:center;z-index:10}
+    .celebration-details strong{color:#fff}
+    .high-bidder-reveal{margin-top:24px;padding:16px 32px;background:rgba(255,255,255,.1);border-radius:8px;font-size:16px;color:#aaa;z-index:10}
+    .high-bidder-reveal strong{color:#fff}
+    @keyframes popIn{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+    .confetti{position:absolute;width:12px;height:12px;animation:confettiFall 3s ease-out forwards;z-index:5}
+    @keyframes confettiFall{0%{transform:translateY(-100vh) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+    .blood-drip{position:absolute;top:-10px;background:linear-gradient(180deg,#660000 0%,#990000 30%,#cc0000 60%,#ff0000 100%);border-radius:0 0 50% 50%;animation:drip 2.5s ease-in forwards;z-index:5;box-shadow:0 0 15px rgba(255,0,0,.6)}
+    @keyframes drip{0%{height:0}50%{height:35vh}100%{height:105vh}}
+    .tiebreaker-banner{background:var(--espn-orange);color:#fff;padding:16px;text-align:center;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.1rem;text-transform:uppercase;max-width:780px;margin:0 auto 24px;border-radius:8px}
+    .loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-size:18px}
+    .loading-spinner{width:40px;height:40px;border:4px solid var(--espn-border);border-top-color:var(--espn-red);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .lobby-info{max-width:780px;margin:0 auto;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:32px;text-align:center}
+    .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
+    @media(max-width:1100px){.app-container{grid-template-columns:1fr}.sidebar,.sidebar-right{display:none}}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+const PREV_YR = new Date().getFullYear() - 1;
+const fmt = n => (n || 0).toFixed(2);
+const getParams = () => { const p = new URLSearchParams(window.location.search); return { auctionId: p.get('id'), role: p.get('role') }; };
+const keepPct = a => ({ 1: 0.4, 2: 0.6, 3: 0.8 }[a] || 1);
+const yrs = a => ({ 1: 3, 2: 2, 3: 1 }[a] || 1);
+const enc = (b, k) => CryptoJS.AES.encrypt(JSON.stringify(b), k).toString();
+const dec = (e, k) => { try { return JSON.parse(CryptoJS.AES.decrypt(e, k).toString(CryptoJS.enc.Utf8)); } catch { return null; } };
+const maxBid = t => t ? Math.max(0, (t.cap || t.salaryCap || 100) - (t.sal || t.currentSalary || 0) - (t.spots || t.spotsAvailable || 1) + 1) : 0;
+const keepPr = (b, a) => Math.max(1, Math.ceil(b * keepPct(a)));
+const stickPr = b => Math.max(1, b);
+
+const hitPts = (s, sc) => {
+  if (!s || !sc) return 0;
+  const h = s.H || 0, d = s['2B'] || 0, t = s['3B'] || 0, hr = s.HR || 0, sg = Math.max(0, h - d - t - hr);
+  return Math.round((sg * (sc['1B'] || 0) + d * (sc['2B'] || 0) + t * (sc['3B'] || 0) + hr * (sc['HR'] || 0) + (s.R || 0) * (sc['R'] || 0) + (s.RBI || 0) * (sc['RBI'] || 0) + (s.BB || 0) * (sc['BB'] || 0) + (s.HBP || 0) * (sc['HBP'] || 0) + (s.SB || 0) * (sc['SB'] || 0)) * 100) / 100;
+};
+
+const pitPts = (s, sc) => {
+  if (!s || !sc) return 0;
+  return Math.round(((s.IP || 0) * (sc['IP'] || 0) + (s.ER || 0) * (sc['ER'] || 0) + (s.SO || 0) * (sc['K'] || 0) + (s.HA || 0) * (sc['H'] || 0) + (s.BBA || 0) * (sc['BB'] || 0) + (s.HBP_A || 0) * (sc['HBP'] || 0) + (s.W || 0) * (sc['W'] || 0) + (s.SV || 0) * (sc['SV'] || 0) + (s.HD || 0) * (sc['HD'] || 0) + (s.CG || 0) * (sc['CG'] || 0)) * 100) / 100;
+};
+
+function App() {
+  const { auctionId, role: urlRole } = getParams();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [db, setDb] = useState(null);
+  const [auction, setAuction] = useState(null);
+  const [screen, setScreen] = useState('login');
+  const [activeTab, setActiveTab] = useState('auction');
+  const [userTeamId, setUserTeamId] = useState(null);
+  const [userTeamName, setUserTeamName] = useState('');
+  const [isComm, setIsComm] = useState(false);
+  const [loginName, setLoginName] = useState('');
+  const [loginTeamId, setLoginTeamId] = useState('');
+  const [loginPw, setLoginPw] = useState('');
+  const [loginErr, setLoginErr] = useState('');
+  const [preBids, setPreBids] = useState({});
+  const [curBid, setCurBid] = useState('');
+  const [usePre, setUsePre] = useState(true);
+  const [bidOk, setBidOk] = useState(false);
+  const [bidErr, setBidErr] = useState('');
+  const [timeLeft, setTimeLeft] = useState(0);
+  const timerRef = useRef(null);
+  const [celeb, setCeleb] = useState(null);
+  const [tieModal, setTieModal] = useState(false);
+  const [tieMethod, setTieMethod] = useState('random');
+  const [tieWinner, setTieWinner] = useState('');
+  const [syncStatus, setSyncStatus] = useState('ok');
+  const sKey = auctionId || 'x';
+
+  // Sync to Google Sheets
+  const syncToSheets = async (action, data) => {
+    const cfg = auction?.sheetsConfig;
+    if (!cfg?.scriptUrl) return;
+    setSyncStatus('pending');
+    try {
+      const teamNames = Object.values(auction.teams).map(t => t.name);
+      const payload = { action, teamNames, ...data };
+      await fetch(cfg.scriptUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      setSyncStatus('ok');
+    } catch (e) { console.error('Sync error:', e); setSyncStatus('error'); }
+  };
+
+  const initSheets = async () => {
+    if (!auction?.sheetsConfig?.scriptUrl) return;
+    const teamNames = Object.values(auction.teams).map(t => t.name);
+    await syncToSheets('init', { teamNames });
+  };
+
+  useEffect(() => {
+    if (!auctionId) { setError('No auction ID'); setLoading(false); return; }
+    const saved = localStorage.getItem('auction_' + auctionId);
+    if (saved) { const s = JSON.parse(saved); setUserTeamId(s.tid); setUserTeamName(s.tn); setPreBids(s.pb || {}); setIsComm(s.ic || false); }
+    const cfg = localStorage.getItem('firebaseConfig');
+    if (!cfg) { setError('Firebase not configured'); setLoading(false); return; }
+    try {
+      const config = JSON.parse(cfg);
+      if (!firebase.apps.length) firebase.initializeApp(config);
+      const database = firebase.database();
+      setDb(database);
+      database.ref('auctions/' + auctionId).on('value', snap => {
+        const d = snap.val();
+        if (d) { setAuction(d); if (saved) { const s = JSON.parse(saved); setScreen(s.ic || urlRole === 'commissioner' ? 'auction' : d.phase === 'lobby' ? 'prebid' : 'auction'); } }
+        else setError('Auction not found');
+        setLoading(false);
+      });
+    } catch (e) { setError('Connection failed'); setLoading(false); }
+  }, [auctionId, urlRole]);
+
+  useEffect(() => {
+    if (auction?.timerEndTime && (auction.phase === 'bidding' || auction.phase === 'tiebreaker')) {
+      const upd = () => { const r = Math.max(0, Math.floor((auction.timerEndTime - Date.now()) / 1000)); setTimeLeft(r); if (r <= 0) clearInterval(timerRef.current); };
+      upd();
+      timerRef.current = setInterval(upd, 1000);
+      return () => clearInterval(timerRef.current);
+    }
+  }, [auction?.timerEndTime, auction?.phase]);
+
+  useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); }, [auction?.currentPlayerIndex, auction?.phase]);
+
+  const save = (tid, tn, pb = {}, ic = false) => { localStorage.setItem('auction_' + auctionId, JSON.stringify({ tid, tn, pb, ic })); };
+  const savePre = async bids => { if (db && userTeamId) await db.ref('auctions/' + auctionId + '/preBids/' + userTeamId).set(bids); };
+
+  const commLogin = async () => {
+    setLoginErr('');
+    if (!loginTeamId) return setLoginErr('Select team');
+    if (!loginPw) return setLoginErr('Enter password');
+    const t = auction.teams[loginTeamId];
+    if (!t?.isCommissioner && !t?.isComm) return setLoginErr('Not commissioner team');
+    if (CryptoJS.SHA256(loginPw).toString() !== auction.commissionerPasswordHash) return setLoginErr('Wrong password');
+    if (db && !t.joined) await db.ref('auctions/' + auctionId + '/teams/' + loginTeamId).update({ joined: true, ownerName: loginName || 'Commissioner' });
+    setUserTeamId(loginTeamId); setUserTeamName(t.name); setIsComm(true);
+    save(loginTeamId, t.name, preBids, true); setScreen('auction');
+  };
+
+  const ownerLogin = async () => {
+    setLoginErr('');
+    if (!loginTeamId || !loginName || !loginPw) return setLoginErr('Fill all fields');
+    const t = auction.teams[loginTeamId];
+    if (!t) return setLoginErr('Team not found');
+    if (t.isCommissioner || t.isComm) return setLoginErr('Use commissioner login');
+    if (t.joined && t.passwordHash) { if (CryptoJS.SHA256(loginPw).toString() !== t.passwordHash) return setLoginErr('Wrong password'); }
+    else { if (db) await db.ref('auctions/' + auctionId + '/teams/' + loginTeamId).update({ ownerName: loginName, passwordHash: CryptoJS.SHA256(loginPw).toString(), joined: true }); }
+    setUserTeamId(loginTeamId); setUserTeamName(t.name); setIsComm(false);
+    save(loginTeamId, t.name, preBids, false); setScreen('prebid');
+  };
+
+  const savePrebids = async () => { save(userTeamId, userTeamName, preBids, isComm); await savePre(preBids); setScreen('auction'); };
+  const updPre = (i, v) => { const nb = { ...preBids, [i]: parseFloat(v) || 0 }; setPreBids(nb); save(userTeamId, userTeamName, nb, isComm); savePre(nb); };
+
+  const startAuc = async () => {
+    if (db) await db.ref('auctions/' + auctionId).update({ phase: 'waiting' });
+    setTimeout(() => initSheets(), 500);
+  };
+
+  const startBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'bidding', timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
+
+  const submitBid = async () => {
+    setBidErr('');
+    const amt = usePre ? (preBids[auction.currentPlayerIndex] || 0) : parseFloat(curBid) || 0;
+    const t = auction.teams[userTeamId];
+    const mx = maxBid(t);
+    if (amt > mx) return setBidErr('Max $' + fmt(mx));
+    const bid = { teamId: userTeamId, teamName: userTeamName, amount: amt, ts: Date.now() };
+    if (db) { await db.ref('auctions/' + auctionId + '/bids/' + userTeamId).set(enc(bid, sKey)); await db.ref('auctions/' + auctionId + '/bidStatuses/' + userTeamId).set(true); }
+    setBidOk(true);
+  };
+
+  const endBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'reveal', timerEndTime: null }); };
+
+  const reveal = async () => {
+    const decoded = {}; let mx = 0;
+    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (b.amount > mx) mx = b.amount; } });
+    const top = Object.entries(decoded).filter(([_, b]) => b.amount === mx);
+    const hi = top.length > 0 ? top[0][1] : { amount: 0, teamId: null, teamName: 'No bids' };
+    const tied = top.length > 1 ? top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })) : null;
+    if (db) await db.ref('auctions/' + auctionId).update({ phase: 'decision', revealedBids: decoded, highestBid: hi, tiedTeams: tied });
+  };
+
+  const hasTie = () => auction.tiedTeams && auction.tiedTeams.length > 1;
+  const startTie = async () => { const ids = auction.tiedTeams.map(t => t.id); if (db) await db.ref('auctions/' + auctionId).update({ phase: 'tiebreaker', tiebreakerTeams: ids, timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
+
+  const endTie = async () => {
+    const decoded = {}; let mx = 0;
+    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (b.amount > mx) mx = b.amount; } });
+    const top = Object.entries(decoded).filter(([_, b]) => b.amount === mx);
+    if (top.length === 1) { const w = top[0][1]; await doStick(w.teamId, w.teamName, w.amount); }
+    else { const tied = top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })); if (db) await db.ref('auctions/' + auctionId).update({ phase: 'tie-resolution', tiedTeams: tied, revealedBids: decoded }); setTieModal(true); }
+  };
+
+  const resolveTie = async () => {
+    let wid, wname;
+    if (tieMethod === 'random') { const i = Math.floor(Math.random() * auction.tiedTeams.length); wid = auction.tiedTeams[i].id; wname = auction.tiedTeams[i].name; }
+    else { wid = tieWinner; wname = auction.tiedTeams.find(t => t.id === wid)?.name; }
+    setTieModal(false);
+    await doStick(wid, wname, auction.tiedTeams[0].amount);
+  };
+
+  const doStick = async (wid, wname, amt) => { const p = auction.players[auction.currentPlayerIndex]; await finalize('stick', wname, wid, stickPr(amt), yrs(p.arbYear), auction.highestBid || { amount: amt, teamName: wname }); };
+
+  const decide = async d => {
+    const p = auction.players[auction.currentPlayerIndex]; const hb = auction.highestBid; const hi = hb?.amount || 0;
+    if (d === 'stick') { if (hi === 0) return; if (hasTie()) { await startTie(); return; } await doStick(hb.teamId, hb.teamName, hi); return; }
+    const oid = Object.entries(auction.teams).find(([_, t]) => t.name === p.owner)?.[0];
+    if (d === 'keep') await finalize('keep', p.owner, oid, hi === 0 ? 1 : keepPr(hi, p.arbYear), 1, hb);
+    else await finalize('self-stick', p.owner, oid, stickPr(hi), yrs(p.arbYear), hb);
+  };
+
+  const finalize = async (d, winner, wid, price, years, hb) => {
+    const p = auction.players[auction.currentPlayerIndex]; const upd = {};
+    const allBids = {}; if (auction.revealedBids) Object.entries(auction.revealedBids).forEach(([tid, b]) => { allBids[auction.teams[tid]?.name || tid] = b.amount; });
+    const hist = { player: p.name, team: p.team, pos: p.position, owner: p.owner, arb: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids, ts: Date.now() };
+    upd['players/' + auction.currentPlayerIndex] = { ...p, status: 'completed', result: { decision: d, winner, winnerId: wid, price, contractYears: years, topBid: hb?.amount || 0, topBidder: hb?.teamName || 'None' } };
+    const wt = auction.teams[wid]; const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots || wt?.spotsAvailable || 1;
+    upd['teams/' + wid + '/currentSalary'] = oldSal + price; upd['teams/' + wid + '/sal'] = oldSal + price;
+    upd['teams/' + wid + '/spotsAvailable'] = Math.max(0, oldSpots - 1); upd['teams/' + wid + '/spots'] = Math.max(0, oldSpots - 1);
+    upd['phase'] = 'celebration'; upd['bidHistory'] = [...(auction.bidHistory || []), hist];
+    if (db) await db.ref('auctions/' + auctionId).update(upd);
+    syncToSheets('sync', { player: { name: p.name, team: p.team, position: p.position, owner: p.owner, arbYear: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids } });
+    setCeleb({ d, player: p.name, winner, price, years, hiBidder: hb?.teamName || 'None' });
+    setTimeout(async () => {
+      setCeleb(null); const nx = auction.currentPlayerIndex + 1;
+      if (nx < auction.players.length) { if (db) await db.ref('auctions/' + auctionId).update({ currentPlayerIndex: nx, phase: 'waiting', bids: null, bidStatuses: null, revealedBids: null, highestBid: null, tiedTeams: null, tiebreakerTeams: null }); }
+      else { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'complete' }); }
+    }, 5000);
+  };
+
+  const undo = async idx => {
+    if (!isComm) return; const p = auction.players[idx]; if (!p?.result) return;
+    const r = p.result; const wt = auction.teams[r.winnerId]; const upd = {};
+    upd['players/' + idx] = { ...p, status: 'pending', result: null };
+    const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots || wt?.spotsAvailable || 0;
+    upd['teams/' + r.winnerId + '/currentSalary'] = Math.max(0, oldSal - r.price); upd['teams/' + r.winnerId + '/sal'] = Math.max(0, oldSal - r.price);
+    upd['teams/' + r.winnerId + '/spotsAvailable'] = oldSpots + 1; upd['teams/' + r.winnerId + '/spots'] = oldSpots + 1;
+    upd['currentPlayerIndex'] = idx; upd['phase'] = 'waiting'; upd['bids'] = null; upd['bidStatuses'] = null; upd['revealedBids'] = null; upd['highestBid'] = null; upd['tiedTeams'] = null;
+    upd['bidHistory'] = (auction.bidHistory || []).filter(h => h.player !== p.name);
+    if (db) await db.ref('auctions/' + auctionId).update(upd);
+  };
+
+  const exportCSV = () => {
+    if (!auction?.bidHistory?.length) return;
+    const tns = Object.values(auction.teams).map(t => t.name);
+    let csv = 'Player,Team,Pos,Owner,Arb,Winner,Decision,Price,Years,HighBid,HighBidder';
+    tns.forEach(n => { csv += ',"' + n + '"'; }); csv += '\n';
+    auction.bidHistory.forEach(h => {
+      csv += '"' + h.player + '","' + h.team + '","' + h.pos + '","' + h.owner + '",' + h.arb + ',"' + h.winner + '","' + h.decision + '",' + fmt(h.price) + ',' + h.years + ',' + fmt(h.highBid) + ',"' + h.highBidder + '"';
+      tns.forEach(n => { csv += ',' + (h.bids?.[n] !== undefined ? fmt(h.bids[n]) : ''); }); csv += '\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = auction.leagueName + '_results.csv'; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const openSheet = () => { if (auction?.sheetsConfig?.sheetUrl) window.open(auction.sheetsConfig.sheetUrl, '_blank'); };
+  const retrySync = () => { if (auction?.bidHistory?.length > 0) { const last = auction.bidHistory[auction.bidHistory.length - 1]; syncToSheets('sync', { player: last }); } };
+  const fmtTime = s => Math.floor(s / 60) + ':' + (s % 60).toString().padStart(2, '0');
+  const timerCls = () => timeLeft <= 10 ? 'danger' : timeLeft <= 30 ? 'warning' : '';
+  const canDecide = () => { if (!auction?.players) return false; const p = auction.players[auction.currentPlayerIndex]; if (!p) return false; if (isComm) return true; return auction.teams[userTeamId]?.name === p.owner; };
+  const isOwner = p => { if (!auction?.teams || !userTeamId) return false; return auction.teams[userTeamId]?.name === p?.owner; };
+  const canTieBid = () => auction?.tiebreakerTeams?.includes(userTeamId);
+
+  const confetti = () => ['#00703c', '#f7a500', '#6f42c1', '#0b6ebd'].flatMap((c, i) => Array.from({ length: 12 }).map((_, j) => <div key={i + '-' + j} className="confetti" style={{ left: (Math.random() * 100) + '%', background: c, animationDelay: (Math.random() * 0.5) + 's', borderRadius: Math.random() > 0.5 ? '50%' : '0' }} />));
+  const bloodDrips = () => Array.from({ length: 20 }).map((_, i) => <div key={i} className="blood-drip" style={{ left: (2 + i * 5) + '%', animationDelay: (Math.random() * 1.2) + 's', width: (18 + Math.random() * 25) + 'px' }} />);
+
+  const HitStats = ({ p }) => {
+    const s = p?.hittingStats; if (!s) return null; const sc = auction?.hittingScoring || {};
+    const h = s.H || 0, d = s['2B'] || 0, t = s['3B'] || 0, hr = s.HR || 0, sg = Math.max(0, h - d - t - hr); const tot = hitPts(s, sc);
+    return <div className="stats-line">
+      <span className="stat"><span className="stat-lbl">1B</span><span className="stat-val">{sg}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">2B</span><span className="stat-val">{d}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">3B</span><span className="stat-val">{t}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">HR</span><span className="stat-val">{hr}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">R</span><span className="stat-val">{s.R || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">RBI</span><span className="stat-val">{s.RBI || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">BB</span><span className="stat-val">{s.BB || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">HBP</span><span className="stat-val">{s.HBP || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">SB</span><span className="stat-val">{s.SB || 0}</span></span>
+      <span className="total">= {fmt(tot)} pts</span>
+    </div>;
+  };
+
+  const PitStats = ({ p }) => {
+    const s = p?.pitchingStats; if (!s) return null; const sc = auction?.pitchingScoring || {}; const tot = pitPts(s, sc);
+    return <div className="stats-line">
+      <span className="stat"><span className="stat-lbl">IP</span><span className="stat-val">{s.IP || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">ER</span><span className="stat-val">{s.ER || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">K</span><span className="stat-val">{s.SO || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">H</span><span className="stat-val">{s.HA || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">BB</span><span className="stat-val">{s.BBA || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">HBP</span><span className="stat-val">{s.HBP_A || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">W</span><span className="stat-val">{s.W || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">SV</span><span className="stat-val">{s.SV || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">HD</span><span className="stat-val">{s.HD || 0}</span></span><span className="sep">|</span>
+      <span className="stat"><span className="stat-lbl">CG</span><span className="stat-val">{s.CG || 0}</span></span>
+      <span className="total">= {fmt(tot)} pts</span>
+    </div>;
+  };
+
+  if (loading) return <div className="loading-screen"><div className="loading-spinner"></div><div>Loading auction...</div></div>;
+  if (error) return <div className="loading-screen"><div style={{ color: 'var(--espn-error)', fontSize: '20px' }}>⚠️ {error}</div></div>;
+
+  // LOGIN SCREEN
+  if (screen === 'login') {
+    const isCL = urlRole === 'commissioner';
+    const teams = auction?.teams ? Object.entries(auction.teams) : [];
+    const cTeams = teams.filter(([_, t]) => t.isCommissioner || t.isComm);
+    const rTeams = teams.filter(([_, t]) => !t.isCommissioner && !t.isComm);
+    return (
+      <>
+        <header className="header"><div className="header-title">Arbitration Auction</div></header>
+        <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
+        <div className="loading-screen" style={{ minHeight: 'calc(100vh - 110px)' }}>
+          <div className="modal">
+            <div className="modal-header">{isCL ? 'Commissioner Login' : 'Join Auction'}</div>
+            <div className="modal-body">
+              <div className="form-group"><label>Your Name</label><input value={loginName} onChange={e => setLoginName(e.target.value)} /></div>
+              <div className="form-group">
+                <label>Select Team</label>
+                <select value={loginTeamId} onChange={e => setLoginTeamId(e.target.value)}>
+                  <option value="">Choose your team...</option>
+                  {(isCL ? cTeams : rTeams).map(([id, t]) => <option key={id} value={id}>{t.name}{(t.isCommissioner || t.isComm) ? ' ⭐' : t.joined ? ' ✓' : ''}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Password</label>
+                <input type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} onKeyPress={e => e.key === 'Enter' && (isCL ? commLogin() : ownerLogin())} />
+                {loginErr && <div className="form-error">{loginErr}</div>}
+              </div>
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={isCL ? commLogin : ownerLogin}>{isCL ? 'Login as Commissioner' : 'Join Auction'}</button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // PREBID SCREEN
+  if (screen === 'prebid') {
+    const pls = auction?.players || []; const t = auction?.teams?.[userTeamId]; const mx = maxBid(t);
+    return (
+      <>
+        <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info"><span>{userTeamName}</span></div></header>
+        <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
+        <div style={{ maxWidth: '900px', margin: '24px auto', padding: '0 24px' }}>
+          {auction?.phase === 'lobby' && <div className="lobby-info" style={{ marginBottom: '24px', background: '#e3f2fd' }}><div className="lobby-status">⏳ Waiting for Commissioner to Start</div></div>}
+          <div className="modal" style={{ position: 'relative', maxWidth: 'none' }}>
+            <div className="modal-header">Set Your Pre-Bids</div>
+            <div className="modal-body">
+              <div className="max-bid-info" style={{ marginBottom: '16px' }}>Your Max Bid: <strong>${fmt(mx)}</strong></div>
+              <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
+                <table className="history-table">
+                  <thead><tr><th>Player</th><th>Team</th><th>Owner</th><th>Arb</th><th>Points</th><th style={{ width: '100px' }}>Your Bid</th></tr></thead>
+                  <tbody>
+                    {pls.map((p, i) => { const own = isOwner(p); const done = p.status === 'completed'; return (
+                      <tr key={i} style={done ? { opacity: 0.4 } : {}}>
+                        <td style={{ fontWeight: 600 }}>{p.name}</td><td>{p.team}</td><td>{p.owner}</td>
+                        <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
+                        <td>{fmt(p.fantasyPoints)}</td>
+                        <td>{!own && !done ? <input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'right' }} /> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                      </tr>
+                    ); })}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ marginTop: '20px', display: 'flex', gap: '14px' }}>
+                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setScreen('auction')}>Skip Pre-Bids</button>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={savePrebids}>Save & Enter Auction</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // MAIN AUCTION SCREEN
+  const cp = auction?.players?.[auction?.currentPlayerIndex];
+  const teams = auction?.teams ? Object.entries(auction.teams) : [];
+  const teamList = Object.values(auction?.teams || {});
+  const teamNames = teamList.map(t => t.name);
+  const grp = {}; auction?.players?.forEach((p, i) => { const k = p.arbYear; if (!grp[k]) grp[k] = []; grp[k].push({ ...p, idx: i }); });
+  const cpOwn = isOwner(cp);
+  const pb = preBids[auction?.currentPlayerIndex] || 0;
+  const uTeam = auction?.teams?.[userTeamId];
+  const mx = maxBid(uTeam);
+  const hi = auction?.highestBid?.amount || 0;
+  const kp = cp ? keepPr(hi, cp.arbYear) : 1;
+  const sp = stickPr(hi);
+  const allZero = hi === 0;
+  const isTie = auction?.phase === 'tiebreaker';
+  const canBid = isTie ? canTieBid() : !cpOwn;
+  const hasSheets = auction?.sheetsConfig?.scriptUrl;
+
+  // HISTORY TAB
+  if (activeTab === 'history') {
+    const hist = auction?.bidHistory || [];
+    return (
+      <>
+        <header className="header">
+          <div className="header-title">Arbitration Auction</div>
+          <div className="user-info">
+            {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
+            <span>{userTeamName}</span>
+            {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
+          </div>
+        </header>
+        <nav className="nav">
+          <div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div>
+          <div className="nav-tabs">
+            <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
+            <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History</div>
+          </div>
+        </nav>
+        <div className="history-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem' }}>Bid History ({hist.length} players)</h2>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Google Sheet</button>}
+              <button className="btn btn-secondary" onClick={exportCSV} disabled={!hist.length}>📥 Export CSV</button>
+            </div>
+          </div>
+          {hist.length === 0 ? <p style={{ color: 'var(--espn-text-muted)', fontSize: '16px' }}>No completed players yet.</p> :
+            <div style={{ overflowX: 'auto' }}>
+              <table className="history-table">
+                <thead><tr><th>Player</th><th>Owner</th><th>Winner</th><th>Decision</th><th>Price</th><th>Years</th><th>High Bid</th>{teamNames.map((n, i) => <th key={i} className="team-bid">{n}</th>)}</tr></thead>
+                <tbody>
+                  {hist.map((h, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 600 }}>{h.player}</td>
+                      <td>{h.owner}</td>
+                      <td style={{ color: 'var(--espn-blue)', fontWeight: 600 }}>{h.winner}</td>
+                      <td><span className={'result-badge ' + h.decision}>{h.decision}</span></td>
+                      <td style={{ fontWeight: 600 }}>${fmt(h.price)}</td>
+                      <td>{h.years}</td>
+                      <td>${fmt(h.highBid)}</td>
+                      {teamNames.map((n, j) => <td key={j} className="team-bid" style={{ color: h.bids?.[n] === h.highBid && h.highBid > 0 ? 'var(--espn-blue)' : 'inherit', fontWeight: h.bids?.[n] === h.highBid && h.highBid > 0 ? 700 : 'normal' }}>{h.bids?.[n] !== undefined ? '$' + fmt(h.bids[n]) : '-'}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>}
+        </div>
+      </>
+    );
+  }
+
+  // MAIN AUCTION VIEW
+  return (
+    <>
+      <header className="header">
+        <div className="header-title">Arbitration Auction</div>
+        <div className="user-info">
+          {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
+          <span>{userTeamName}</span>
+          {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
+        </div>
+      </header>
+      <nav className="nav">
+        <div className="nav-left">
+          <span className="league-name">{auction?.leagueName}</span>
+          <span className="nav-info">Player {(auction?.currentPlayerIndex || 0) + 1} of {auction?.players?.length || 0}</span>
+        </div>
+        <div className="nav-tabs">
+          <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
+          <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History ({auction?.bidHistory?.length || 0})</div>
+        </div>
+      </nav>
+
+      <div className="app-container">
+        <div className="sidebar">
+          <div className="sidebar-title">Player Queue</div>
+          {[3, 2, 1].map(ay => { const pls = grp[ay] || []; if (!pls.length) return null; return (
+            <React.Fragment key={ay}>
+              <div className="arb-group-header">Arbitration Year {ay}</div>
+              {pls.map(p => {
+                const cur = p.idx === auction?.currentPlayerIndex;
+                const own = auction?.teams?.[userTeamId]?.name === p.owner;
+                const won = p.result?.winnerId === userTeamId;
+                const done = p.status === 'completed';
+                let cn = 'player-queue-item'; if (cur) cn += ' current'; else if (own && !done) cn += ' own-player'; if (won) cn += ' won-player'; if (done && !cur) cn += ' completed';
+                return (
+                  <div key={p.idx} className={cn}>
+                    <div className="player-queue-header"><span className="player-queue-name">{p.name}</span><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></div>
+                    <div className="player-queue-details"><span>{p.owner}</span><span>{fmt(p.fantasyPoints)} pts</span></div>
+                    {!done && !own && <div className="prebid-input"><label>Pre-bid: $</label><input type="number" value={preBids[p.idx] || ''} onChange={e => updPre(p.idx, e.target.value)} min="0" /></div>}
+                    {p.result && <><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</>}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ); })}
+        </div>
+
+        <div className="main-stage">
+          {auction?.phase === 'lobby' && (
+            <div className="lobby-info">
+              <div className="lobby-status">⏳ Waiting for Auction to Begin</div>
+              <p style={{ color: 'var(--espn-text-secondary)', marginBottom: '20px' }}>The commissioner will start the auction shortly.</p>
+              {isComm && <button className="btn btn-primary" onClick={startAuc}>Start Auction</button>}
+            </div>
+          )}
+
+          {isTie && <div className="tiebreaker-banner">⚠️ TIE-BREAKER ROUND: {auction.tiedTeams?.map(t => t.name).join(' vs ')}</div>}
+
+          {cp && auction?.phase !== 'lobby' && (
+            <>
+              <div className="player-card">
+                <div className="player-card-header">
+                  <div><div className="player-name">{cp.name}</div><div className="player-meta">{cp.position} • {cp.team}</div></div>
+                  <span className={'arb-badge arb-' + cp.arbYear}>ARB {cp.arbYear}</span>
+                </div>
+                <div className="player-card-body">
+                  <div className="info-row"><div><div className="info-label">Current Owner</div><div className="info-value">{cp.owner}</div></div><div style={{ textAlign: 'right' }}><div className="info-label">Keep Discount</div><div className="info-value">{keepPct(cp.arbYear) * 100}%</div></div></div>
+                  <HitStats p={cp} />
+                  <PitStats p={cp} />
+                  <div className="points-box"><div className="points-label">{PREV_YR} Fantasy Points</div><div className="points-value">{fmt(cp.fantasyPoints)}</div></div>
+                </div>
+              </div>
+
+              <div className="timer-section">
+                {auction.phase === 'waiting' && <><div className="timer-display">{fmtTime(auction.timerDuration)}</div>{isComm ? <button className="btn btn-primary" onClick={startBid}>Start Bidding</button> : <p style={{ color: 'var(--espn-text-muted)', marginTop: '12px' }}>Waiting for commissioner to start bidding...</p>}</>}
+                {(auction.phase === 'bidding' || isTie) && <><div className={'timer-display ' + timerCls()}>{fmtTime(timeLeft)}</div>{isComm && <button className="btn btn-secondary" onClick={isTie ? endTie : endBid}>{isTie ? 'End Tiebreaker' : 'End Bidding'}</button>}</>}
+                {auction.phase === 'reveal' && isComm && <button className="btn btn-primary" style={{ fontSize: '18px', padding: '18px 36px' }} onClick={reveal}>🎯 Reveal All Bids</button>}
+                {auction.phase === 'tie-resolution' && isComm && <button className="btn btn-primary" onClick={() => setTieModal(true)}>Resolve Tie</button>}
+              </div>
+
+              {(auction.phase === 'bidding' || isTie) && canBid && (
+                <div className={'your-bid-section' + (bidOk ? ' submitted' : '')}>
+                  <h3>{bidOk ? '✓ Bid Submitted' : 'Enter Your Bid'}{isTie ? ' (Tiebreaker Round)' : ''}</h3>
+                  <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong> • Enter $0.00 to pass</div>
+                  <div className="bid-options" style={{ marginTop: '14px' }}>
+                    {pb > 0 && !isTie && <div className="bid-option"><label>Use Pre-Bid</label><div className={'prebid-value' + (usePre ? ' selected' : '')} onClick={() => setUsePre(true)}>${fmt(pb)}</div></div>}
+                    <div className="bid-option"><label>Enter Amount</label><input type="number" value={curBid} onChange={e => { setCurBid(e.target.value); setUsePre(false); }} min="0" step="0.01" onFocus={() => setUsePre(false)} placeholder="0.00" /></div>
+                    <button className="btn btn-blue" style={{ padding: '14px 28px', fontSize: '16px' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
+                  </div>
+                  {bidErr && <div className="bid-error">{bidErr}</div>}
+                </div>
+              )}
+
+              {(auction.phase === 'bidding' || isTie) && !canBid && (
+                <div className="your-bid-section" style={{ borderColor: '#ccc', background: '#f9f9f9', textAlign: 'center' }}>
+                  <p style={{ color: 'var(--espn-text-muted)', fontSize: '16px' }}>{cpOwn ? 'You own this player - waiting for bids' : isTie ? 'You are not in the tiebreaker' : 'Waiting...'}</p>
+                </div>
+              )}
+
+              {(auction.phase === 'bidding' || auction.phase === 'reveal' || isTie) && (
+                <div className="bid-status">
+                  <div className="bid-status-header">Bid Submission Status</div>
+                  <div className="bid-status-grid">
+                    {teams.map(([id, t]) => {
+                      const own = t.name === cp?.owner;
+                      const inTie = auction.tiebreakerTeams?.includes(id);
+                      const tied = auction.tiedTeams?.some(x => x.id === id);
+                      return <div key={id} className={'bid-status-item ' + (auction.bidStatuses?.[id] ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied' : '')} style={isTie && !inTie ? { opacity: 0.3 } : {}}>{t.name}{own ? ' 👤' : auction.bidStatuses?.[id] ? <span className="checkmark"> ✓</span> : ''}</div>;
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {(auction.phase === 'decision' || auction.phase === 'tie-resolution') && auction.highestBid && (
+                <div className="reveal-section">
+                  <div className="reveal-card">
+                    <div className="reveal-label">Highest Bid</div>
+                    <div className="reveal-amount">${fmt(hi)}</div>
+                    <div className="reveal-bidder">{allZero ? 'All teams passed' : 'High bidder revealed after decision'}</div>
+                    <div className="prices-row">
+                      <div className="price-box keep"><div className="price-label">Keep Price</div><div className="price-value">${fmt(allZero ? 1 : kp)}</div></div>
+                      <div className="price-box stick"><div className="price-label">Stick Price</div><div className="price-value">${fmt(sp)}</div></div>
+                    </div>
+                  </div>
+                  {canDecide() && auction.phase === 'decision' ? (
+                    <div className="decision-buttons">
+                      <button className="btn btn-decision btn-keep" onClick={() => decide('keep')}>🛡️ Keep<span className="btn-years">1yr @ ${fmt(allZero ? 1 : kp)}</span></button>
+                      <button className="btn btn-decision btn-stick" onClick={() => decide('stick')} disabled={allZero} style={allZero ? { opacity: 0.4 } : {}}>🎯 Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(sp)}</span></button>
+                      <button className="btn btn-decision btn-self-stick" onClick={() => decide('self-stick')}>💪 Self-Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(sp)}</span></button>
+                    </div>
+                  ) : <p style={{ textAlign: 'center', color: 'var(--espn-text-muted)', fontSize: '16px' }}>{auction.phase === 'tie-resolution' ? 'Commissioner resolving tie...' : 'Waiting for ' + cp.owner + '...'}</p>}
+                </div>
+              )}
+
+              {auction.phase === 'complete' && (
+                <div style={{ textAlign: 'center', padding: '48px', background: '#fff', borderRadius: '8px' }}>
+                  <h2 style={{ color: 'var(--espn-success)', fontSize: '2rem', marginBottom: '20px' }}>🏆 Auction Complete!</h2>
+                  <p style={{ color: 'var(--espn-text-secondary)', marginBottom: '24px' }}>All players assigned. View History tab for results.</p>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Sheet</button>}
+                    <button className="btn btn-secondary" onClick={exportCSV}>📥 Export CSV</button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="sidebar-right">
+          <div className="sidebar-title">Team Budgets</div>
+          {teams.map(([id, t]) => {
+            const cap = t.cap || t.salaryCap || 100;
+            const sal = t.sal || t.currentSalary || 0;
+            const av = cap - sal;
+            const mb = maxBid(t);
+            const pct = (av / cap) * 100;
+            const fc = pct < 20 ? 'critical' : pct < 40 ? 'low' : '';
+            return (
+              <div key={id} className={'budget-item ' + (id === userTeamId ? 'current-user ' : '') + ((t.isCommissioner || t.isComm) ? 'is-commish' : '')}>
+                <div className="budget-team-name"><span>{t.name}{(t.isCommissioner || t.isComm) && <span className="commish-star">⭐</span>}</span><span className="budget-available">${fmt(av)}</span></div>
+                <div className="budget-details"><span>Spots: {t.spots || t.spotsAvailable || 0}</span><span>Max: ${fmt(mb)}</span></div>
+                <div className="budget-bar"><div className={'budget-bar-fill ' + fc} style={{ width: pct + '%' }}></div></div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {tieModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">Resolve Tie</div>
+            <div className="modal-body">
+              <p style={{ marginBottom: '16px', fontSize: '16px' }}>Teams tied at <strong>${fmt(auction.tiedTeams?.[0]?.amount || 0)}</strong>:</p>
+              <ul style={{ marginBottom: '20px', marginLeft: '24px', fontSize: '15px' }}>{auction.tiedTeams?.map(t => <li key={t.id} style={{ marginBottom: '6px' }}><strong>{t.name}</strong></li>)}</ul>
+              <div className="form-group"><label>Method</label><select value={tieMethod} onChange={e => setTieMethod(e.target.value)}><option value="random">Random</option><option value="choose">Commissioner Choice</option></select></div>
+              {tieMethod === 'choose' && <div className="form-group"><label>Winner</label><select value={tieWinner} onChange={e => setTieWinner(e.target.value)}><option value="">Select...</option>{auction.tiedTeams?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>}
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={resolveTie} disabled={tieMethod === 'choose' && !tieWinner}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {celeb && (
+        <div className="celebration-overlay">
+          {celeb.d === 'stick' ? bloodDrips() : confetti()}
+          <div className={'celebration-text ' + celeb.d}>{celeb.d === 'keep' ? '🛡️ KEPT!' : celeb.d === 'stick' ? '🩸 STUCK!' : '💪 SELF-STUCK!'}</div>
+          <div className="celebration-details"><strong>{celeb.player}</strong><br />→ <strong>{celeb.winner}</strong><br />${fmt(celeb.price)} • {celeb.years} year{celeb.years > 1 ? 's' : ''}</div>
+          <div className="high-bidder-reveal">High Bidder: <strong>{celeb.hiBidder}</strong></div>
+        </div>
+      )}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

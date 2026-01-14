@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arbitration Auction - Commissioner Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
+    *{margin:0;padding:0;box-sizing:border-box}body{font-family:'Roboto',sans-serif;background:var(--espn-bg-page);color:var(--espn-text-primary);font-size:15px;line-height:1.6}
+    .header{background:var(--espn-red);height:60px;display:flex;align-items:center;padding:0 28px}.header-title{font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.6rem;color:white;text-transform:uppercase}
+    .nav{background:var(--espn-nav-dark);padding:0 28px;height:50px;display:flex;align-items:center}.nav-item{color:white;font-size:15px;padding:14px 20px}.nav-item.active{border-bottom:3px solid var(--espn-red)}
+    .main-content{max-width:1200px;margin:32px auto;padding:0 28px}
+    .page-header{margin-bottom:32px}.page-title{font-family:'Roboto Condensed',sans-serif;font-size:2.2rem;font-weight:700}.page-subtitle{color:var(--espn-text-secondary);margin-top:8px;font-size:16px}
+    .card{background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;margin-bottom:28px}.card-header{background:var(--espn-bg-table-header);padding:16px 24px;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.15rem;text-transform:uppercase;border-bottom:1px solid var(--espn-border)}.card-body{padding:24px}
+    .form-group{margin-bottom:20px}.form-group label{display:block;font-size:13px;font-weight:600;color:var(--espn-text-secondary);text-transform:uppercase;margin-bottom:8px}.form-group input,.form-group select,.form-group textarea{width:100%;padding:14px 16px;font-size:16px;border:1px solid var(--espn-border);border-radius:6px}.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--espn-blue)}
+    .form-hint{font-size:13px;color:var(--espn-text-muted);margin-top:6px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:16px 32px;font-size:15px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif}.btn:disabled{opacity:.5;cursor:not-allowed}.btn-primary{background:var(--espn-red);color:white}.btn-primary:hover:not(:disabled){background:var(--espn-red-dark)}.btn-secondary{background:var(--espn-bg-table-header);color:var(--espn-text-primary);border:1px solid var(--espn-border)}.btn-blue{background:var(--espn-blue);color:white}.btn-success{background:var(--espn-success);color:white}
+    .data-table{width:100%;border-collapse:collapse;font-size:15px}.data-table th{background:var(--espn-bg-table-header);padding:14px 16px;text-align:left;font-weight:600;text-transform:uppercase;font-size:12px;border-bottom:2px solid var(--espn-border)}.data-table td{padding:14px 16px;border-bottom:1px solid var(--espn-border)}.data-table input{padding:10px 12px;font-size:15px}.data-table input[type="number"]{width:90px;text-align:right}
+    .steps{display:flex;justify-content:center;margin-bottom:40px;gap:12px;flex-wrap:wrap}.step{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--espn-bg-card);border:2px solid var(--espn-border);border-radius:8px;cursor:pointer;font-size:15px}.step:hover{border-color:var(--espn-blue)}.step.active{background:var(--espn-blue);border-color:var(--espn-blue);color:white}.step.completed{border-color:var(--espn-success)}.step.completed .step-number{background:var(--espn-success);color:white}.step.disabled{opacity:.5;cursor:not-allowed}.step-number{width:32px;height:32px;border-radius:50%;background:var(--espn-bg-table-header);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}.step.active .step-number{background:rgba(255,255,255,.2)}.step-label{font-weight:600}
+    .info-box{background:#e3f2fd;border:1px solid var(--espn-blue);border-radius:8px;padding:20px;margin-bottom:20px}.info-box h4{color:var(--espn-blue);margin-bottom:12px;font-size:16px}.info-box ol,.info-box ul{margin-left:24px}.info-box li{margin:10px 0;font-size:15px}.info-box code{background:rgba(0,0,0,.1);padding:2px 8px;border-radius:4px;font-size:13px}
+    .success-box{background:#d4edda;border:1px solid var(--espn-success);border-radius:8px;padding:20px;margin-bottom:20px}.success-box h4{color:var(--espn-success);margin-bottom:8px}
+    .error-box{background:#f8d7da;border:1px solid var(--espn-error);border-radius:8px;padding:20px;color:var(--espn-error)}
+    .warning-box{background:#fff3cd;border:1px solid var(--espn-orange);border-radius:8px;padding:20px;margin-bottom:20px}.warning-box h4{color:#856404;margin-bottom:8px}
+    .config-textarea{min-height:180px;font-family:monospace;font-size:13px}
+    .script-box{background:#1e1e1e;border-radius:8px;padding:20px;margin:20px 0;max-height:300px;overflow-y:auto}.script-box pre{color:#d4d4d4;font-size:12px;white-space:pre-wrap;word-break:break-all}
+    .arb-badge{display:inline-block;padding:4px 12px;border-radius:4px;font-size:13px;font-weight:700;color:white}.arb-badge.arb-3{background:var(--espn-red)}.arb-badge.arb-2{background:var(--espn-orange)}.arb-badge.arb-1{background:var(--espn-success)}
+    .progress-bar{height:12px;background:var(--espn-bg-page);border-radius:6px;overflow:hidden;margin-top:16px}.progress-bar-fill{height:100%;background:var(--espn-blue)}
+    .auction-link{display:flex;gap:16px;align-items:center;margin-top:20px}.auction-link input{flex:1;padding:16px;background:var(--espn-bg-table-header);border:1px solid var(--espn-border);border-radius:6px;font-size:15px}
+    .scoring-inline{display:flex;flex-wrap:wrap;gap:14px;align-items:center}.scoring-inline .scoring-item{display:flex;align-items:center;gap:8px}.scoring-inline .scoring-item label{font-weight:600;font-size:14px;min-width:36px}.scoring-inline .scoring-item input{width:70px;padding:10px;text-align:center;font-size:15px;border:1px solid var(--espn-border);border-radius:4px}.scoring-inline .scoring-item.negative input{color:var(--espn-error)}
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000}.modal{background:white;border-radius:8px;max-width:480px;width:90%}.modal-header{background:var(--espn-nav-dark);color:white;padding:20px 24px;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.2rem}.modal-body{padding:28px}.modal-footer{padding:0 28px 28px;display:flex;gap:16px}.modal-footer .btn{flex:1}
+    .copy-btn{background:var(--espn-blue);color:white;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:13px;margin-top:10px}.copy-btn:hover{background:var(--espn-blue-hover)}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <script type="text/babel">
+const{useState,useEffect,useCallback}=React;
+const PREV_YR=new Date().getFullYear()-1;
+const STORE='arb_comm_session';
+const fmt=n=>(n||0).toFixed(2);
+const DEFAULT_HIT={'1B':1,'2B':2,'3B':3,'HR':4,'R':1,'RBI':1,'BB':1,'HBP':1,'SB':2};
+const DEFAULT_PIT={'IP':2,'ER':-1,'K':1,'H':-0.5,'BB':-0.5,'HBP':-0.5,'W':10,'SV':8,'HD':7,'CG':5};
+const genId=()=>{const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:8},()=>c[Math.floor(Math.random()*c.length)]).join('')};
+const parseFB=input=>{try{let c=input.trim().replace(/^(const|let|var)\s+\w+\s*=\s*/,'').replace(/;?\s*$/,'');c=c.replace(/([{,]\s*)(\w+)\s*:/g,'$1"$2":');const cfg=JSON.parse(c);if(!cfg.apiKey||!cfg.databaseURL)throw new Error('Missing fields');return cfg}catch(e){throw new Error('Invalid: '+e.message)}};
+const extractSheetId=url=>{const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);return m?m[1]:null};
+const calcPts=(s,hs,ps,isH,isP)=>{let pts=0;if(isH&&s){const h=s.H||0,d=s['2B']||0,t=s['3B']||0,hr=s.HR||0,sg=Math.max(0,h-d-t-hr);pts+=sg*(hs['1B']||0)+d*(hs['2B']||0)+t*(hs['3B']||0)+hr*(hs['HR']||0)+(s.R||0)*(hs['R']||0)+(s.RBI||0)*(hs['RBI']||0)+(s.BB||0)*(hs['BB']||0)+(s.HBP||0)*(hs['HBP']||0)+(s.SB||0)*(hs['SB']||0)}if(isP&&s){pts+=(s.IP||0)*(ps['IP']||0)+(s.ER||0)*(ps['ER']||0)+(s.SO||0)*(ps['K']||0)+(s.HA||0)*(ps['H']||0)+(s.BBA||0)*(ps['BB']||0)+(s.HBP_A||0)*(ps['HBP']||0)+(s.W||0)*(ps['W']||0)+(s.SV||0)*(ps['SV']||0)+(s.HD||0)*(ps['HD']||0)+(s.CG||0)*(ps['CG']||0)}return Math.round(pts*100)/100};
+const downloadCSV=(c,f)=>{const b=new Blob([c],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=f;a.click();URL.revokeObjectURL(u)};
+const csvTemplate=()=>'Name,Team,Position,Owner,ArbYear,Type,Points\nJuan Soto,NYY,OF,Team 1,3,Hitter,906.50\nShohei Ohtani,LAD,DH/SP,Team 2,2,Both,1640.50\nCorbin Burnes,BAL,SP,Team 3,1,Pitcher,\n';
+
+const APPS_SCRIPT_CODE=`/**
+ * ARBITRATION AUCTION - GOOGLE SHEETS SYNC
+ * Paste this entire script into your Google Sheet's Apps Script editor
+ */
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const action = data.action;
+    if (action === 'init') return initializeSheet(data);
+    else if (action === 'sync') return syncPlayer(data);
+    else return jsonResponse({ success: false, error: 'Unknown action' });
+  } catch (error) {
+    return jsonResponse({ success: false, error: error.toString() });
+  }
+}
+
+function doGet(e) {
+  return jsonResponse({ success: true, message: 'Auction Sync Ready!' });
+}
+
+function initializeSheet(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const teamNames = data.teamNames || [];
+  sheet.clear();
+  const headers = ['Player', 'Team', 'Position', 'Owner', 'Arb Year', 'Winner', 'Decision', 'Price', 'Years', 'High Bid', 'High Bidder'];
+  teamNames.forEach(name => headers.push(name));
+  const headerRange = sheet.getRange(1, 1, 1, headers.length);
+  headerRange.setValues([headers]);
+  headerRange.setFontWeight('bold');
+  headerRange.setBackground('#282828');
+  headerRange.setFontColor('#ffffff');
+  sheet.setFrozenRows(1);
+  return jsonResponse({ success: true, message: 'Sheet initialized' });
+}
+
+function syncPlayer(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const player = data.player;
+  const teamNames = data.teamNames || [];
+  if (!player) return jsonResponse({ success: false, error: 'No player data' });
+  const row = [player.name||'', player.team||'', player.position||'', player.owner||'', player.arbYear||'', player.winner||'', player.decision||'', player.price||0, player.years||1, player.highBid||0, player.highBidder||''];
+  teamNames.forEach(name => { row.push(player.bids && player.bids[name] !== undefined ? player.bids[name] : ''); });
+  const values = sheet.getDataRange().getValues();
+  let existingRow = -1;
+  for (let i = 1; i < values.length; i++) { if (values[i][0] === player.name) { existingRow = i + 1; break; } }
+  if (existingRow > 0) sheet.getRange(existingRow, 1, 1, row.length).setValues([row]);
+  else { sheet.appendRow(row); existingRow = sheet.getLastRow(); }
+  const rowRange = sheet.getRange(existingRow, 1, 1, row.length);
+  if (player.decision === 'keep') rowRange.setBackground('#d4edda');
+  else if (player.decision === 'stick') rowRange.setBackground('#cce5ff');
+  else if (player.decision === 'self-stick') rowRange.setBackground('#f8d7da');
+  return jsonResponse({ success: true, player: player.name });
+}
+
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}`;
+
+function App(){
+  const[hasSess,setHasSess]=useState(false);
+  const[showLogin,setShowLogin]=useState(true);
+  const[loginPw,setLoginPw]=useState('');
+  const[loginErr,setLoginErr]=useState('');
+  const[step,setStep]=useState(1);
+  const[done,setDone]=useState([]);
+  const[fbInput,setFbInput]=useState('');
+  const[fbStatus,setFbStatus]=useState('pending');
+  const[fbErr,setFbErr]=useState('');
+  const[db,setDb]=useState(null);
+  const[sheetUrl,setSheetUrl]=useState('');
+  const[sheetId,setSheetId]=useState('');
+  const[scriptUrl,setScriptUrl]=useState('');
+  const[sheetStatus,setSheetStatus]=useState('pending');
+  const[sheetErr,setSheetErr]=useState('');
+  const[league,setLeague]=useState('');
+  const[commName,setCommName]=useState('');
+  const[commPw,setCommPw]=useState('');
+  const[timer,setTimer]=useState(120);
+  const[hitScore,setHitScore]=useState(DEFAULT_HIT);
+  const[pitScore,setPitScore]=useState(DEFAULT_PIT);
+  const[teams,setTeams]=useState(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})));
+  const[players,setPlayers]=useState([]);
+  const[playerTxt,setPlayerTxt]=useState('');
+  const[fetching,setFetching]=useState(false);
+  const[fetchProg,setFetchProg]=useState({c:0,t:0});
+  const[aucId,setAucId]=useState(null);
+  const[created,setCreated]=useState(false);
+  const[copied,setCopied]=useState(false);
+
+  useEffect(()=>{const s=localStorage.getItem(STORE);if(s)setHasSess(true);else setShowLogin(false)},[]);
+  useEffect(()=>{if(sheetUrl){const id=extractSheetId(sheetUrl);setSheetId(id||'')}},[sheetUrl]);
+
+  const save=useCallback(()=>{localStorage.setItem(STORE,JSON.stringify({fbInput,league,commName,commPwHash:commPw?CryptoJS.SHA256(commPw).toString():'',timer,teams,players,aucId,step,done,hitScore,pitScore,sheetUrl,sheetId,scriptUrl,savedAt:Date.now()}))},[fbInput,league,commName,commPw,timer,teams,players,aucId,step,done,hitScore,pitScore,sheetUrl,sheetId,scriptUrl]);
+  useEffect(()=>{if(!showLogin&&(league||players.length>0))save()},[league,commName,timer,teams,players,step,done,hitScore,pitScore,save,showLogin,sheetUrl,scriptUrl]);
+
+  const load=s=>{setFbInput(s.fbInput||'');setLeague(s.league||'');setCommName(s.commName||'');setTimer(s.timer||120);setTeams(s.teams||[]);setPlayers(s.players||[]);setAucId(s.aucId);setStep(s.step||1);setDone(s.done||[]);setHitScore(s.hitScore||DEFAULT_HIT);setPitScore(s.pitScore||DEFAULT_PIT);setSheetUrl(s.sheetUrl||'');setSheetId(s.sheetId||'');setScriptUrl(s.scriptUrl||'');if(s.aucId)setCreated(true);if(s.fbInput){try{const cfg=parseFB(s.fbInput);localStorage.setItem('firebaseConfig',JSON.stringify(cfg));if(!firebase.apps.length)firebase.initializeApp(cfg);setDb(firebase.database());setFbStatus('connected')}catch(e){}}};
+
+  const handleLogin=()=>{const s=JSON.parse(localStorage.getItem(STORE));if(s&&s.commPwHash===CryptoJS.SHA256(loginPw).toString()){load(s);setShowLogin(false)}else setLoginErr('Invalid password')};
+  const startFresh=()=>{localStorage.removeItem(STORE);setHasSess(false);setShowLogin(false)};
+
+  const connectFB=async()=>{try{const cfg=parseFB(fbInput);localStorage.setItem('firebaseConfig',JSON.stringify(cfg));if(firebase.apps.length)await firebase.app().delete();firebase.initializeApp(cfg);const d=firebase.database();await d.ref('.info/connected').once('value');setDb(d);setFbStatus('connected');setFbErr('')}catch(e){setFbStatus('error');setFbErr(e.message)}};
+
+  const testSheets=async()=>{
+    setSheetStatus('testing');setSheetErr('');
+    if(!scriptUrl){setSheetErr('Enter the Apps Script URL');setSheetStatus('error');return}
+    if(!scriptUrl.includes('script.google.com')){setSheetErr('Invalid Apps Script URL');setSheetStatus('error');return}
+    try{
+      const res=await fetch(scriptUrl,{method:'GET',mode:'no-cors'});
+      // no-cors won't give us response, but if it doesn't throw, URL is valid
+      setSheetStatus('connected');
+    }catch(e){setSheetErr('Could not reach script. Make sure it\'s deployed.');setSheetStatus('error')}
+  };
+
+  const copyScript=()=>{navigator.clipboard.writeText(APPS_SCRIPT_CODE);setCopied(true);setTimeout(()=>setCopied(false),2000)};
+
+  const goStep=s=>{if(s<=step||done.includes(s-1))setStep(s)};
+  const finish=s=>{if(!done.includes(s))setDone([...done,s]);setStep(s+1)};
+  const updTeam=(id,f,v)=>{setTeams(t=>t.map(x=>x.id===id?{...x,[f]:f==='name'?v:f==='isComm'?v:parseFloat(v)||0}:x))};
+  const updHit=(k,v)=>{setHitScore(s=>({...s,[k]:parseFloat(v)||0}))};
+  const updPit=(k,v)=>{setPitScore(s=>({...s,[k]:parseFloat(v)||0}))};
+
+  const parsePlayers=txt=>{const lines=txt.trim().split('\n');if(lines.length<2)return[];const hdrs=lines[0].toLowerCase().split(',').map(h=>h.trim());const out=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(',').map(v=>v.trim());if(vals.length<4)continue;const row={};hdrs.forEach((h,j)=>{row[h]=vals[j]||''});const type=(row.type||'').toLowerCase();const pos=(row.position||row.pos||'').toUpperCase();const isP=['SP','RP','P'].some(p=>pos.includes(p));const isH=!isP||type==='both'||pos.includes('/');out.push({id:i,name:row.name||'',team:row.team||'',position:pos,owner:row.owner||'',arbYear:parseInt(row.arbyear||row.arb||'1')||1,type:type==='both'?'both':(isP&&!isH?'pitcher':'hitter'),isHitter:isH||type==='both',isPitcher:isP||type==='both',fantasyPoints:parseFloat(row.points||'0')||0})}return out};
+  const handleFile=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{const txt=ev.target.result;setPlayerTxt(txt);const p=parsePlayers(txt);if(p.length>0)setPlayers(p)};r.readAsText(f)}};
+  const handleTxt=txt=>{setPlayerTxt(txt);const p=parsePlayers(txt);if(p.length>0)setPlayers(p)};
+  const updPts=(id,pts)=>{setPlayers(p=>p.map(x=>x.id===id?{...x,fantasyPoints:parseFloat(pts)||0}:x))};
+
+  const fetchMLB=async pl=>{try{const sr=await fetch(`https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(pl.name)}&sportIds=1&active=true`);const sd=await sr.json();if(!sd.people?.length)return null;const mp=sd.people.find(p=>p.currentTeam?.abbreviation===pl.team)||sd.people[0];const pid=mp.id;const st={hit:null,pit:null};if(pl.isHitter){const hr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=hitting&sportId=1`);const hd=await hr.json();if(hd.stats?.[0]?.splits?.[0]?.stat){const s=hd.stats[0].splits[0].stat;st.hit={H:s.hits||0,'2B':s.doubles||0,'3B':s.triples||0,HR:s.homeRuns||0,RBI:s.rbi||0,R:s.runs||0,SB:s.stolenBases||0,BB:s.baseOnBalls||0,HBP:s.hitByPitch||0}}}if(pl.isPitcher){const pr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=pitching&sportId=1`);const pd=await pr.json();if(pd.stats?.[0]?.splits?.[0]?.stat){const s=pd.stats[0].splits[0].stat;st.pit={IP:parseFloat(s.inningsPitched)||0,SO:s.strikeOuts||0,HA:s.hits||0,BBA:s.baseOnBalls||0,HBP_A:s.hitBatsmen||0,ER:s.earnedRuns||0,W:s.wins||0,SV:s.saves||0,HD:s.holds||0,CG:s.completeGames||0}}}return st}catch(e){return null}};
+
+  const fetchAll=async()=>{setFetching(true);setFetchProg({c:0,t:players.length});const upd=[...players];for(let i=0;i<upd.length;i++){setFetchProg({c:i+1,t:upd.length});const st=await fetchMLB(upd[i]);if(st){let pts=0;if(st.hit){pts+=calcPts(st.hit,hitScore,pitScore,true,false);upd[i].hittingStats=st.hit}if(st.pit){pts+=calcPts(st.pit,hitScore,pitScore,false,true);upd[i].pitchingStats=st.pit}upd[i].fantasyPoints=pts}await new Promise(r=>setTimeout(r,150))}upd.sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);setPlayers(upd);setFetching(false)};
+
+  const createAuc=async()=>{const id=genId();const pwHash=CryptoJS.SHA256(commPw).toString();const sorted=[...players].sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);const tObj={};teams.forEach((t,i)=>{tObj[`team_${i+1}`]={...t,joined:false}});const sheetsCfg=scriptUrl?{scriptUrl,sheetUrl,sheetId}:null;const data={leagueName:league,commissionerName:commName,commissionerPasswordHash:pwHash,timerDuration:timer,teams:tObj,players:sorted.map((p,i)=>({...p,status:'pending',order:i})),hittingScoring:hitScore,pitchingScoring:pitScore,sheetsConfig:sheetsCfg,currentPlayerIndex:0,phase:'lobby',createdAt:Date.now(),bidHistory:[]};if(db){await db.ref(`auctions/${id}`).set(data);setAucId(id);setCreated(true);save()}};
+
+  const getUrl=()=>{const u=window.location.href;const i=u.lastIndexOf('/');return`${u.substring(0,i+1)}auction.html?id=${aucId}`};
+  const enter=()=>{window.location.href=getUrl()+'&role=commissioner'};
+
+  if(showLogin&&hasSess){return<div className="modal-overlay"><div className="modal"><div className="modal-header">Welcome Back</div><div className="modal-body"><p style={{marginBottom:'20px'}}>Enter commissioner password to continue.</p><div className="form-group"><label>Password</label><input type="password" value={loginPw} onChange={e=>setLoginPw(e.target.value)} onKeyPress={e=>e.key==='Enter'&&handleLogin()}/>{loginErr&&<div style={{color:'var(--espn-error)',marginTop:'8px'}}>{loginErr}</div>}</div></div><div className="modal-footer"><button className="btn btn-secondary" onClick={startFresh}>Start Fresh</button><button className="btn btn-primary" onClick={handleLogin}>Continue</button></div></div></div>}
+
+  return<><header className="header"><div className="header-title">Arbitration Auction</div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
+    <main className="main-content">
+      <div className="steps">{[1,2,3,4,5,6].map(s=><div key={s} className={`step ${step===s?'active':''} ${done.includes(s)?'completed':''} ${s>step&&!done.includes(s-1)?'disabled':''}`} onClick={()=>goStep(s)}><span className="step-number">{done.includes(s)?'✓':s}</span><span className="step-label">{s===1&&'Firebase'}{s===2&&'Google Sheets'}{s===3&&'Scoring'}{s===4&&'League'}{s===5&&'Players'}{s===6&&'Launch'}</span></div>)}</div>
+
+      {step===1&&<><div className="page-header"><h1 className="page-title">Firebase Setup</h1><p className="page-subtitle">Required for real-time sync across all devices</p></div>
+        <div className="card"><div className="card-header">Firebase Configuration</div><div className="card-body">
+          <div className="info-box"><h4>📋 Setup Instructions (Free)</h4><ol><li>Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a></li><li>Create project → Build → Realtime Database</li><li>Create Database in <strong>test mode</strong></li><li>Project Settings → Your apps → Web icon</li><li>Copy the firebaseConfig and paste below</li></ol></div>
+          <div className="form-group"><label>Paste Firebase Config</label><textarea className="config-textarea" value={fbInput} onChange={e=>setFbInput(e.target.value)} placeholder="Paste firebaseConfig here..."/></div>
+          <button className="btn btn-blue" onClick={connectFB} disabled={!fbInput.trim()}>Test Connection</button>
+          {fbStatus==='connected'&&<div className="success-box" style={{marginTop:'20px'}}><h4>✓ Connected to Firebase!</h4></div>}
+          {fbStatus==='error'&&<div className="error-box" style={{marginTop:'20px'}}>{fbErr}</div>}
+        </div></div>
+        <button className="btn btn-primary" onClick={()=>finish(1)} disabled={fbStatus!=='connected'}>Continue →</button>
+      </>}
+
+      {step===2&&<><div className="page-header"><h1 className="page-title">Google Sheets Setup</h1><p className="page-subtitle">Live sync auction results to Google Sheets (optional but recommended)</p></div>
+        <div className="card"><div className="card-header">Google Sheets Configuration</div><div className="card-body">
+          <div className="info-box"><h4>📋 Setup Instructions</h4><ol>
+            <li>Create a new Google Sheet at <a href="https://sheets.google.com" target="_blank">sheets.google.com</a></li>
+            <li>In your sheet, go to <strong>Extensions → Apps Script</strong></li>
+            <li>Delete any existing code and paste the script below</li>
+            <li>Click <strong>Deploy → New deployment</strong></li>
+            <li>Select type: <strong>Web app</strong></li>
+            <li>Set "Who has access" to <strong>Anyone</strong></li>
+            <li>Click <strong>Deploy</strong> and authorize when prompted</li>
+            <li>Copy the <strong>Web app URL</strong> and paste below</li>
+          </ol></div>
+
+          <div className="form-group">
+            <label>1. Copy This Script</label>
+            <div className="script-box"><pre>{APPS_SCRIPT_CODE}</pre></div>
+            <button className="copy-btn" onClick={copyScript}>{copied?'✓ Copied!':'📋 Copy Script to Clipboard'}</button>
+          </div>
+
+          <div className="form-group">
+            <label>2. Paste Your Web App URL</label>
+            <input value={scriptUrl} onChange={e=>setScriptUrl(e.target.value)} placeholder="https://script.google.com/macros/s/.../exec"/>
+            <div className="form-hint">This URL is shown after you deploy the Apps Script</div>
+          </div>
+
+          <div className="form-group">
+            <label>3. Paste Your Google Sheet URL (optional, for easy access)</label>
+            <input value={sheetUrl} onChange={e=>setSheetUrl(e.target.value)} placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
+          </div>
+
+          {scriptUrl&&<button className="btn btn-blue" onClick={testSheets}>{sheetStatus==='testing'?'Testing...':'Verify Connection'}</button>}
+          {sheetStatus==='connected'&&<div className="success-box" style={{marginTop:'20px'}}><h4>✓ Google Sheets Ready!</h4><p>Your auction results will sync automatically.</p></div>}
+          {sheetStatus==='error'&&<div className="error-box" style={{marginTop:'20px'}}>{sheetErr}</div>}
+        </div></div>
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(1)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(2)}>{scriptUrl?'Continue →':'Skip for Now →'}</button></div>
+      </>}
+
+      {step===3&&<><div className="page-header"><h1 className="page-title">Scoring Settings</h1><p className="page-subtitle">Configure fantasy point values</p></div>
+        <div className="card"><div className="card-header">⚾ Hitting</div><div className="card-body"><div className="scoring-inline">{Object.entries(hitScore).map(([k,v])=><div key={k} className={`scoring-item ${v<0?'negative':''}`}><label>{k}</label><input type="number" step="0.5" value={v} onChange={e=>updHit(k,e.target.value)}/></div>)}</div></div></div>
+        <div className="card"><div className="card-header">⚾ Pitching</div><div className="card-body"><div className="scoring-inline">{Object.entries(pitScore).map(([k,v])=><div key={k} className={`scoring-item ${v<0?'negative':''}`}><label>{k}</label><input type="number" step="0.5" value={v} onChange={e=>updPit(k,e.target.value)}/></div>)}</div><div className="form-hint" style={{marginTop:'16px'}}>Negative = subtract points</div></div></div>
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(2)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(3)}>Continue →</button></div>
+      </>}
+
+      {step===4&&<><div className="page-header"><h1 className="page-title">League Settings</h1></div>
+        <div className="card"><div className="card-header">General</div><div className="card-body">
+          <div className="form-row"><div className="form-group"><label>League Name</label><input value={league} onChange={e=>setLeague(e.target.value)}/></div><div className="form-group"><label>Commissioner</label><input value={commName} onChange={e=>setCommName(e.target.value)}/></div></div>
+          <div className="form-row"><div className="form-group"><label>Password</label><input type="password" value={commPw} onChange={e=>setCommPw(e.target.value)}/></div><div className="form-group"><label>Timer (sec)</label><input type="number" value={timer} onChange={e=>setTimer(parseInt(e.target.value)||120)}/></div></div>
+        </div></div>
+        <div className="card"><div className="card-header">Teams</div><div className="card-body">
+          <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>Max Bid = Cap - Salary - Spots + 1. Min salary $1.00.</p>
+          <div style={{overflowX:'auto'}}><table className="data-table"><thead><tr><th>#</th><th>Name</th><th>Comm</th><th>Cap</th><th>Salary</th><th>Spots</th><th>Avail</th><th>Max</th></tr></thead><tbody>
+            {teams.map((t,i)=>{const av=t.cap-t.sal;const mx=Math.max(0,t.cap-t.sal-t.spots+1);return<tr key={t.id}><td>{i+1}</td><td><input type="text" value={t.name} onChange={e=>updTeam(t.id,'name',e.target.value)}/></td><td style={{textAlign:'center'}}><input type="checkbox" checked={t.isComm||false} onChange={e=>updTeam(t.id,'isComm',e.target.checked)} style={{width:'20px',height:'20px'}}/></td><td><input type="number" value={t.cap} onChange={e=>updTeam(t.id,'cap',e.target.value)}/></td><td><input type="number" value={t.sal} onChange={e=>updTeam(t.id,'sal',e.target.value)}/></td><td><input type="number" value={t.spots} onChange={e=>updTeam(t.id,'spots',e.target.value)} min="1"/></td><td style={{color:'var(--espn-success)',fontWeight:600}}>${fmt(av)}</td><td style={{color:'var(--espn-blue)',fontWeight:600}}>${fmt(mx)}</td></tr>})}
+          </tbody></table></div>
+        </div></div>
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(3)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(4)} disabled={!league||!commPw}>Continue →</button></div>
+      </>}
+
+      {step===5&&<><div className="page-header"><h1 className="page-title">Players</h1></div>
+        <div className="card"><div className="card-header">Import</div><div className="card-body">
+          <div style={{display:'flex',gap:'16px',marginBottom:'20px',flexWrap:'wrap'}}><input type="file" accept=".csv" onChange={handleFile} style={{display:'none'}} id="csvUp"/><label htmlFor="csvUp" className="btn btn-secondary" style={{cursor:'pointer'}}>📁 Upload CSV</label><button className="btn btn-secondary" onClick={()=>downloadCSV(csvTemplate(),'template.csv')}>📥 Template</button><button className="btn btn-blue" onClick={fetchAll} disabled={players.length===0||fetching}>{fetching?`Fetching ${fetchProg.c}/${fetchProg.t}...`:'🔄 Fetch MLB Stats'}</button></div>
+          {fetching&&<div className="progress-bar"><div className="progress-bar-fill" style={{width:`${(fetchProg.c/fetchProg.t)*100}%`}}/></div>}
+          <div className="form-group"><label>Or Paste CSV</label><textarea style={{minHeight:'140px',fontFamily:'monospace'}} value={playerTxt} onChange={e=>handleTxt(e.target.value)} placeholder="Name,Team,Position,Owner,ArbYear,Type,Points"/></div>
+        </div></div>
+        {players.length>0&&<div className="card"><div className="card-header">Players ({players.length})</div><div className="card-body"><div style={{overflowX:'auto',maxHeight:'500px'}}><table className="data-table"><thead><tr><th>Name</th><th>Team</th><th>Pos</th><th>Owner</th><th>Arb</th><th>Type</th><th>Points</th></tr></thead><tbody>
+          {players.map(p=><tr key={p.id}><td style={{fontWeight:500}}>{p.name}</td><td>{p.team}</td><td>{p.position}</td><td>{p.owner}</td><td><span className={`arb-badge arb-${p.arbYear}`}>ARB {p.arbYear}</span></td><td style={{textTransform:'capitalize'}}>{p.type}</td><td><input type="number" step="0.01" value={p.fantasyPoints||''} onChange={e=>updPts(p.id,e.target.value)} style={{width:'100px'}}/></td></tr>)}
+        </tbody></table></div></div></div>}
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(4)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(5)} disabled={players.length===0}>Continue →</button></div>
+      </>}
+
+      {step===6&&<><div className="page-header"><h1 className="page-title">Launch Auction</h1></div>
+        <div className="card"><div className="card-header">Summary</div><div className="card-body">
+          <p style={{marginBottom:'10px'}}><strong>League:</strong> {league}</p>
+          <p style={{marginBottom:'10px'}}><strong>Teams:</strong> {teams.length}</p>
+          <p style={{marginBottom:'10px'}}><strong>Players:</strong> {players.length}</p>
+          <p style={{marginBottom:'10px'}}><strong>Timer:</strong> {timer}s</p>
+          <p><strong>Google Sheets:</strong> {scriptUrl?'✓ Configured':'Not configured'}</p>
+        </div></div>
+        {!created?<button className="btn btn-success" onClick={createAuc} style={{width:'100%',padding:'20px',fontSize:'18px'}}>🚀 Create Auction</button>
+        :<div className="success-box"><h4>✓ Auction Created!</h4><p style={{marginTop:'12px'}}>Auction ID: <strong>{aucId}</strong></p><div className="auction-link"><input value={getUrl()} readOnly/><button className="btn btn-secondary" onClick={()=>navigator.clipboard.writeText(getUrl())}>Copy</button></div><button className="btn btn-primary" onClick={enter} style={{marginTop:'20px',width:'100%'}}>Enter Auction →</button></div>}
+      </>}
+    </main>
+  </>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
