@@ -488,6 +488,14 @@ function App() {
     const a = document.createElement('a'); a.href = url; a.download = auction.leagueName + '_results.csv'; a.click(); URL.revokeObjectURL(url);
   };
 
+  const downloadPrebidTemplate = () => {
+    if (!auction?.players) return;
+    let csv = 'PlayerName,Bid\n';
+    auction.players.forEach(p => { csv += '"' + p.name + '",0.00\n'; });
+    const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = auction.leagueName + '_prebid_template.csv'; a.click(); URL.revokeObjectURL(url);
+  };
+
   const openSheet = () => { if (auction?.sheetsConfig?.sheetUrl) window.open(auction.sheetsConfig.sheetUrl, '_blank'); };
   const retrySync = () => { if (auction?.bidHistory?.length > 0) { const last = auction.bidHistory[auction.bidHistory.length - 1]; syncToSheets('sync', { player: last }); } };
   const fmtTime = s => Math.floor(s / 60) + ':' + (s % 60).toString().padStart(2, '0');
@@ -565,10 +573,10 @@ function App() {
                     {teams.map(([id, t]) => <option key={id} value={id}>{t.name}{(t.isCommissioner || t.isComm) ? ' ⭐' : t.claimedBy ? ' (Claimed)' : ''}</option>)}
                   </select>
                 </div>
-                {loginTeamId&&auction?.teams?.[loginTeamId]?.isCommissioner&&<div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e => setCommCode(e.target.value)} placeholder="Commissioner code" /></div>}
+                {loginTeamId&&(auction?.teams?.[loginTeamId]?.isCommissioner||auction?.teams?.[loginTeamId]?.isComm)&&<div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e => setCommCode(e.target.value)} placeholder="Commissioner code" /></div>}
               </>}
               {loginErr && <div className="form-error" style={{marginTop:'12px'}}>{loginErr}</div>}
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={loginMode==='register'?(loginTeamId&&auction?.teams?.[loginTeamId]?.isCommissioner?commLogin:ownerLogin):returningLogin}>{loginMode==='register'?'Register & Join':'Login'}</button>
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={loginMode==='register'?(loginTeamId&&(auction?.teams?.[loginTeamId]?.isCommissioner||auction?.teams?.[loginTeamId]?.isComm)?commLogin:ownerLogin):returningLogin}>{loginMode==='register'?'Register & Join':'Login'}</button>
             </div>
           </div>
         </div>
@@ -590,7 +598,7 @@ function App() {
             <div className="modal-body">
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
                 <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong></div>
-                <div><input type="file" accept=".csv" id="bulk-upload" style={{display:'none'}} onChange={bulkUploadPreBids} /><button className="btn btn-secondary" onClick={()=>document.getElementById('bulk-upload').click()} style={{padding:'8px 16px',fontSize:'14px'}}>📁 Upload Pre-Bids</button></div>
+                <div style={{display:'flex',gap:'8px'}}><button className="btn btn-blue" onClick={downloadPrebidTemplate} style={{padding:'8px 16px',fontSize:'14px'}}>📥 Download Template</button><input type="file" accept=".csv" id="bulk-upload" style={{display:'none'}} onChange={bulkUploadPreBids} /><button className="btn btn-secondary" onClick={()=>document.getElementById('bulk-upload').click()} style={{padding:'8px 16px',fontSize:'14px'}}>📁 Upload Pre-Bids</button></div>
               </div>
               <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
                 <table className="history-table">
