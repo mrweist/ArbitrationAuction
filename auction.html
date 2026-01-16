@@ -162,7 +162,7 @@
     .loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-size:18px}
     .loading-spinner{width:40px;height:40px;border:4px solid var(--espn-border);border-top-color:var(--espn-red);border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .lobby-info{margin:0 auto;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:32px;text-align:center}
+    .lobby-info{max-width:780px;margin:0 auto;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:32px;text-align:center}
     .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
     @media(max-width:1100px){.app-container{grid-template-columns:1fr}.sidebar,.sidebar-right{display:none}}
   </style>
@@ -280,18 +280,6 @@ function App() {
 
   useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); }, [auction?.currentPlayerIndex, auction?.phase]);
 
-  useEffect(() => {
-    if (db && userTeamId && auctionId) {
-      db.ref(`auctions/${auctionId}/preBids/${userTeamId}`).once('value', snap => {
-        const fbBids = snap.val();
-        if (fbBids) {
-          setPreBids(fbBids);
-          save(userTeamId, userTeamName, fbBids, isComm);
-        }
-      });
-    }
-  }, [db, userTeamId, auctionId]);
-
   const save = (tid, tn, pb = {}, ic = false) => { localStorage.setItem('auction_' + auctionId, JSON.stringify({ tid, tn, pb, ic })); };
   const savePre = async bids => { if (db && userTeamId) await db.ref('auctions/' + auctionId + '/preBids/' + userTeamId).set(bids); };
 
@@ -375,19 +363,9 @@ function App() {
         const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
         const playerIdx = headers.findIndex(h => h.includes('player') || h.includes('name'));
         const bidIdx = headers.findIndex(h => h.includes('bid') || h.includes('amount'));
-        if (playerIdx === -1 || bidIdx === -1) return alert('CSV must have Player and Bid columns');
+        if (playerIdx === -1 || bidIdx === -1) return alert('CSV must have PlayerName and Bid columns');
         const players = auction?.players || [];
-        const csvPlayerNames = [];
-        for (let i = 1; i < lines.length; i++) {
-          const vals = lines[i].split(',').map(v => v.trim());
-          const playerName = vals[playerIdx];
-          if (playerName) csvPlayerNames.push(playerName.toLowerCase());
-        }
-        const templatePlayerNames = players.map(p => p.name.toLowerCase());
-        const extraPlayers = csvPlayerNames.filter(n => !templatePlayerNames.includes(n));
-        if (extraPlayers.length > 0) return alert(`❌ REJECTED: Player names don\'t match template.\n\nUnknown players: ${extraPlayers.slice(0,5).join(', ')}${extraPlayers.length>5?'...':''}\n\nPlease use the downloaded template.`);
-        const missingPlayers = templatePlayerNames.filter(n => !csvPlayerNames.includes(n));
-        const newBids = {};
+        const newBids = { ...preBids };
         let count = 0;
         for (let i = 1; i < lines.length; i++) {
           const vals = lines[i].split(',').map(v => v.trim());
@@ -395,21 +373,15 @@ function App() {
           const bidAmount = parseFloat(vals[bidIdx]) || 0;
           const playerIndex = players.findIndex(p => p.name.toLowerCase() === playerName.toLowerCase());
           if (playerIndex !== -1) {
-            const player = players[playerIndex];
-            if (player.owner === auction?.teams?.[userTeamId]?.name) continue;
             newBids[playerIndex] = bidAmount;
             count++;
           }
         }
-        if (count === 0 && missingPlayers.length === 0) return alert('No valid bids to upload');
+        if (count === 0) return alert('No matching players found');
         setPreBids(newBids);
         save(userTeamId, userTeamName, newBids, isComm);
         await savePre(newBids);
-        if (missingPlayers.length > 0) {
-          alert(`⚠️ WARNING: Upload successful for ${count} players.\n\n${missingPlayers.length} players were missing from your CSV.`);
-        } else {
-          alert(`✅ SUCCESS: Pre-bids uploaded for ${count} players!`);
-        }
+        alert(`Pre-bids uploaded for ${count} players`);
         e.target.value = ''; // Reset file input
       } catch (err) {
         alert('Error uploading pre-bids: ' + err.message);
@@ -423,18 +395,7 @@ function App() {
     setTimeout(() => initSheets(), 500);
   };
 
-  const startBid = async () => { 
-    const initialBidStatuses = {};
-    if (auction?.preBids) {
-      const currentPlayerName = auction.players[auction.currentPlayerIndex]?.name;
-      Object.entries(auction.preBids).forEach(([teamId, bids]) => {
-        if (bids && bids[currentPlayerName] !== undefined && bids[currentPlayerName] !== null && bids[currentPlayerName] !== '') {
-          initialBidStatuses[teamId] = 'prebid';
-        }
-      });
-    }
-    if (db) await db.ref('auctions/' + auctionId).update({ phase: 'bidding', timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: initialBidStatuses }); 
-  };
+  const startBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'bidding', timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
 
   const submitBid = async () => {
     setBidErr('');
@@ -483,16 +444,8 @@ function App() {
     const p = auction.players[auction.currentPlayerIndex]; const hb = auction.highestBid; const hi = hb?.amount || 0;
     if (d === 'stick') { if (hi === 0) return; if (hasTie()) { await startTie(); return; } await doStick(hb.teamId, hb.teamName, hi); return; }
     const oid = Object.entries(auction.teams).find(([_, t]) => t.name === p.owner)?.[0];
-    const ownerTeam = auction.teams[oid];
-    const remaining = (ownerTeam?.cap || 0) - (ownerTeam?.sal || ownerTeam?.currentSalary || 0);
-    const keepPrice = hi === 0 ? 1 : keepPr(hi, p.arbYear);
-    const selfStickPrice = stickPr(hi);
-    if (isComm && ((d === 'keep' && keepPrice > remaining) || (d === 'self-stick' && selfStickPrice > remaining))) {
-      const price = d === 'keep' ? keepPrice : selfStickPrice;
-      if (!confirm(`⚠️ WARNING: ${p.owner} only has $${fmt(remaining)} remaining but this costs $${fmt(price)}. Proceed anyway?`)) return;
-    }
-    if (d === 'keep') await finalize('keep', p.owner, oid, keepPrice, 1, hb);
-    else await finalize('self-stick', p.owner, oid, selfStickPrice, yrs(p.arbYear), hb);
+    if (d === 'keep') await finalize('keep', p.owner, oid, hi === 0 ? 1 : keepPr(hi, p.arbYear), 1, hb);
+    else await finalize('self-stick', p.owner, oid, stickPr(hi), yrs(p.arbYear), hb);
   };
 
   const finalize = async (d, winner, wid, price, years, hb) => {
@@ -643,7 +596,7 @@ function App() {
         <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+leagueId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div></header>
         <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
-          {auction?.phase === 'lobby' && <div className="lobby-info" style={{ marginBottom: '24px', background: '#e3f2fd', maxWidth: 'none' }}><div className="lobby-status">⏳ Waiting for Commissioner to Start</div></div>}
+          {auction?.phase === 'lobby' && <div className="lobby-info" style={{ marginBottom: '24px', background: '#e3f2fd' }}><div className="lobby-status">⏳ Waiting for Commissioner to Start</div></div>}
           <div className="modal" style={{ position: 'relative', maxWidth: 'none' }}>
             <div className="modal-header">Set Your Pre-Bids</div>
             <div className="modal-body">
@@ -702,9 +655,10 @@ function App() {
       <>
         <header className="header">
           <div className="header-title">Arbitration Auction</div>
-          <div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}>
-            <span>{userTeamName}{isComm && <span className="commish-star">⭐</span>}</span>
-            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+leagueId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button>
+          <div className="user-info">
+            {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
+            <span>{userTeamName}</span>
+            {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
           </div>
         </header>
         <nav className="nav">
@@ -755,10 +709,9 @@ function App() {
     const unclaimedTeams = teams.filter(([_, t]) => !t.claimedBy);
     
     const removeUser = async (teamId) => {
-      if (!confirm('Remove this user? The team and their pre-bids will be cleared.')) return;
+      if (!confirm('Remove this user? The team will become claimable again.')) return;
       try {
         await db.ref(`auctions/${leagueId}/teams/${teamId}`).update({ claimedBy: null, passwordHash: '', joined: false });
-        await db.ref(`auctions/${leagueId}/preBids/${teamId}`).remove();
       } catch (e) {
         alert('Error removing user: ' + e.message);
       }
@@ -825,7 +778,7 @@ function App() {
               {claimedTeams.length === 0 ? <p style={{color:'var(--espn-text-muted)'}}>No teams claimed yet.</p> :
                 <div style={{overflowX:'auto'}}>
                   <table className="history-table">
-                    <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Pre-Bid Actions</th><th>User Actions</th></tr></thead>
+                    <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Actions</th></tr></thead>
                     <tbody>
                       {claimedTeams.map(([id, t]) => {
                         const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
@@ -836,8 +789,7 @@ function App() {
                           <td>{t.claimedBy}</td>
                           <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
                           <td>{hasPrebids ? <span style={{color:'var(--espn-green)',fontWeight:600}}>✅ {prebidCount} bids</span> : <span style={{color:'var(--espn-text-muted)'}}>None</span>}</td>
-                          <td><div style={{display:'flex',gap:'8px'}}><input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>{hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'6px 12px',fontSize:'13px'}}>🗑️ Delete</button>}</div></td>
-                          <td><button className="btn btn-secondary" onClick={() => removeUser(id)} style={{padding:'6px 12px',fontSize:'13px'}}>❌ Remove</button></td>
+                          <td><div style={{display:'flex',gap:'8px'}}><input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>{hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'6px 12px',fontSize:'13px'}}>🗑️ Delete</button>}<button className="btn btn-secondary" onClick={() => removeUser(id)} style={{padding:'6px 12px',fontSize:'13px'}}>❌ Remove</button></div></td>
                         </tr>
                       )})}
                     </tbody>
@@ -853,19 +805,16 @@ function App() {
               {unclaimedTeams.length === 0 ? <p style={{color:'var(--espn-text-muted)'}}>All teams have been claimed!</p> :
                 <div style={{overflowX:'auto'}}>
                   <table className="history-table">
-                    <thead><tr><th>Team</th><th>Commissioner</th><th>Pre-Bids</th><th>Pre-Bid Actions</th></tr></thead>
+                    <thead><tr><th>Team</th><th>Commissioner</th><th>Pre-Bids</th><th>Status</th></tr></thead>
                     <tbody>
-                      {unclaimedTeams.map(([id, t]) => {
-                        const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
-                        const prebidCount = hasPrebids ? Object.keys(auction.preBids[id]).length : 0;
-                        return (
+                      {unclaimedTeams.map(([id, t]) => (
                         <tr key={id}>
                           <td style={{fontWeight:600}}>{t.name}</td>
                           <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
-                          <td>{hasPrebids ? <span style={{color:'var(--espn-green)',fontWeight:600}}>✅ {prebidCount} bids</span> : <span style={{color:'var(--espn-text-muted)'}}>None</span>}</td>
-                          <td><div style={{display:'flex',gap:'8px'}}><input type="file" accept=".csv" id={`upload-unclaimed-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-unclaimed-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>{hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'6px 12px',fontSize:'13px'}}>🗑️ Delete</button>}</div></td>
+                          <td><input type="file" accept=".csv" id={`upload-unclaimed-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-unclaimed-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 Upload</button></td>
+                          <td style={{color:'var(--espn-orange)',fontWeight:600}}>Available</td>
                         </tr>
-                      )})
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -945,12 +894,13 @@ function App() {
               <div className="player-card">
                 <div className="player-card-header">
                   <div><div className="player-name">{cp.name}</div><div className="player-meta">{cp.position} • {cp.team}</div></div>
-                  <div style={{display:'flex',alignItems:'center',gap:'12px'}}><span style={{fontSize:'13px',color:'var(--espn-text-secondary)',fontWeight:600}}>Pre-Bid</span><span className={'arb-badge arb-' + cp.arbYear}>ARB {cp.arbYear}</span></div>
+                  <span className={'arb-badge arb-' + cp.arbYear}>ARB {cp.arbYear}</span>
                 </div>
                 <div className="player-card-body">
-                  <div className="info-row"><div><div className="info-label">Current Owner</div><div className="info-value">{cp.owner}</div></div><div style={{textAlign:'center'}}><input type="number" value={preBids[cp.name]||''} onChange={e=>setPreBids(pb=>({...pb,[cp.name]:e.target.value}))} placeholder="0" style={{width:'80px',padding:'6px',fontSize:'14px',border:'1px solid var(--espn-border)',borderRadius:'4px',textAlign:'center'}} /></div><div style={{ textAlign: 'right' }}><div className="info-label">{PREV_YR} Points</div><div className="info-value">{fmt(cp.fantasyPoints)}</div></div></div>
+                  <div className="info-row"><div><div className="info-label">Current Owner</div><div className="info-value">{cp.owner}</div></div><div style={{ textAlign: 'right' }}><div className="info-label">Keep Discount</div><div className="info-value">{keepPct(cp.arbYear) * 100}%</div></div></div>
                   <HitStats p={cp} />
                   <PitStats p={cp} />
+                  <div className="points-box"><div className="points-label">{PREV_YR} Fantasy Points</div><div className="points-value">{fmt(cp.fantasyPoints)}</div></div>
                 </div>
               </div>
 
@@ -988,10 +938,7 @@ function App() {
                       const own = t.name === cp?.owner;
                       const inTie = auction.tiebreakerTeams?.includes(id);
                       const tied = auction.tiedTeams?.some(x => x.id === id);
-                      const bidStatus = auction.bidStatuses?.[id];
-                      const isPrebid = bidStatus === 'prebid';
-                      const isSubmitted = bidStatus === true || (bidStatus && bidStatus !== 'prebid');
-                      return <div key={id} className={'bid-status-item ' + ((isPrebid || isSubmitted) ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied' : '')} style={isTie && !inTie ? { opacity: 0.3 } : {}}>{t.name}{own ? ' 👤' : isSubmitted ? <span className="checkmark"> ✓</span> : isPrebid ? <span className="prebid-indicator"> ⏱️</span> : ''}</div>;
+                      return <div key={id} className={'bid-status-item ' + (auction.bidStatuses?.[id] ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied' : '')} style={isTie && !inTie ? { opacity: 0.3 } : {}}>{t.name}{own ? ' 👤' : auction.bidStatuses?.[id] ? <span className="checkmark"> ✓</span> : ''}</div>;
                     })}
                   </div>
                 </div>
@@ -1010,22 +957,9 @@ function App() {
                   </div>
                   {canDecide() && auction.phase === 'decision' ? (
                     <div className="decision-buttons">
-                      {(() => {
-                        const oid = Object.entries(auction.teams).find(([_, t]) => t.name === cp.owner)?.[0];
-                        const ownerTeam = auction.teams[oid];
-                        const remaining = (ownerTeam?.cap || 0) - (ownerTeam?.sal || ownerTeam?.currentSalary || 0);
-                        const keepPrice = allZero ? 1 : kp;
-                        const selfStickPrice = sp;
-                        const canAffordKeep = keepPrice <= remaining;
-                        const canAffordSelfStick = selfStickPrice <= remaining;
-                        return (
-                          <>
-                            <button className="btn btn-decision btn-keep" onClick={() => decide('keep')} disabled={!isComm && !canAffordKeep} style={!isComm && !canAffordKeep ? { opacity: 0.4, cursor: 'not-allowed' } : {}} title={!isComm && !canAffordKeep ? `Cannot afford: $${fmt(keepPrice)} > $${fmt(remaining)} remaining` : ''}>🛡️ Keep<span className="btn-years">1yr @ ${fmt(keepPrice)}</span></button>
-                            <button className="btn btn-decision btn-stick" onClick={() => decide('stick')} disabled={allZero} style={allZero ? { opacity: 0.4 } : {}}>🎯 Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(sp)}</span></button>
-                            <button className="btn btn-decision btn-self-stick" onClick={() => decide('self-stick')} disabled={!isComm && !canAffordSelfStick} style={!isComm && !canAffordSelfStick ? { opacity: 0.4, cursor: 'not-allowed' } : {}} title={!isComm && !canAffordSelfStick ? `Cannot afford: $${fmt(selfStickPrice)} > $${fmt(remaining)} remaining` : ''}>💪 Self-Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(selfStickPrice)}</span></button>
-                          </>
-                        );
-                      })()}
+                      <button className="btn btn-decision btn-keep" onClick={() => decide('keep')}>🛡️ Keep<span className="btn-years">1yr @ ${fmt(allZero ? 1 : kp)}</span></button>
+                      <button className="btn btn-decision btn-stick" onClick={() => decide('stick')} disabled={allZero} style={allZero ? { opacity: 0.4 } : {}}>🎯 Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(sp)}</span></button>
+                      <button className="btn btn-decision btn-self-stick" onClick={() => decide('self-stick')}>💪 Self-Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(sp)}</span></button>
                     </div>
                   ) : <p style={{ textAlign: 'center', color: 'var(--espn-text-muted)', fontSize: '16px' }}>{auction.phase === 'tie-resolution' ? 'Commissioner resolving tie...' : 'Waiting for ' + cp.owner + '...'}</p>}
                 </div>
