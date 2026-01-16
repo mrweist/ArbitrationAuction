@@ -197,13 +197,25 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
     loadLeagues();
   },[db,admin.username]);
 
+  const deleteLeague=async(leagueId,e)=>{
+    e.stopPropagation();
+    if(!confirm('Delete this league? This cannot be undone.'))return;
+    try{
+      await db.ref(`admins/${admin.username}/leagues/${leagueId}`).remove();
+      await db.ref(`auctions/${leagueId}`).remove();
+      setLeagues(leagues.filter(l=>l.id!==leagueId));
+    }catch(err){
+      alert('Error deleting league: '+err.message);
+    }
+  };
+
   if(loading)return<div className="main-content">Loading...</div>;
 
   return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user">Admin: {admin.username}<button className="logout-btn" onClick={onLogout}>Logout</button></div></header>
     <main className="main-content">
       <div className="page-header"><div className="page-title">Your Leagues</div><div className="page-subtitle">Select a league to manage or create a new one</div></div>
       <div className="card"><div className="card-body"><button className="btn btn-primary" onClick={onCreateNew}>+ Create New League</button></div></div>
-      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></li>)}</ul>
+      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item" onClick={()=>onSelectLeague(league.id)}><div style={{flex:1}}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><button className="btn btn-secondary" onClick={(e)=>deleteLeague(league.id,e)} style={{padding:'8px 16px',fontSize:'13px'}}>❌ Delete</button></li>)}</ul>
       :<div className="info-box"><h4>No leagues yet</h4><p>Create your first league to get started!</p></div>}
     </main>
   </>;
@@ -287,7 +299,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
   const updPts=(id,pts)=>{setPlayers(p=>p.map(x=>x.id===id?{...x,fantasyPoints:parseFloat(pts)||0}:x))};
 
   const teamTemplate=()=>'Name,Cap,Salary,Spots,IsCommissioner\nTeam 1,100,0,5,true\nTeam 2,100,0,5,false\nTeam 3,100,0,5,false';
-  const parseTeams=txt=>{const lines=txt.trim().split('\n');if(lines.length<2)return[];const hdrs=lines[0].toLowerCase().split(',').map(h=>h.trim());const out=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(',').map(v=>v.trim());if(vals.length<4)continue;const row={};hdrs.forEach((h,j)=>{row[h]=vals[j]||''});const isComm=(row.iscommissioner||row.commissioner||row.comm||'').toLowerCase();out.push({id:i,name:row.name||`Team ${i}`,cap:parseFloat(row.cap||'100')||100,sal:parseFloat(row.salary||row.sal||'0')||0,spots:parseInt(row.spots||'5')||5,isComm:isComm==='true'||isComm==='yes'||isComm==='1'})}return out};
+  const parseTeams=txt=>{const lines=txt.trim().split('\n');if(lines.length<2)return[];const hdrs=lines[0].toLowerCase().split(',').map(h=>h.trim());const out=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(',').map(v=>v.trim());if(vals.length<4)continue;const row={};hdrs.forEach((h,j)=>{row[h]=vals[j]||''});const isComm=(row.iscommissioner||row.commissioner||row.comm||'').toLowerCase();out.push({id:i,name:row.name||`Team ${i}`,cap:parseFloat(row.cap||'100')||100,sal:parseFloat(row.salary||row.sal||'0')||0,spots:parseInt(row.spots||'5')||5,isComm:isComm==='true'||isComm==='yes'||isComm==='1'});}return out;};
   const handleTeamFile=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{const txt=ev.target.result;const t=parseTeams(txt);if(t.length>0)setTeams(t)};r.readAsText(f)}};
 
   const fetchMLB=async pl=>{try{const sr=await fetch(`https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(pl.name)}&sportIds=1&active=true`);const sd=await sr.json();if(!sd.people?.length)return null;const mp=sd.people.find(p=>p.currentTeam?.abbreviation===pl.team)||sd.people[0];const pid=mp.id;const st={hit:null,pit:null,team:mp.currentTeam?.abbreviation||pl.team,position:mp.primaryPosition?.abbreviation||pl.position};const hr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=hitting&sportId=1`);const hd=await hr.json();if(hd.stats?.[0]?.splits?.[0]?.stat){const s=hd.stats[0].splits[0].stat;st.hit={H:s.hits||0,'2B':s.doubles||0,'3B':s.triples||0,HR:s.homeRuns||0,RBI:s.rbi||0,R:s.runs||0,SB:s.stolenBases||0,BB:s.baseOnBalls||0,HBP:s.hitByPitch||0}}const pr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=pitching&sportId=1`);const pd=await pr.json();if(pd.stats?.[0]?.splits?.[0]?.stat){const s=pd.stats[0].splits[0].stat;st.pit={IP:parseFloat(s.inningsPitched)||0,SO:s.strikeOuts||0,HA:s.hits||0,BBA:s.baseOnBalls||0,HBP_A:s.hitBatsmen||0,ER:s.earnedRuns||0,W:s.wins||0,SV:s.saves||0,HD:s.holds||0,CG:s.completeGames||0}}return st}catch(e){return null}};
