@@ -210,7 +210,7 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
 }
 
 // Commissioner Setup Component (existing functionality)
-function CommissionerSetup({admin,leagueId,onComplete}){
+function CommissionerSetup({admin,leagueId,onComplete,onBack}){
   const[step,setStep]=useState(1);
   const[done,setDone]=useState([]);
   const[db,setDb]=useState(null);
@@ -242,6 +242,28 @@ function CommissionerSetup({admin,leagueId,onComplete}){
   },[]);
 
   useEffect(()=>{if(sheetUrl){const id=extractSheetId(sheetUrl);setSheetId(id||'')}},[sheetUrl]);
+
+  useEffect(()=>{
+    if(leagueId&&db){
+      db.ref(`auctions/${leagueId}`).once('value',snap=>{
+        const d=snap.val();
+        if(d){
+          setLeague(d.leagueName||'');
+          setLeagueCode(d.leagueAccessCode||'');
+          setCommCode(d.commissionerAccessCode||'');
+          setCommName(d.commissionerName||'');
+          setTimer(d.timerDuration||120);
+          setHitScore(d.hittingScoring||DEFAULT_HIT);
+          setPitScore(d.pitchingScoring||DEFAULT_PIT);
+          if(d.teams){const tArr=Object.values(d.teams).map((t,i)=>({id:i+1,name:t.name,cap:t.cap||t.salaryCap||100,sal:t.sal||t.currentSalary||0,spots:t.spots||t.spotsAvailable||5,isComm:t.isCommissioner||t.isComm||false}));setTeams(tArr)}
+          if(d.players){setPlayers(d.players.map(p=>({...p})))}
+          if(d.sheetsConfig){setScriptUrl(d.sheetsConfig.scriptUrl||'');setSheetUrl(d.sheetsConfig.sheetUrl||'');setSheetId(d.sheetsConfig.sheetId||'')}
+          setAucId(leagueId);
+          setDone([1,2,3,4]);
+        }
+      });
+    }
+  },[leagueId,db]);
 
   const testSheets=async()=>{
     setSheetStatus('testing');setSheetErr('');
@@ -306,7 +328,20 @@ function CommissionerSetup({admin,leagueId,onComplete}){
   const getUrl=()=>{const u=window.location.href;const i=u.lastIndexOf('/');return`${u.substring(0,i+1)}auction.html?league=${aucId||leagueId}`};
   const enter=()=>{window.location.href=getUrl()+'&role=commissioner'};
 
-  return<><header className="header"><div className="header-title">Arbitration Auction</div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
+  const resetTab=()=>{
+    if(step===1){setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('')}
+    if(step===2){setHitScore(DEFAULT_HIT);setPitScore(DEFAULT_PIT)}
+    if(step===3){setLeague('');setLeagueCode('');setCommCode('');setCommName('');setCommPw('');setTimer(120);setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})))}
+    if(step===4){setPlayers([]);setPlayerTxt('')}
+  };
+
+  const resetAll=()=>{
+    if(confirm('Reset all settings? This cannot be undone.')){
+      setStep(1);setDone([]);setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('');setLeague('');setLeagueCode('');setCommCode('');setCommName('');setCommPw('');setTimer(120);setHitScore(DEFAULT_HIT);setPitScore(DEFAULT_PIT);setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})));setPlayers([]);setPlayerTxt('');setAucId(null);setCreated(false)
+    }
+  };
+
+  return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user" style={{display:'flex',gap:'12px'}}><button className="logout-btn" onClick={onBack}>← Dashboard</button><button className="logout-btn" onClick={resetTab}>Reset Tab</button><button className="logout-btn" onClick={resetAll}>Reset All</button></div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
     <main className="main-content">
       <div className="steps">{[1,2,3,4,5].map(s=><div key={s} className={`step ${step===s?'active':''} ${done.includes(s)?'completed':''} ${s>step&&!done.includes(s-1)?'disabled':''}`} onClick={()=>goStep(s)}><span className="step-number">{done.includes(s)?'✓':s}</span><span className="step-label">{s===1&&'Google Sheets'}{s===2&&'Scoring'}{s===3&&'League'}{s===4&&'Players'}{s===5&&'Launch'}</span></div>)}</div>
 
@@ -404,6 +439,65 @@ function CommissionerSetup({admin,leagueId,onComplete}){
   </>;
 }
 
+// League Management Component
+function LeagueManagement({leagueId,onBack,onEdit}){
+  const[league,setLeague]=useState(null);
+  const[db,setDb]=useState(null);
+  const[copied,setCopied]=useState(false);
+
+  useEffect(()=>{
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    setDb(firebase.database());
+  },[]);
+
+  useEffect(()=>{
+    if(leagueId&&db){
+      db.ref(`auctions/${leagueId}`).once('value',snap=>{
+        const d=snap.val();
+        if(d)setLeague({id:leagueId,...d});
+      });
+    }
+  },[leagueId,db]);
+
+  const getUrl=()=>`${window.location.href.substring(0,window.location.href.lastIndexOf('/')+1)}auction.html?league=${leagueId}`;
+  const copyUrl=()=>{navigator.clipboard.writeText(getUrl());setCopied(true);setTimeout(()=>setCopied(false),2000)};
+  const enterAuction=()=>{window.location.href=getUrl()+'&role=commissioner'};
+
+  if(!league)return<div className="loading-screen"><div className="loading-spinner"/><p>Loading league...</p></div>;
+
+  return<><header className="header"><div className="header-title">League Management</div></header>
+    <nav className="nav"><div className="nav-item active">{league.leagueName}</div></nav>
+    <main className="main-content">
+      <div className="page-header"><h1 className="page-title">{league.leagueName}</h1><p className="page-subtitle">League ID: {leagueId}</p></div>
+      
+      <div className="card"><div className="card-header">Auction Link</div><div className="card-body">
+        <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>Share this link with your league members to join the auction:</p>
+        <div className="auction-link"><input value={getUrl()} readOnly/><button className="btn btn-secondary" onClick={copyUrl}>{copied?'✓ Copied!':'Copy Link'}</button></div>
+        <button className="btn btn-primary" onClick={enterAuction} style={{marginTop:'20px',width:'100%'}}>Enter Auction as Commissioner →</button>
+      </div></div>
+
+      <div className="card"><div className="card-header">Access Codes</div><div className="card-body">
+        <div className="form-row">
+          <div><label style={{fontSize:'13px',fontWeight:600,color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px',display:'block'}}>League Access Code</label><p style={{fontSize:'18px',fontWeight:700,color:'var(--espn-blue)'}}>{league.leagueAccessCode}</p><p style={{fontSize:'13px',color:'var(--espn-text-muted)',marginTop:'4px'}}>Share with all league members</p></div>
+          <div><label style={{fontSize:'13px',fontWeight:600,color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px',display:'block'}}>Commissioner Access Code</label><p style={{fontSize:'18px',fontWeight:700,color:'var(--espn-orange)'}}>{league.commissionerAccessCode}</p><p style={{fontSize:'13px',color:'var(--espn-text-muted)',marginTop:'4px'}}>Only for commissioners</p></div>
+        </div>
+      </div></div>
+
+      <div className="card"><div className="card-header">League Summary</div><div className="card-body">
+        <div className="form-row">
+          <div><p style={{marginBottom:'10px'}}><strong>Teams:</strong> {league.teams?Object.keys(league.teams).length:0}</p><p style={{marginBottom:'10px'}}><strong>Players:</strong> {league.players?league.players.length:0}</p></div>
+          <div><p style={{marginBottom:'10px'}}><strong>Timer:</strong> {league.timerDuration}s</p><p style={{marginBottom:'10px'}}><strong>Google Sheets:</strong> {league.sheetsConfig?'✓ Configured':'Not configured'}</p></div>
+        </div>
+      </div></div>
+
+      <div style={{display:'flex',gap:'16px',marginTop:'32px'}}>
+        <button className="btn btn-secondary" onClick={onBack} style={{flex:1}}>← Back to Dashboard</button>
+        <button className="btn btn-blue" onClick={onEdit} style={{flex:1}}>Edit League Settings</button>
+      </div>
+    </main>
+  </>;
+}
+
 // Main App Component
 function App(){
   const[admin,setAdmin]=useState(null);
@@ -431,12 +525,19 @@ function App(){
   };
 
   const handleComplete=(leagueId,leagueName)=>{
+    setCurrentLeagueId(leagueId);
+    setView('manage');
+  };
+
+  const handleBackToDashboard=()=>{
+    setCurrentLeagueId(null);
     setView('dashboard');
   };
 
   if(view==='login')return<AdminLogin onLogin={handleLogin}/>;
   if(view==='dashboard')return<LeagueDashboard admin={admin} onSelectLeague={handleSelectLeague} onCreateNew={handleCreateNew} onLogout={handleLogout}/>;
-  if(view==='setup')return<CommissionerSetup admin={admin} leagueId={currentLeagueId} onComplete={handleComplete}/>;
+  if(view==='setup')return<CommissionerSetup admin={admin} leagueId={currentLeagueId} onComplete={handleComplete} onBack={handleBackToDashboard}/>;
+  if(view==='manage')return<LeagueManagement leagueId={currentLeagueId} onBack={handleBackToDashboard} onEdit={()=>setView('setup')}/>;
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
