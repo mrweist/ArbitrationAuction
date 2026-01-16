@@ -202,6 +202,7 @@ const pitPts = (s, sc) => {
 
 function App() {
   const { auctionId, role: urlRole } = getParams();
+  const leagueId = auctionId; // Alias for clarity
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [db, setDb] = useState(null);
@@ -217,6 +218,7 @@ function App() {
   const [leagueCode, setLeagueCode] = useState('');
   const [commCode, setCommCode] = useState('');
   const [loginErr, setLoginErr] = useState('');
+  const [loginMode, setLoginMode] = useState('register'); // 'register' or 'returning'
   const [preBids, setPreBids] = useState({});
   const [curBid, setCurBid] = useState('');
   const [usePre, setUsePre] = useState(true);
@@ -303,7 +305,24 @@ function App() {
       await db.ref('auctions/' + auctionId + '/teams/' + loginTeamId).update(updates);
     }
     setUserTeamId(loginTeamId); setUserTeamName(t.name); setIsComm(true);
-    save(loginTeamId, t.name, preBids, true); setScreen('auction');
+    save(loginTeamId, t.name, preBids, true); setScreen('prebid');
+  };
+
+  const returningLogin = async () => {
+    setLoginErr('');
+    if (!loginName || !loginPw) return setLoginErr('Enter username and password');
+    const teams = Object.entries(auction?.teams || {});
+    const userTeam = teams.find(([_, t]) => t.claimedBy === loginName);
+    if (!userTeam) return setLoginErr('Username not found. Use Register if new user.');
+    const [teamId, team] = userTeam;
+    if (CryptoJS.SHA256(loginPw).toString() !== team.passwordHash) return setLoginErr('Wrong password');
+    const isCommTeam = team.isCommissioner || team.isComm;
+    if (db && !team.joined) {
+      await db.ref('auctions/' + auctionId + '/teams/' + teamId).update({ joined: true });
+    }
+    setUserTeamId(teamId); setUserTeamName(team.name); setIsComm(isCommTeam);
+    save(teamId, team.name, preBids, isCommTeam);
+    setScreen(isCommTeam ? 'auction' : 'prebid');
   };
 
   const ownerLogin = async () => {
@@ -325,8 +344,47 @@ function App() {
     save(loginTeamId, t.name, preBids, false); setScreen('prebid');
   };
 
-  const savePrebids = async () => { save(userTeamId, userTeamName, preBids, isComm); await savePre(preBids); setScreen('auction'); };
+  const savePrebids = async () => { save(userTeamId, userTeamName, preBids, isComm); await savePre(preBids); setScreen(isComm ? 'auction' : 'auction'); };
   const updPre = (i, v) => { const nb = { ...preBids, [i]: parseFloat(v) || 0 }; setPreBids(nb); save(userTeamId, userTeamName, nb, isComm); savePre(nb); };
+
+  const bulkUploadPreBids = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const text = ev.target.result;
+        const lines = text.trim().split('\n');
+        if (lines.length < 2) return alert('CSV must have at least a header and one row');
+        const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+        const playerIdx = headers.findIndex(h => h.includes('player') || h.includes('name'));
+        const bidIdx = headers.findIndex(h => h.includes('bid') || h.includes('amount'));
+        if (playerIdx === -1 || bidIdx === -1) return alert('CSV must have PlayerName and Bid columns');
+        const players = auction?.players || [];
+        const newBids = { ...preBids };
+        let count = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const vals = lines[i].split(',').map(v => v.trim());
+          const playerName = vals[playerIdx];
+          const bidAmount = parseFloat(vals[bidIdx]) || 0;
+          const playerIndex = players.findIndex(p => p.name.toLowerCase() === playerName.toLowerCase());
+          if (playerIndex !== -1) {
+            newBids[playerIndex] = bidAmount;
+            count++;
+          }
+        }
+        if (count === 0) return alert('No matching players found');
+        setPreBids(newBids);
+        save(userTeamId, userTeamName, newBids, isComm);
+        await savePre(newBids);
+        alert(`Pre-bids uploaded for ${count} players`);
+        e.target.value = ''; // Reset file input
+      } catch (err) {
+        alert('Error uploading pre-bids: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const startAuc = async () => {
     if (db) await db.ref('auctions/' + auctionId).update({ phase: 'waiting' });
@@ -490,21 +548,27 @@ function App() {
         <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
         <div className="loading-screen" style={{ minHeight: 'calc(100vh - 110px)' }}>
           <div className="modal">
-            <div className="modal-header">{isCL ? 'Commissioner Login' : 'Join Auction'}</div>
+            <div className="modal-header">Arbitration Auction Login</div>
             <div className="modal-body">
-              <div className="form-group"><label>Username</label><input value={loginName} onChange={e => setLoginName(e.target.value)} placeholder="Your username" /></div>
-              <div className="form-group"><label>Password</label><input type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} placeholder="Create or enter password" /></div>
-              <div className="form-group"><label>League Access Code</label><input value={leagueCode} onChange={e => setLeagueCode(e.target.value)} placeholder="Provided by commissioner" /></div>
-              {isCL && <div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e => setCommCode(e.target.value)} placeholder="Commissioner code" /></div>}
-              <div className="form-group">
-                <label>Select Team</label>
-                <select value={loginTeamId} onChange={e => setLoginTeamId(e.target.value)}>
-                  <option value="">Choose your team...</option>
-                  {(isCL ? cTeams : rTeams).map(([id, t]) => <option key={id} value={id}>{t.name}{(t.isCommissioner || t.isComm) ? ' ⭐' : t.claimedBy ? ' (Claimed)' : ''}</option>)}
-                </select>
+              <div style={{display:'flex',gap:'8px',marginBottom:'20px',borderBottom:'2px solid var(--espn-border)'}}>
+                <button onClick={()=>{setLoginMode('register');setLoginErr('')}} style={{flex:1,padding:'12px',background:loginMode==='register'?'var(--espn-blue)':'transparent',color:loginMode==='register'?'#fff':'var(--espn-text-primary)',border:'none',borderBottom:loginMode==='register'?'3px solid var(--espn-blue)':'none',cursor:'pointer',fontWeight:600,fontSize:'15px'}}>Register</button>
+                <button onClick={()=>{setLoginMode('returning');setLoginErr('')}} style={{flex:1,padding:'12px',background:loginMode==='returning'?'var(--espn-blue)':'transparent',color:loginMode==='returning'?'#fff':'var(--espn-text-primary)',border:'none',borderBottom:loginMode==='returning'?'3px solid var(--espn-blue)':'none',cursor:'pointer',fontWeight:600,fontSize:'15px'}}>Returning User</button>
               </div>
+              <div className="form-group"><label>Username</label><input value={loginName} onChange={e => setLoginName(e.target.value)} placeholder={loginMode==='register'?'Create username':'Your username'} /></div>
+              <div className="form-group"><label>Password</label><input type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} placeholder={loginMode==='register'?'Create password':'Your password'} /></div>
+              {loginMode==='register'&&<>
+                <div className="form-group"><label>League Access Code</label><input value={leagueCode} onChange={e => setLeagueCode(e.target.value)} placeholder="Provided by commissioner" /></div>
+                <div className="form-group">
+                  <label>Select Team</label>
+                  <select value={loginTeamId} onChange={e => setLoginTeamId(e.target.value)}>
+                    <option value="">Choose your team...</option>
+                    {teams.map(([id, t]) => <option key={id} value={id}>{t.name}{(t.isCommissioner || t.isComm) ? ' ⭐' : t.claimedBy ? ' (Claimed)' : ''}</option>)}
+                  </select>
+                </div>
+                {loginTeamId&&auction?.teams?.[loginTeamId]?.isCommissioner&&<div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e => setCommCode(e.target.value)} placeholder="Commissioner code" /></div>}
+              </>}
               {loginErr && <div className="form-error" style={{marginTop:'12px'}}>{loginErr}</div>}
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={isCL ? commLogin : ownerLogin}>{isCL ? 'Login as Commissioner' : 'Join Auction'}</button>
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={loginMode==='register'?(loginTeamId&&auction?.teams?.[loginTeamId]?.isCommissioner?commLogin:ownerLogin):returningLogin}>{loginMode==='register'?'Register & Join':'Login'}</button>
             </div>
           </div>
         </div>
@@ -517,14 +581,17 @@ function App() {
     const pls = auction?.players || []; const t = auction?.teams?.[userTeamId]; const mx = maxBid(t);
     return (
       <>
-        <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auctionUser');window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div></header>
+        <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+leagueId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div></header>
         <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
         <div style={{ maxWidth: '900px', margin: '24px auto', padding: '0 24px' }}>
           {auction?.phase === 'lobby' && <div className="lobby-info" style={{ marginBottom: '24px', background: '#e3f2fd' }}><div className="lobby-status">⏳ Waiting for Commissioner to Start</div></div>}
           <div className="modal" style={{ position: 'relative', maxWidth: 'none' }}>
             <div className="modal-header">Set Your Pre-Bids</div>
             <div className="modal-body">
-              <div className="max-bid-info" style={{ marginBottom: '16px' }}>Your Max Bid: <strong>${fmt(mx)}</strong></div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
+                <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong></div>
+                <div><input type="file" accept=".csv" id="bulk-upload" style={{display:'none'}} onChange={bulkUploadPreBids} /><button className="btn btn-secondary" onClick={()=>document.getElementById('bulk-upload').click()} style={{padding:'8px 16px',fontSize:'14px'}}>📁 Upload Pre-Bids</button></div>
+              </div>
               <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
                 <table className="history-table">
                   <thead><tr><th>Player</th><th>Team</th><th>Owner</th><th>Arb</th><th>Points</th><th style={{ width: '100px' }}>Your Bid</th></tr></thead>
@@ -637,6 +704,39 @@ function App() {
       }
     };
 
+    const uploadPreBidsForTeam = async (teamId, e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const text = ev.target.result;
+          const lines = text.trim().split('\n');
+          if (lines.length < 2) return alert('CSV must have at least a header and one row');
+          const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+          const playerIdx = headers.findIndex(h => h.includes('player') || h.includes('name'));
+          const bidIdx = headers.findIndex(h => h.includes('bid') || h.includes('amount'));
+          if (playerIdx === -1 || bidIdx === -1) return alert('CSV must have PlayerName and Bid columns');
+          const players = auction?.players || [];
+          const bids = {};
+          for (let i = 1; i < lines.length; i++) {
+            const vals = lines[i].split(',').map(v => v.trim());
+            const playerName = vals[playerIdx];
+            const bidAmount = parseFloat(vals[bidIdx]) || 0;
+            const player = players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+            if (player) bids[player.id] = bidAmount;
+          }
+          if (Object.keys(bids).length === 0) return alert('No matching players found');
+          await db.ref(`auctions/${leagueId}/preBids/${teamId}`).set(bids);
+          alert(`Pre-bids uploaded for ${Object.keys(bids).length} players`);
+          e.target.value = ''; // Reset file input
+        } catch (err) {
+          alert('Error uploading pre-bids: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+
     return (
       <>
         <header className="header">
@@ -645,7 +745,7 @@ function App() {
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
             <span>{userTeamName}</span>
             {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
-            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auctionUser');window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
+            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+leagueId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
           </div>
         </header>
         <nav className="nav">
@@ -665,13 +765,14 @@ function App() {
               {claimedTeams.length === 0 ? <p style={{color:'var(--espn-text-muted)'}}>No teams claimed yet.</p> :
                 <div style={{overflowX:'auto'}}>
                   <table className="history-table">
-                    <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Action</th></tr></thead>
                     <tbody>
                       {claimedTeams.map(([id, t]) => (
                         <tr key={id}>
                           <td style={{fontWeight:600}}>{t.name}</td>
                           <td>{t.claimedBy}</td>
                           <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
+                          <td><input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 Upload</button></td>
                           <td><button className="btn btn-secondary" onClick={() => removeUser(id)} style={{padding:'6px 12px',fontSize:'13px'}}>❌ Remove</button></td>
                         </tr>
                       ))}
@@ -688,12 +789,13 @@ function App() {
               {unclaimedTeams.length === 0 ? <p style={{color:'var(--espn-text-muted)'}}>All teams have been claimed!</p> :
                 <div style={{overflowX:'auto'}}>
                   <table className="history-table">
-                    <thead><tr><th>Team</th><th>Commissioner</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Team</th><th>Commissioner</th><th>Pre-Bids</th><th>Status</th></tr></thead>
                     <tbody>
                       {unclaimedTeams.map(([id, t]) => (
                         <tr key={id}>
                           <td style={{fontWeight:600}}>{t.name}</td>
                           <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
+                          <td><input type="file" accept=".csv" id={`upload-unclaimed-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-unclaimed-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 Upload</button></td>
                           <td style={{color:'var(--espn-orange)',fontWeight:600}}>Available</td>
                         </tr>
                       ))}
@@ -717,7 +819,7 @@ function App() {
           {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
           <span>{userTeamName}</span>
           {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
-          <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auctionUser');window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
+          <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+leagueId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
         </div>
       </header>
       <nav className="nav">
@@ -728,7 +830,7 @@ function App() {
         <div className="nav-tabs">
           <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
           <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History ({auction?.bidHistory?.length || 0})</div>
-          <div className={'nav-tab ' + (activeTab === 'users' ? 'active' : '')} onClick={() => setActiveTab('users')}>Users</div>
+          {isComm && <div className={'nav-tab ' + (activeTab === 'users' ? 'active' : '')} onClick={() => setActiveTab('users')}>Users</div>}
         </div>
       </nav>
 
@@ -762,7 +864,10 @@ function App() {
             <div className="lobby-info">
               <div className="lobby-status">⏳ Waiting for Auction to Begin</div>
               <p style={{ color: 'var(--espn-text-secondary)', marginBottom: '20px' }}>The commissioner will start the auction shortly.</p>
-              {isComm && <button className="btn btn-primary" onClick={startAuc}>Start Auction</button>}
+              <div style={{display:'flex',gap:'12px',justifyContent:'center'}}>
+                <button className="btn btn-secondary" onClick={()=>setScreen('prebid')}>← Back to Pre-Bids</button>
+                {isComm && <button className="btn btn-primary" onClick={startAuc}>Start Auction</button>}
+              </div>
             </div>
           )}
 
