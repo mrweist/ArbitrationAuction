@@ -3,168 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction</title>
+  <title>Arbitration Auction - Commissioner Setup</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Roboto',sans-serif;background:var(--espn-bg-page);color:var(--espn-text-primary);font-size:16px}
-    .header{background:var(--espn-red);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
-    .header-title{font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.5rem;color:#fff;text-transform:uppercase}
-    .user-info{display:flex;align-items:center;gap:14px;color:#fff;font-size:14px}
-    .role-badge{background:rgba(255,255,255,.2);padding:5px 12px;border-radius:4px;font-size:12px;font-weight:600}
-    .role-badge.commish{background:var(--espn-orange)}
-    .nav{background:var(--espn-nav-dark);height:50px;display:flex;align-items:center;padding:0 28px}
-    .nav-left{display:flex;align-items:center;gap:24px}
-    .nav-tabs{display:flex;gap:6px;margin-left:auto}
-    .nav-tab{color:rgba(255,255,255,.6);font-size:14px;padding:10px 20px;cursor:pointer;border-radius:6px 6px 0 0}
-    .nav-tab:hover{background:rgba(255,255,255,.1)}
-    .nav-tab.active{background:var(--espn-bg-page);color:var(--espn-text-primary)}
-    .league-name{font-family:'Roboto Condensed',sans-serif;font-size:1.2rem;color:#fff;font-weight:700}
-    .nav-info{color:rgba(255,255,255,.6);font-size:14px}
-    .sync-status{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 12px;background:rgba(0,0,0,.2);border-radius:4px;cursor:pointer}
-    .sync-dot{width:10px;height:10px;border-radius:50%}
-    .sync-dot.ok{background:#4ade80}
-    .sync-dot.pending{background:var(--espn-orange);animation:pulse 1s infinite}
-    .sync-dot.error{background:var(--espn-error)}
-    .app-container{display:grid;grid-template-columns:280px 1fr 240px;min-height:calc(100vh - 110px)}
-    .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto}
-    .sidebar-title{font-size:12px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-nav-dark);padding:12px 16px;position:sticky;top:0;z-index:10}
-    .arb-group-header{background:var(--espn-bg-table-header);padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border)}
-    .player-queue-item{padding:12px 16px;border-bottom:1px solid var(--espn-border);font-size:14px}
-    .player-queue-item.current{background:#e3f2fd;border-left:4px solid var(--espn-blue)}
-    .player-queue-item.own-player{background:#fff3cd}
-    .player-queue-item.won-player{background:#d4edda}
-    .player-queue-item.completed{opacity:.5}
-    .player-queue-header{display:flex;justify-content:space-between;margin-bottom:4px}
-    .player-queue-name{font-weight:600;font-size:14px;color:var(--espn-blue)}
-    .arb-badge{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#fff}
-    .arb-badge.arb-3{background:var(--espn-red)}
-    .arb-badge.arb-2{background:var(--espn-orange)}
-    .arb-badge.arb-1{background:var(--espn-success)}
-    .player-queue-details{font-size:12px;color:var(--espn-text-secondary);display:flex;justify-content:space-between}
-    .prebid-input{display:flex;align-items:center;gap:6px;margin-top:6px}
-    .prebid-input input{width:60px;padding:6px 8px;font-size:13px;border:1px solid var(--espn-border);border-radius:4px;text-align:right}
-    .prebid-input label{font-size:12px;color:var(--espn-text-muted)}
-    .result-badge{font-size:11px;padding:3px 8px;border-radius:4px;margin-top:6px;display:inline-block}
-    .result-badge.keep{background:#d4edda;color:#155724}
-    .result-badge.stick{background:#cce5ff;color:#004085}
-    .result-badge.self-stick{background:#f8d7da;color:#721c24}
-    .undo-btn{font-size:10px;padding:3px 8px;background:var(--espn-text-muted);color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px}
-    .main-stage{padding:24px;background:var(--espn-bg-page);overflow-y:auto}
-    .player-card{background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;max-width:780px;margin:0 auto 24px}
-    .player-card-header{background:linear-gradient(135deg,var(--espn-nav-dark),#3a3a3a);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0}
-    .player-card-header .player-name{font-family:'Roboto Condensed',sans-serif;font-size:2rem;font-weight:700;color:#fff}
-    .player-card-header .player-meta{color:rgba(255,255,255,.7);font-size:15px;margin-top:4px}
-    .player-card-header .arb-badge{font-size:16px;padding:10px 16px}
-    .player-card-body{padding:20px 24px}
-    .info-row{display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--espn-border)}
-    .info-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase}
-    .info-value{font-weight:600;color:var(--espn-blue);font-size:16px}
-    .stats-line{background:var(--espn-bg-table-header);border-radius:6px;padding:12px 16px;margin-top:12px;font-size:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-    .stats-line .stat{display:inline-flex;align-items:center;gap:4px}
-    .stats-line .stat-lbl{color:var(--espn-text-muted);font-size:11px;text-transform:uppercase}
-    .stats-line .stat-val{font-weight:600;font-size:15px}
-    .stats-line .sep{color:#ccc}
-    .stats-line .total{margin-left:auto;font-weight:700;color:var(--espn-blue);font-size:16px}
-    .points-box{background:linear-gradient(135deg,var(--espn-success),#009944);border-radius:6px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;color:#fff;margin-top:16px}
-    .points-label{font-family:'Roboto Condensed',sans-serif;font-size:16px;text-transform:uppercase;font-weight:600}
-    .points-value{font-family:'Roboto Condensed',sans-serif;font-size:2.4rem;font-weight:700}
-    .timer-section{text-align:center;max-width:780px;margin:0 auto 24px;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:24px}
-    .timer-display{font-family:'Roboto Condensed',sans-serif;font-size:4.5rem;font-weight:700}
-    .timer-display.warning{color:var(--espn-orange)}
-    .timer-display.danger{color:var(--espn-red);animation:pulse .5s infinite}
-    @keyframes pulse{50%{opacity:.5}}
-    .bid-status{max-width:780px;margin:0 auto 24px;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px}
-    .bid-status-header{background:var(--espn-bg-table-header);padding:12px 20px;font-size:12px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border)}
-    .bid-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--espn-border)}
-    .bid-status-item{background:var(--espn-bg-card);padding:12px;text-align:center;font-size:13px}
-    .bid-status-item.submitted{background:#d4edda}
-    .bid-status-item.owner{background:#e0e0e0}
-    .bid-status-item.tied{background:#fff3cd}
-    .bid-status-item .checkmark{color:var(--espn-success);font-weight:700}
-    .your-bid-section{max-width:780px;margin:0 auto 24px;background:var(--espn-bg-card);border:3px solid var(--espn-blue);border-radius:8px;padding:20px}
-    .your-bid-section.submitted{border-color:var(--espn-success)}
-    .your-bid-section h3{font-family:'Roboto Condensed',sans-serif;font-size:1.1rem;text-transform:uppercase;color:var(--espn-blue);margin-bottom:12px}
-    .your-bid-section.submitted h3{color:var(--espn-success)}
-    .bid-options{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
-    .bid-option{flex:1;min-width:100px}
-    .bid-option label{display:block;font-size:11px;color:var(--espn-text-muted);text-transform:uppercase;margin-bottom:6px}
-    .bid-option input{width:100%;padding:14px;font-size:1.3rem;font-family:'Roboto Condensed',sans-serif;font-weight:700;text-align:center;border:1px solid var(--espn-border);border-radius:6px}
-    .bid-option input:focus{outline:none;border-color:var(--espn-blue)}
-    .prebid-value{background:var(--espn-bg-table-header);padding:14px;border-radius:6px;text-align:center;font-family:'Roboto Condensed',sans-serif;font-size:1.3rem;font-weight:700;cursor:pointer;border:3px solid transparent}
-    .prebid-value.selected{border-color:var(--espn-blue)}
-    .max-bid-info{background:#e3f2fd;border-radius:6px;padding:10px;margin-top:12px;font-size:13px;color:var(--espn-blue);text-align:center}
-    .bid-error{color:var(--espn-error);font-size:13px;margin-top:10px;text-align:center}
-    .reveal-section{max-width:780px;margin:0 auto 24px}
-    .reveal-card{background:var(--espn-bg-card);border:3px solid var(--espn-red);border-radius:8px;padding:24px;text-align:center;margin-bottom:16px}
-    .reveal-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase}
-    .reveal-amount{font-family:'Roboto Condensed',sans-serif;font-size:3.5rem;font-weight:700;color:var(--espn-red);margin:8px 0}
-    .reveal-bidder{font-size:15px;color:var(--espn-text-secondary)}
-    .prices-row{display:flex;justify-content:center;gap:40px;margin-top:20px;padding-top:20px;border-top:1px solid var(--espn-border)}
-    .price-box{text-align:center}
-    .price-box .price-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase}
-    .price-box .price-value{font-family:'Roboto Condensed',sans-serif;font-size:1.8rem;font-weight:700}
-    .price-box.keep .price-value{color:var(--espn-success)}
-    .price-box.stick .price-value{color:var(--espn-blue)}
-    .decision-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;font-size:14px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif}
-    .btn:disabled{opacity:.4;cursor:not-allowed}
-    .btn-primary{background:var(--espn-red);color:#fff}
-    .btn-secondary{background:var(--espn-bg-table-header);color:var(--espn-text-primary);border:1px solid var(--espn-border)}
-    .btn-blue{background:var(--espn-blue);color:#fff}
-    .btn-decision{flex:1;max-width:160px;padding:18px 14px;flex-direction:column;gap:4px}
-    .btn-keep{background:var(--espn-success);color:#fff}
-    .btn-stick{background:var(--espn-blue);color:#fff}
-    .btn-self-stick{background:#6f42c1;color:#fff}
-    .btn-years{font-size:11px;opacity:.8}
-    .sidebar-right{background:var(--espn-bg-card);border-left:1px solid var(--espn-border);overflow-y:auto}
-    .budget-item{padding:12px 14px;border-bottom:1px solid var(--espn-border);font-size:13px}
-    .budget-item.current-user{background:#e3f2fd}
-    .budget-item.is-commish{border-left:3px solid var(--espn-orange)}
-    .budget-team-name{font-weight:600;display:flex;justify-content:space-between;margin-bottom:4px}
-    .budget-available{color:var(--espn-success)}
-    .budget-details{display:flex;justify-content:space-between;font-size:11px;color:var(--espn-text-muted);margin-bottom:4px}
-    .budget-bar{height:6px;background:var(--espn-bg-page);border-radius:3px}
-    .budget-bar-fill{height:100%;background:var(--espn-blue);border-radius:3px}
-    .budget-bar-fill.low{background:var(--espn-orange)}
-    .budget-bar-fill.critical{background:var(--espn-error)}
-    .commish-star{color:var(--espn-orange);margin-left:4px}
-    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000}
-    .modal{background:var(--espn-bg-card);border-radius:8px;width:90%;max-width:500px}
-    .modal-header{background:var(--espn-nav-dark);color:#fff;padding:18px 24px;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.2rem}
-    .modal-body{padding:24px}
-    .form-group{margin-bottom:18px}
-    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--espn-text-secondary);text-transform:uppercase;margin-bottom:8px}
-    .form-group input,.form-group select{width:100%;padding:14px 16px;font-size:16px;border:1px solid var(--espn-border);border-radius:6px}
-    .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--espn-blue)}
-    .form-error{color:var(--espn-error);font-size:13px;margin-top:6px}
-    .history-container{padding:24px;max-width:1400px;margin:0 auto}
-    .history-table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:8px;overflow:hidden}
-    .history-table th{background:var(--espn-nav-dark);color:#fff;padding:14px 12px;text-align:left;font-size:12px;text-transform:uppercase;position:sticky;top:0}
-    .history-table td{padding:12px;border-bottom:1px solid var(--espn-border)}
-    .history-table .team-bid{text-align:right;font-family:'Roboto Condensed',sans-serif;font-size:13px}
-    .celebration-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;overflow:hidden}
-    .celebration-text{font-family:'Roboto Condensed',sans-serif;font-size:3.5rem;font-weight:700;text-transform:uppercase;animation:popIn .5s ease-out;z-index:10}
-    .celebration-text.keep{color:var(--espn-success)}
-    .celebration-text.stick{color:#ff4444}
-    .celebration-text.self-stick{color:#8b5cf6}
-    .celebration-details{font-size:1.4rem;color:#ccc;margin-top:16px;text-align:center;z-index:10}
-    .celebration-details strong{color:#fff}
-    .high-bidder-reveal{margin-top:24px;padding:16px 32px;background:rgba(255,255,255,.1);border-radius:8px;font-size:16px;color:#aaa;z-index:10}
-    .high-bidder-reveal strong{color:#fff}
-    @keyframes popIn{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
-    .confetti{position:absolute;width:12px;height:12px;animation:confettiFall 3s ease-out forwards;z-index:5}
-    @keyframes confettiFall{0%{transform:translateY(-100vh) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
-    .blood-drip{position:absolute;top:-10px;background:linear-gradient(180deg,#660000 0%,#990000 30%,#cc0000 60%,#ff0000 100%);border-radius:0 0 50% 50%;animation:drip 2.5s ease-in forwards;z-index:5;box-shadow:0 0 15px rgba(255,0,0,.6)}
-    @keyframes drip{0%{height:0}50%{height:35vh}100%{height:105vh}}
-    .tiebreaker-banner{background:var(--espn-orange);color:#fff;padding:16px;text-align:center;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.1rem;text-transform:uppercase;max-width:780px;margin:0 auto 24px;border-radius:8px}
-    .loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-size:18px}
-    .loading-spinner{width:40px;height:40px;border:4px solid var(--espn-border);border-top-color:var(--espn-red);border-radius:50%;animation:spin .8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .lobby-info{max-width:780px;margin:0 auto;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:32px;text-align:center}
-    .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
-    @media(max-width:1100px){.app-container{grid-template-columns:1fr}.sidebar,.sidebar-right{display:none}}
+    *{margin:0;padding:0;box-sizing:border-box}body{font-family:'Roboto',sans-serif;background:var(--espn-bg-page);color:var(--espn-text-primary);font-size:15px;line-height:1.6}
+    .header{background:var(--espn-red);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px}.header-title{font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.6rem;color:white;text-transform:uppercase}
+    .header-user{color:white;font-size:14px}.logout-btn{background:rgba(255,255,255,.2);color:white;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:13px;margin-left:12px}.logout-btn:hover{background:rgba(255,255,255,.3)}
+    .nav{background:var(--espn-nav-dark);padding:0 28px;height:50px;display:flex;align-items:center}.nav-item{color:white;font-size:15px;padding:14px 20px;cursor:pointer}.nav-item.active{border-bottom:3px solid var(--espn-red)}
+    .main-content{max-width:1200px;margin:32px auto;padding:0 28px}
+    .page-header{margin-bottom:32px}.page-title{font-family:'Roboto Condensed',sans-serif;font-size:2.2rem;font-weight:700}.page-subtitle{color:var(--espn-text-secondary);margin-top:8px;font-size:16px}
+    .card{background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;margin-bottom:28px}.card-header{background:var(--espn-bg-table-header);padding:16px 24px;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.15rem;text-transform:uppercase;border-bottom:1px solid var(--espn-border)}.card-body{padding:24px}
+    .form-group{margin-bottom:20px}.form-group label{display:block;font-size:13px;font-weight:600;color:var(--espn-text-secondary);text-transform:uppercase;margin-bottom:8px}.form-group input,.form-group select,.form-group textarea{width:100%;padding:14px 16px;font-size:16px;border:1px solid var(--espn-border);border-radius:6px}.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--espn-blue)}
+    .form-hint{font-size:13px;color:var(--espn-text-muted);margin-top:6px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:16px 32px;font-size:15px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif}.btn:disabled{opacity:.5;cursor:not-allowed}.btn-primary{background:var(--espn-red);color:white}.btn-primary:hover:not(:disabled){background:var(--espn-red-dark)}.btn-secondary{background:var(--espn-bg-table-header);color:var(--espn-text-primary);border:1px solid var(--espn-border)}.btn-blue{background:var(--espn-blue);color:white}.btn-success{background:var(--espn-success);color:white}
+    .data-table{width:100%;border-collapse:collapse;font-size:15px}.data-table th{background:var(--espn-bg-table-header);padding:14px 16px;text-align:left;font-weight:600;text-transform:uppercase;font-size:12px;border-bottom:2px solid var(--espn-border)}.data-table td{padding:14px 16px;border-bottom:1px solid var(--espn-border)}.data-table input{padding:10px 12px;font-size:15px}.data-table input[type="number"]{width:90px;text-align:right}
+    .steps{display:flex;justify-content:center;margin-bottom:40px;gap:12px;flex-wrap:wrap}.step{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--espn-bg-card);border:2px solid var(--espn-border);border-radius:8px;cursor:pointer;font-size:15px}.step:hover{border-color:var(--espn-blue)}.step.active{background:var(--espn-blue);border-color:var(--espn-blue);color:white}.step.completed{border-color:var(--espn-success)}.step.completed .step-number{background:var(--espn-success);color:white}.step.disabled{opacity:.5;cursor:not-allowed}.step-number{width:32px;height:32px;border-radius:50%;background:var(--espn-bg-table-header);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}.step.active .step-number{background:rgba(255,255,255,.2)}.step-label{font-weight:600}
+    .info-box{background:#e3f2fd;border:1px solid var(--espn-blue);border-radius:8px;padding:20px;margin-bottom:20px}.info-box h4{color:var(--espn-blue);margin-bottom:12px;font-size:16px}.info-box ol,.info-box ul{margin-left:24px}.info-box li{margin:10px 0;font-size:15px}.info-box code{background:rgba(0,0,0,.1);padding:2px 8px;border-radius:4px;font-size:13px}
+    .success-box{background:#d4edda;border:1px solid var(--espn-success);border-radius:8px;padding:20px;margin-bottom:20px}.success-box h4{color:var(--espn-success);margin-bottom:8px}
+    .error-box{background:#f8d7da;border:1px solid var(--espn-error);border-radius:8px;padding:20px;color:var(--espn-error)}
+    .warning-box{background:#fff3cd;border:1px solid var(--espn-orange);border-radius:8px;padding:20px;margin-bottom:20px}.warning-box h4{color:#856404;margin-bottom:8px}
+    .config-textarea{min-height:180px;font-family:monospace;font-size:13px}
+    .script-box{background:#1e1e1e;border-radius:8px;padding:20px;margin:20px 0;max-height:300px;overflow-y:auto}.script-box pre{color:#d4d4d4;font-size:12px;white-space:pre-wrap;word-break:break-all}
+    .arb-badge{display:inline-block;padding:4px 12px;border-radius:4px;font-size:13px;font-weight:700;color:white}.arb-badge.arb-3{background:var(--espn-red)}.arb-badge.arb-2{background:var(--espn-orange)}.arb-badge.arb-1{background:var(--espn-success)}
+    .progress-bar{height:12px;background:var(--espn-bg-page);border-radius:6px;overflow:hidden;margin-top:16px}.progress-bar-fill{height:100%;background:var(--espn-blue)}
+    .auction-link{display:flex;gap:16px;align-items:center;margin-top:20px}.auction-link input{flex:1;padding:16px;background:var(--espn-bg-table-header);border:1px solid var(--espn-border);border-radius:6px;font-size:15px}
+    .scoring-inline{display:flex;flex-wrap:wrap;gap:14px;align-items:center}.scoring-inline .scoring-item{display:flex;align-items:center;gap:8px}.scoring-inline .scoring-item label{font-weight:600;font-size:14px;min-width:36px}.scoring-inline .scoring-item input{width:70px;padding:10px;text-align:center;font-size:15px;border:1px solid var(--espn-border);border-radius:4px}.scoring-inline .scoring-item.negative input{color:var(--espn-error)}
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000}.modal{background:white;border-radius:8px;max-width:480px;width:90%}.modal-header{background:var(--espn-nav-dark);color:white;padding:20px 24px;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.2rem}.modal-body{padding:28px}.modal-footer{padding:0 28px 28px;display:flex;gap:16px}.modal-footer .btn{flex:1}
+    .copy-btn{background:var(--espn-blue);color:white;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:13px;margin-top:10px}.copy-btn:hover{background:var(--espn-blue-hover)}
+    .login-container{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--espn-bg-page)}.login-card{background:white;border-radius:8px;padding:40px;max-width:420px;width:90%;box-shadow:0 4px 12px rgba(0,0,0,.1)}.login-title{font-family:'Roboto Condensed',sans-serif;font-size:2rem;font-weight:700;text-align:center;margin-bottom:32px;color:var(--espn-red)}
+    .login-tabs{display:flex;gap:8px;margin-bottom:24px}.login-tab{flex:1;padding:12px;background:var(--espn-bg-table-header);border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:15px}.login-tab.active{background:var(--espn-blue);color:white}
+    .league-list{list-style:none;padding:0}.league-item{background:white;border:1px solid var(--espn-border);border-radius:8px;padding:20px;margin-bottom:16px;cursor:pointer;transition:all .2s}.league-item:hover{border-color:var(--espn-blue);box-shadow:0 2px 8px rgba(0,0,0,.1)}.league-item-name{font-family:'Roboto Condensed',sans-serif;font-size:1.3rem;font-weight:700;color:var(--espn-blue);margin-bottom:8px}.league-item-meta{font-size:13px;color:var(--espn-text-muted)}
   </style>
 </head>
 <body>
@@ -176,648 +45,502 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
-const PREV_YR = new Date().getFullYear() - 1;
-const fmt = n => (n || 0).toFixed(2);
-const getParams = () => { const p = new URLSearchParams(window.location.search); return { auctionId: p.get('league') || p.get('id'), role: p.get('role') }; };
+const{useState,useEffect,useCallback}=React;
+const PREV_YR=new Date().getFullYear()-1;
+const STORE='arb_comm_session';
+const fmt=n=>(n||0).toFixed(2);
+const DEFAULT_HIT={'1B':1,'2B':2,'3B':3,'HR':4,'R':1,'RBI':1,'BB':1,'HBP':1,'SB':2};
+const DEFAULT_PIT={'IP':2,'ER':-1,'K':1,'H':-0.5,'BB':-0.5,'HBP':-0.5,'W':10,'SV':8,'HD':7,'CG':5};
+const genId=()=>{const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:8},()=>c[Math.floor(Math.random()*c.length)]).join('')};
+const hashPassword=pw=>CryptoJS.SHA256(pw).toString();
+const extractSheetId=url=>{const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);return m?m[1]:null};
+const calcPts=(s,hs,ps,isH,isP)=>{let pts=0;if(isH&&s){const h=s.H||0,d=s['2B']||0,t=s['3B']||0,hr=s.HR||0,sg=Math.max(0,h-d-t-hr);pts+=sg*(hs['1B']||0)+d*(hs['2B']||0)+t*(hs['3B']||0)+hr*(hs['HR']||0)+(s.R||0)*(hs['R']||0)+(s.RBI||0)*(hs['RBI']||0)+(s.BB||0)*(hs['BB']||0)+(s.HBP||0)*(hs['HBP']||0)+(s.SB||0)*(hs['SB']||0)}if(isP&&s){pts+=(s.IP||0)*(ps['IP']||0)+(s.ER||0)*(ps['ER']||0)+(s.SO||0)*(ps['K']||0)+(s.HA||0)*(ps['H']||0)+(s.BBA||0)*(ps['BB']||0)+(s.HBP_A||0)*(ps['HBP']||0)+(s.W||0)*(ps['W']||0)+(s.SV||0)*(ps['SV']||0)+(s.HD||0)*(ps['HD']||0)+(s.CG||0)*(ps['CG']||0)}return Math.round(pts*100)/100};
+const downloadCSV=(c,f)=>{const b=new Blob([c],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=f;a.click();URL.revokeObjectURL(u)};
+const csvTemplate=()=>'Name,Team,Position,Owner,ArbYear,Type,Points\nJuan Soto,NYY,OF,Team 1,3,Hitter,906.50\nShohei Ohtani,LAD,DH/SP,Team 2,2,Both,1640.50\nCorbin Burnes,BAL,SP,Team 3,1,Pitcher,\n';
+
+// Firebase config - hardcoded
 const FIREBASE_CONFIG={apiKey:"AIzaSyC09xnc-SIXcz95O_tfVes0t_uF-AtMmwo",authDomain:"arbitration-auction.firebaseapp.com",databaseURL:"https://arbitration-auction-default-rtdb.europe-west1.firebasedatabase.app",projectId:"arbitration-auction",storageBucket:"arbitration-auction.firebasestorage.app",messagingSenderId:"105886135634",appId:"1:105886135634:web:ef411018b3017a4c23768b"};
-const keepPct = a => ({ 1: 0.4, 2: 0.6, 3: 0.8 }[a] || 1);
-const yrs = a => ({ 1: 3, 2: 2, 3: 1 }[a] || 1);
-const enc = (b, k) => CryptoJS.AES.encrypt(JSON.stringify(b), k).toString();
-const dec = (e, k) => { try { return JSON.parse(CryptoJS.AES.decrypt(e, k).toString(CryptoJS.enc.Utf8)); } catch { return null; } };
-const maxBid = t => t ? Math.max(0, (t.cap || t.salaryCap || 100) - (t.sal || t.currentSalary || 0) - (t.spots || t.spotsAvailable || 1) + 1) : 0;
-const keepPr = (b, a) => Math.max(1, Math.ceil(b * keepPct(a)));
-const stickPr = b => Math.max(1, b);
 
-const hitPts = (s, sc) => {
-  if (!s || !sc) return 0;
-  const h = s.H || 0, d = s['2B'] || 0, t = s['3B'] || 0, hr = s.HR || 0, sg = Math.max(0, h - d - t - hr);
-  return Math.round((sg * (sc['1B'] || 0) + d * (sc['2B'] || 0) + t * (sc['3B'] || 0) + hr * (sc['HR'] || 0) + (s.R || 0) * (sc['R'] || 0) + (s.RBI || 0) * (sc['RBI'] || 0) + (s.BB || 0) * (sc['BB'] || 0) + (s.HBP || 0) * (sc['HBP'] || 0) + (s.SB || 0) * (sc['SB'] || 0)) * 100) / 100;
-};
+const APPS_SCRIPT_CODE=`/**
+ * ARBITRATION AUCTION - GOOGLE SHEETS SYNC
+ * Paste this entire script into your Google Sheet's Apps Script editor
+ */
 
-const pitPts = (s, sc) => {
-  if (!s || !sc) return 0;
-  return Math.round(((s.IP || 0) * (sc['IP'] || 0) + (s.ER || 0) * (sc['ER'] || 0) + (s.SO || 0) * (sc['K'] || 0) + (s.HA || 0) * (sc['H'] || 0) + (s.BBA || 0) * (sc['BB'] || 0) + (s.HBP_A || 0) * (sc['HBP'] || 0) + (s.W || 0) * (sc['W'] || 0) + (s.SV || 0) * (sc['SV'] || 0) + (s.HD || 0) * (sc['HD'] || 0) + (s.CG || 0) * (sc['CG'] || 0)) * 100) / 100;
-};
-
-function App() {
-  const { auctionId, role: urlRole } = getParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [db, setDb] = useState(null);
-  const [auction, setAuction] = useState(null);
-  const [screen, setScreen] = useState('login');
-  const [activeTab, setActiveTab] = useState('auction');
-  const [userTeamId, setUserTeamId] = useState(null);
-  const [userTeamName, setUserTeamName] = useState('');
-  const [isComm, setIsComm] = useState(false);
-  const [loginName, setLoginName] = useState('');
-  const [loginTeamId, setLoginTeamId] = useState('');
-  const [loginPw, setLoginPw] = useState('');
-  const [leagueCode, setLeagueCode] = useState('');
-  const [commCode, setCommCode] = useState('');
-  const [loginErr, setLoginErr] = useState('');
-  const [preBids, setPreBids] = useState({});
-  const [curBid, setCurBid] = useState('');
-  const [usePre, setUsePre] = useState(true);
-  const [bidOk, setBidOk] = useState(false);
-  const [bidErr, setBidErr] = useState('');
-  const [timeLeft, setTimeLeft] = useState(0);
-  const timerRef = useRef(null);
-  const [celeb, setCeleb] = useState(null);
-  const [tieModal, setTieModal] = useState(false);
-  const [tieMethod, setTieMethod] = useState('random');
-  const [tieWinner, setTieWinner] = useState('');
-  const [syncStatus, setSyncStatus] = useState('ok');
-  const sKey = auctionId || 'x';
-
-  // Sync to Google Sheets
-  const syncToSheets = async (action, data) => {
-    const cfg = auction?.sheetsConfig;
-    if (!cfg?.scriptUrl) return;
-    setSyncStatus('pending');
-    try {
-      const teamNames = Object.values(auction.teams).map(t => t.name);
-      const payload = { action, teamNames, ...data };
-      await fetch(cfg.scriptUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      setSyncStatus('ok');
-    } catch (e) { console.error('Sync error:', e); setSyncStatus('error'); }
-  };
-
-  const initSheets = async () => {
-    if (!auction?.sheetsConfig?.scriptUrl) return;
-    const teamNames = Object.values(auction.teams).map(t => t.name);
-    await syncToSheets('init', { teamNames });
-  };
-
-  useEffect(() => {
-    if (!auctionId) { setError('No auction ID'); setLoading(false); return; }
-    const saved = localStorage.getItem('auction_' + auctionId);
-    if (saved) { const s = JSON.parse(saved); setUserTeamId(s.tid); setUserTeamName(s.tn); setPreBids(s.pb || {}); setIsComm(s.ic || false); }
-    try {
-      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-      const database = firebase.database();
-      setDb(database);
-      database.ref('auctions/' + auctionId).on('value', snap => {
-        const d = snap.val();
-        if (d) { setAuction(d); if (saved) { const s = JSON.parse(saved); setScreen(s.ic || urlRole === 'commissioner' ? 'auction' : d.phase === 'lobby' ? 'prebid' : 'auction'); } }
-        else setError('Auction not found');
-        setLoading(false);
-      });
-    } catch (e) { setError('Connection failed'); setLoading(false); }
-  }, [auctionId, urlRole]);
-
-  useEffect(() => {
-    if (auction?.timerEndTime && (auction.phase === 'bidding' || auction.phase === 'tiebreaker')) {
-      const upd = () => { const r = Math.max(0, Math.floor((auction.timerEndTime - Date.now()) / 1000)); setTimeLeft(r); if (r <= 0) clearInterval(timerRef.current); };
-      upd();
-      timerRef.current = setInterval(upd, 1000);
-      return () => clearInterval(timerRef.current);
-    }
-  }, [auction?.timerEndTime, auction?.phase]);
-
-  useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); }, [auction?.currentPlayerIndex, auction?.phase]);
-
-  const save = (tid, tn, pb = {}, ic = false) => { localStorage.setItem('auction_' + auctionId, JSON.stringify({ tid, tn, pb, ic })); };
-  const savePre = async bids => { if (db && userTeamId) await db.ref('auctions/' + auctionId + '/preBids/' + userTeamId).set(bids); };
-
-  const commLogin = async () => {
-    setLoginErr('');
-    if (!loginTeamId) return setLoginErr('Select team');
-    if (!loginName) return setLoginErr('Enter username');
-    if (!loginPw) return setLoginErr('Enter password');
-    if (!leagueCode) return setLoginErr('Enter league access code');
-    if (!commCode) return setLoginErr('Enter commissioner access code');
-    const t = auction.teams[loginTeamId];
-    if (!t?.isCommissioner && !t?.isComm) return setLoginErr('Not commissioner team');
-    if (leagueCode !== auction.leagueAccessCode) return setLoginErr('Invalid league access code');
-    if (commCode !== auction.commissionerAccessCode) return setLoginErr('Invalid commissioner access code');
-    if (t.claimedBy && t.claimedBy !== loginName) return setLoginErr('Team claimed by another user');
-    if (t.claimedBy && CryptoJS.SHA256(loginPw).toString() !== t.passwordHash) return setLoginErr('Wrong password');
-    if (db) {
-      const updates = { joined: true, ownerName: loginName || 'Commissioner' };
-      if (!t.claimedBy) {
-        updates.claimedBy = loginName;
-        updates.passwordHash = CryptoJS.SHA256(loginPw).toString();
-      }
-      await db.ref('auctions/' + auctionId + '/teams/' + loginTeamId).update(updates);
-    }
-    setUserTeamId(loginTeamId); setUserTeamName(t.name); setIsComm(true);
-    save(loginTeamId, t.name, preBids, true); setScreen('auction');
-  };
-
-  const ownerLogin = async () => {
-    setLoginErr('');
-    if (!loginTeamId || !loginName || !loginPw) return setLoginErr('Fill all fields');
-    if (!leagueCode) return setLoginErr('Enter league access code');
-    const t = auction.teams[loginTeamId];
-    if (!t) return setLoginErr('Team not found');
-    if (t.isCommissioner || t.isComm) return setLoginErr('Use commissioner login');
-    if (leagueCode !== auction.leagueAccessCode) return setLoginErr('Invalid league access code');
-    if (t.claimedBy && t.claimedBy !== loginName) return setLoginErr('Team already claimed by another user');
-    if (t.claimedBy && CryptoJS.SHA256(loginPw).toString() !== t.passwordHash) return setLoginErr('Wrong password');
-    if (db && !t.claimedBy) {
-      await db.ref('auctions/' + auctionId + '/teams/' + loginTeamId).update({ ownerName: loginName, passwordHash: CryptoJS.SHA256(loginPw).toString(), joined: true, claimedBy: loginName });
-    } else if (db && !t.joined) {
-      await db.ref('auctions/' + auctionId + '/teams/' + loginTeamId).update({ joined: true });
-    }
-    setUserTeamId(loginTeamId); setUserTeamName(t.name); setIsComm(false);
-    save(loginTeamId, t.name, preBids, false); setScreen('prebid');
-  };
-
-  const savePrebids = async () => { save(userTeamId, userTeamName, preBids, isComm); await savePre(preBids); setScreen('auction'); };
-  const updPre = (i, v) => { const nb = { ...preBids, [i]: parseFloat(v) || 0 }; setPreBids(nb); save(userTeamId, userTeamName, nb, isComm); savePre(nb); };
-
-  const startAuc = async () => {
-    if (db) await db.ref('auctions/' + auctionId).update({ phase: 'waiting' });
-    setTimeout(() => initSheets(), 500);
-  };
-
-  const startBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'bidding', timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
-
-  const submitBid = async () => {
-    setBidErr('');
-    const amt = usePre ? (preBids[auction.currentPlayerIndex] || 0) : parseFloat(curBid) || 0;
-    const t = auction.teams[userTeamId];
-    const mx = maxBid(t);
-    if (amt > mx) return setBidErr('Max $' + fmt(mx));
-    const bid = { teamId: userTeamId, teamName: userTeamName, amount: amt, ts: Date.now() };
-    if (db) { await db.ref('auctions/' + auctionId + '/bids/' + userTeamId).set(enc(bid, sKey)); await db.ref('auctions/' + auctionId + '/bidStatuses/' + userTeamId).set(true); }
-    setBidOk(true);
-  };
-
-  const endBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'reveal', timerEndTime: null }); };
-
-  const reveal = async () => {
-    const decoded = {}; let mx = 0;
-    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (b.amount > mx) mx = b.amount; } });
-    const top = Object.entries(decoded).filter(([_, b]) => b.amount === mx);
-    const hi = top.length > 0 ? top[0][1] : { amount: 0, teamId: null, teamName: 'No bids' };
-    const tied = top.length > 1 ? top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })) : null;
-    if (db) await db.ref('auctions/' + auctionId).update({ phase: 'decision', revealedBids: decoded, highestBid: hi, tiedTeams: tied });
-  };
-
-  const hasTie = () => auction.tiedTeams && auction.tiedTeams.length > 1;
-  const startTie = async () => { const ids = auction.tiedTeams.map(t => t.id); if (db) await db.ref('auctions/' + auctionId).update({ phase: 'tiebreaker', tiebreakerTeams: ids, timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
-
-  const endTie = async () => {
-    const decoded = {}; let mx = 0;
-    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (b.amount > mx) mx = b.amount; } });
-    const top = Object.entries(decoded).filter(([_, b]) => b.amount === mx);
-    if (top.length === 1) { const w = top[0][1]; await doStick(w.teamId, w.teamName, w.amount); }
-    else { const tied = top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })); if (db) await db.ref('auctions/' + auctionId).update({ phase: 'tie-resolution', tiedTeams: tied, revealedBids: decoded }); setTieModal(true); }
-  };
-
-  const resolveTie = async () => {
-    let wid, wname;
-    if (tieMethod === 'random') { const i = Math.floor(Math.random() * auction.tiedTeams.length); wid = auction.tiedTeams[i].id; wname = auction.tiedTeams[i].name; }
-    else { wid = tieWinner; wname = auction.tiedTeams.find(t => t.id === wid)?.name; }
-    setTieModal(false);
-    await doStick(wid, wname, auction.tiedTeams[0].amount);
-  };
-
-  const doStick = async (wid, wname, amt) => { const p = auction.players[auction.currentPlayerIndex]; await finalize('stick', wname, wid, stickPr(amt), yrs(p.arbYear), auction.highestBid || { amount: amt, teamName: wname }); };
-
-  const decide = async d => {
-    const p = auction.players[auction.currentPlayerIndex]; const hb = auction.highestBid; const hi = hb?.amount || 0;
-    if (d === 'stick') { if (hi === 0) return; if (hasTie()) { await startTie(); return; } await doStick(hb.teamId, hb.teamName, hi); return; }
-    const oid = Object.entries(auction.teams).find(([_, t]) => t.name === p.owner)?.[0];
-    if (d === 'keep') await finalize('keep', p.owner, oid, hi === 0 ? 1 : keepPr(hi, p.arbYear), 1, hb);
-    else await finalize('self-stick', p.owner, oid, stickPr(hi), yrs(p.arbYear), hb);
-  };
-
-  const finalize = async (d, winner, wid, price, years, hb) => {
-    const p = auction.players[auction.currentPlayerIndex]; const upd = {};
-    const allBids = {}; if (auction.revealedBids) Object.entries(auction.revealedBids).forEach(([tid, b]) => { allBids[auction.teams[tid]?.name || tid] = b.amount; });
-    const hist = { player: p.name, team: p.team, pos: p.position, owner: p.owner, arb: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids, ts: Date.now() };
-    upd['players/' + auction.currentPlayerIndex] = { ...p, status: 'completed', result: { decision: d, winner, winnerId: wid, price, contractYears: years, topBid: hb?.amount || 0, topBidder: hb?.teamName || 'None' } };
-    const wt = auction.teams[wid]; const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots || wt?.spotsAvailable || 1;
-    upd['teams/' + wid + '/currentSalary'] = oldSal + price; upd['teams/' + wid + '/sal'] = oldSal + price;
-    upd['teams/' + wid + '/spotsAvailable'] = Math.max(0, oldSpots - 1); upd['teams/' + wid + '/spots'] = Math.max(0, oldSpots - 1);
-    upd['phase'] = 'celebration'; upd['bidHistory'] = [...(auction.bidHistory || []), hist];
-    if (db) await db.ref('auctions/' + auctionId).update(upd);
-    syncToSheets('sync', { player: { name: p.name, team: p.team, position: p.position, owner: p.owner, arbYear: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids } });
-    setCeleb({ d, player: p.name, winner, price, years, hiBidder: hb?.teamName || 'None' });
-    setTimeout(async () => {
-      setCeleb(null); const nx = auction.currentPlayerIndex + 1;
-      if (nx < auction.players.length) { if (db) await db.ref('auctions/' + auctionId).update({ currentPlayerIndex: nx, phase: 'waiting', bids: null, bidStatuses: null, revealedBids: null, highestBid: null, tiedTeams: null, tiebreakerTeams: null }); }
-      else { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'complete' }); }
-    }, 5000);
-  };
-
-  const undo = async idx => {
-    if (!isComm) return; const p = auction.players[idx]; if (!p?.result) return;
-    const r = p.result; const wt = auction.teams[r.winnerId]; const upd = {};
-    upd['players/' + idx] = { ...p, status: 'pending', result: null };
-    const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots || wt?.spotsAvailable || 0;
-    upd['teams/' + r.winnerId + '/currentSalary'] = Math.max(0, oldSal - r.price); upd['teams/' + r.winnerId + '/sal'] = Math.max(0, oldSal - r.price);
-    upd['teams/' + r.winnerId + '/spotsAvailable'] = oldSpots + 1; upd['teams/' + r.winnerId + '/spots'] = oldSpots + 1;
-    upd['currentPlayerIndex'] = idx; upd['phase'] = 'waiting'; upd['bids'] = null; upd['bidStatuses'] = null; upd['revealedBids'] = null; upd['highestBid'] = null; upd['tiedTeams'] = null;
-    upd['bidHistory'] = (auction.bidHistory || []).filter(h => h.player !== p.name);
-    if (db) await db.ref('auctions/' + auctionId).update(upd);
-  };
-
-  const exportCSV = () => {
-    if (!auction?.bidHistory?.length) return;
-    const tns = Object.values(auction.teams).map(t => t.name);
-    let csv = 'Player,Team,Pos,Owner,Arb,Winner,Decision,Price,Years,HighBid,HighBidder';
-    tns.forEach(n => { csv += ',"' + n + '"'; }); csv += '\n';
-    auction.bidHistory.forEach(h => {
-      csv += '"' + h.player + '","' + h.team + '","' + h.pos + '","' + h.owner + '",' + h.arb + ',"' + h.winner + '","' + h.decision + '",' + fmt(h.price) + ',' + h.years + ',' + fmt(h.highBid) + ',"' + h.highBidder + '"';
-      tns.forEach(n => { csv += ',' + (h.bids?.[n] !== undefined ? fmt(h.bids[n]) : ''); }); csv += '\n';
-    });
-    const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = auction.leagueName + '_results.csv'; a.click(); URL.revokeObjectURL(url);
-  };
-
-  const openSheet = () => { if (auction?.sheetsConfig?.sheetUrl) window.open(auction.sheetsConfig.sheetUrl, '_blank'); };
-  const retrySync = () => { if (auction?.bidHistory?.length > 0) { const last = auction.bidHistory[auction.bidHistory.length - 1]; syncToSheets('sync', { player: last }); } };
-  const fmtTime = s => Math.floor(s / 60) + ':' + (s % 60).toString().padStart(2, '0');
-  const timerCls = () => timeLeft <= 10 ? 'danger' : timeLeft <= 30 ? 'warning' : '';
-  const canDecide = () => { if (!auction?.players) return false; const p = auction.players[auction.currentPlayerIndex]; if (!p) return false; if (isComm) return true; return auction.teams[userTeamId]?.name === p.owner; };
-  const isOwner = p => { if (!auction?.teams || !userTeamId) return false; return auction.teams[userTeamId]?.name === p?.owner; };
-  const canTieBid = () => auction?.tiebreakerTeams?.includes(userTeamId);
-
-  const confetti = () => ['#00703c', '#f7a500', '#6f42c1', '#0b6ebd'].flatMap((c, i) => Array.from({ length: 12 }).map((_, j) => <div key={i + '-' + j} className="confetti" style={{ left: (Math.random() * 100) + '%', background: c, animationDelay: (Math.random() * 0.5) + 's', borderRadius: Math.random() > 0.5 ? '50%' : '0' }} />));
-  const bloodDrips = () => Array.from({ length: 20 }).map((_, i) => <div key={i} className="blood-drip" style={{ left: (2 + i * 5) + '%', animationDelay: (Math.random() * 1.2) + 's', width: (18 + Math.random() * 25) + 'px' }} />);
-
-  const HitStats = ({ p }) => {
-    const s = p?.hittingStats; if (!s) return null; const sc = auction?.hittingScoring || {};
-    const h = s.H || 0, d = s['2B'] || 0, t = s['3B'] || 0, hr = s.HR || 0, sg = Math.max(0, h - d - t - hr); const tot = hitPts(s, sc);
-    return <div className="stats-line">
-      <span className="stat"><span className="stat-lbl">1B</span><span className="stat-val">{sg}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">2B</span><span className="stat-val">{d}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">3B</span><span className="stat-val">{t}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">HR</span><span className="stat-val">{hr}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">R</span><span className="stat-val">{s.R || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">RBI</span><span className="stat-val">{s.RBI || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">BB</span><span className="stat-val">{s.BB || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">HBP</span><span className="stat-val">{s.HBP || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">SB</span><span className="stat-val">{s.SB || 0}</span></span>
-      <span className="total">= {fmt(tot)} pts</span>
-    </div>;
-  };
-
-  const PitStats = ({ p }) => {
-    const s = p?.pitchingStats; if (!s) return null; const sc = auction?.pitchingScoring || {}; const tot = pitPts(s, sc);
-    return <div className="stats-line">
-      <span className="stat"><span className="stat-lbl">IP</span><span className="stat-val">{s.IP || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">ER</span><span className="stat-val">{s.ER || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">K</span><span className="stat-val">{s.SO || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">H</span><span className="stat-val">{s.HA || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">BB</span><span className="stat-val">{s.BBA || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">HBP</span><span className="stat-val">{s.HBP_A || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">W</span><span className="stat-val">{s.W || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">SV</span><span className="stat-val">{s.SV || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">HD</span><span className="stat-val">{s.HD || 0}</span></span><span className="sep">|</span>
-      <span className="stat"><span className="stat-lbl">CG</span><span className="stat-val">{s.CG || 0}</span></span>
-      <span className="total">= {fmt(tot)} pts</span>
-    </div>;
-  };
-
-  if (loading) return <div className="loading-screen"><div className="loading-spinner"></div><div>Loading auction...</div></div>;
-  if (error) return <div className="loading-screen"><div style={{ color: 'var(--espn-error)', fontSize: '20px' }}>⚠️ {error}</div></div>;
-
-  // LOGIN SCREEN
-  if (screen === 'login') {
-    const isCL = urlRole === 'commissioner';
-    const teams = auction?.teams ? Object.entries(auction.teams) : [];
-    const cTeams = teams.filter(([_, t]) => t.isCommissioner || t.isComm);
-    const rTeams = teams.filter(([_, t]) => !t.isCommissioner && !t.isComm);
-    return (
-      <>
-        <header className="header"><div className="header-title">Arbitration Auction</div></header>
-        <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
-        <div className="loading-screen" style={{ minHeight: 'calc(100vh - 110px)' }}>
-          <div className="modal">
-            <div className="modal-header">{isCL ? 'Commissioner Login' : 'Join Auction'}</div>
-            <div className="modal-body">
-              <div className="form-group"><label>Username</label><input value={loginName} onChange={e => setLoginName(e.target.value)} placeholder="Your username" /></div>
-              <div className="form-group"><label>Password</label><input type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} placeholder="Create or enter password" /></div>
-              <div className="form-group"><label>League Access Code</label><input value={leagueCode} onChange={e => setLeagueCode(e.target.value)} placeholder="Provided by commissioner" /></div>
-              {isCL && <div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e => setCommCode(e.target.value)} placeholder="Commissioner code" /></div>}
-              <div className="form-group">
-                <label>Select Team</label>
-                <select value={loginTeamId} onChange={e => setLoginTeamId(e.target.value)}>
-                  <option value="">Choose your team...</option>
-                  {(isCL ? cTeams : rTeams).map(([id, t]) => <option key={id} value={id}>{t.name}{(t.isCommissioner || t.isComm) ? ' ⭐' : t.claimedBy ? ' (Claimed)' : ''}</option>)}
-                </select>
-              </div>
-              {loginErr && <div className="form-error" style={{marginTop:'12px'}}>{loginErr}</div>}
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={isCL ? commLogin : ownerLogin}>{isCL ? 'Login as Commissioner' : 'Join Auction'}</button>
-            </div>
-          </div>
-        </div>
-      </>
-    );
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const action = data.action;
+    if (action === 'init') return initializeSheet(data);
+    else if (action === 'sync') return syncPlayer(data);
+    else return jsonResponse({ success: false, error: 'Unknown action' });
+  } catch (error) {
+    return jsonResponse({ success: false, error: error.toString() });
   }
-
-  // PREBID SCREEN
-  if (screen === 'prebid') {
-    const pls = auction?.players || []; const t = auction?.teams?.[userTeamId]; const mx = maxBid(t);
-    return (
-      <>
-        <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info"><span>{userTeamName}</span></div></header>
-        <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
-        <div style={{ maxWidth: '900px', margin: '24px auto', padding: '0 24px' }}>
-          {auction?.phase === 'lobby' && <div className="lobby-info" style={{ marginBottom: '24px', background: '#e3f2fd' }}><div className="lobby-status">⏳ Waiting for Commissioner to Start</div></div>}
-          <div className="modal" style={{ position: 'relative', maxWidth: 'none' }}>
-            <div className="modal-header">Set Your Pre-Bids</div>
-            <div className="modal-body">
-              <div className="max-bid-info" style={{ marginBottom: '16px' }}>Your Max Bid: <strong>${fmt(mx)}</strong></div>
-              <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
-                <table className="history-table">
-                  <thead><tr><th>Player</th><th>Team</th><th>Owner</th><th>Arb</th><th>Points</th><th style={{ width: '100px' }}>Your Bid</th></tr></thead>
-                  <tbody>
-                    {pls.map((p, i) => { const own = isOwner(p); const done = p.status === 'completed'; return (
-                      <tr key={i} style={done ? { opacity: 0.4 } : {}}>
-                        <td style={{ fontWeight: 600 }}>{p.name}</td><td>{p.team}</td><td>{p.owner}</td>
-                        <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
-                        <td>{fmt(p.fantasyPoints)}</td>
-                        <td>{!own && !done ? <input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'right' }} /> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
-                      </tr>
-                    ); })}
-                  </tbody>
-                </table>
-              </div>
-              <div style={{ marginTop: '20px', display: 'flex', gap: '14px' }}>
-                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setScreen('auction')}>Skip Pre-Bids</button>
-                <button className="btn btn-primary" style={{ flex: 1 }} onClick={savePrebids}>Save & Enter Auction</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // MAIN AUCTION SCREEN
-  const cp = auction?.players?.[auction?.currentPlayerIndex];
-  const teams = auction?.teams ? Object.entries(auction.teams) : [];
-  const teamList = Object.values(auction?.teams || {});
-  const teamNames = teamList.map(t => t.name);
-  const grp = {}; auction?.players?.forEach((p, i) => { const k = p.arbYear; if (!grp[k]) grp[k] = []; grp[k].push({ ...p, idx: i }); });
-  const cpOwn = isOwner(cp);
-  const pb = preBids[auction?.currentPlayerIndex] || 0;
-  const uTeam = auction?.teams?.[userTeamId];
-  const mx = maxBid(uTeam);
-  const hi = auction?.highestBid?.amount || 0;
-  const kp = cp ? keepPr(hi, cp.arbYear) : 1;
-  const sp = stickPr(hi);
-  const allZero = hi === 0;
-  const isTie = auction?.phase === 'tiebreaker';
-  const canBid = isTie ? canTieBid() : !cpOwn;
-  const hasSheets = auction?.sheetsConfig?.scriptUrl;
-
-  // HISTORY TAB
-  if (activeTab === 'history') {
-    const hist = auction?.bidHistory || [];
-    return (
-      <>
-        <header className="header">
-          <div className="header-title">Arbitration Auction</div>
-          <div className="user-info">
-            {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
-            <span>{userTeamName}</span>
-            {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
-          </div>
-        </header>
-        <nav className="nav">
-          <div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div>
-          <div className="nav-tabs">
-            <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
-            <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History</div>
-          </div>
-        </nav>
-        <div className="history-container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-            <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem' }}>Bid History ({hist.length} players)</h2>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Google Sheet</button>}
-              <button className="btn btn-secondary" onClick={exportCSV} disabled={!hist.length}>📥 Export CSV</button>
-            </div>
-          </div>
-          {hist.length === 0 ? <p style={{ color: 'var(--espn-text-muted)', fontSize: '16px' }}>No completed players yet.</p> :
-            <div style={{ overflowX: 'auto' }}>
-              <table className="history-table">
-                <thead><tr><th>Player</th><th>Owner</th><th>Winner</th><th>Decision</th><th>Price</th><th>Years</th><th>High Bid</th>{teamNames.map((n, i) => <th key={i} className="team-bid">{n}</th>)}</tr></thead>
-                <tbody>
-                  {hist.map((h, i) => (
-                    <tr key={i}>
-                      <td style={{ fontWeight: 600 }}>{h.player}</td>
-                      <td>{h.owner}</td>
-                      <td style={{ color: 'var(--espn-blue)', fontWeight: 600 }}>{h.winner}</td>
-                      <td><span className={'result-badge ' + h.decision}>{h.decision}</span></td>
-                      <td style={{ fontWeight: 600 }}>${fmt(h.price)}</td>
-                      <td>{h.years}</td>
-                      <td>${fmt(h.highBid)}</td>
-                      {teamNames.map((n, j) => <td key={j} className="team-bid" style={{ color: h.bids?.[n] === h.highBid && h.highBid > 0 ? 'var(--espn-blue)' : 'inherit', fontWeight: h.bids?.[n] === h.highBid && h.highBid > 0 ? 700 : 'normal' }}>{h.bids?.[n] !== undefined ? '$' + fmt(h.bids[n]) : '-'}</td>)}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>}
-        </div>
-      </>
-    );
-  }
-
-  // MAIN AUCTION VIEW
-  return (
-    <>
-      <header className="header">
-        <div className="header-title">Arbitration Auction</div>
-        <div className="user-info">
-          {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
-          <span>{userTeamName}</span>
-          {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
-        </div>
-      </header>
-      <nav className="nav">
-        <div className="nav-left">
-          <span className="league-name">{auction?.leagueName}</span>
-          <span className="nav-info">Player {(auction?.currentPlayerIndex || 0) + 1} of {auction?.players?.length || 0}</span>
-        </div>
-        <div className="nav-tabs">
-          <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
-          <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History ({auction?.bidHistory?.length || 0})</div>
-        </div>
-      </nav>
-
-      <div className="app-container">
-        <div className="sidebar">
-          <div className="sidebar-title">Player Queue</div>
-          {[3, 2, 1].map(ay => { const pls = grp[ay] || []; if (!pls.length) return null; return (
-            <React.Fragment key={ay}>
-              <div className="arb-group-header">Arbitration Year {ay}</div>
-              {pls.map(p => {
-                const cur = p.idx === auction?.currentPlayerIndex;
-                const own = auction?.teams?.[userTeamId]?.name === p.owner;
-                const won = p.result?.winnerId === userTeamId;
-                const done = p.status === 'completed';
-                let cn = 'player-queue-item'; if (cur) cn += ' current'; else if (own && !done) cn += ' own-player'; if (won) cn += ' won-player'; if (done && !cur) cn += ' completed';
-                return (
-                  <div key={p.idx} className={cn}>
-                    <div className="player-queue-header"><span className="player-queue-name">{p.name}</span><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></div>
-                    <div className="player-queue-details"><span>{p.owner}</span><span>{fmt(p.fantasyPoints)} pts</span></div>
-                    {!done && !own && <div className="prebid-input"><label>Pre-bid: $</label><input type="number" value={preBids[p.idx] || ''} onChange={e => updPre(p.idx, e.target.value)} min="0" /></div>}
-                    {p.result && <><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</>}
-                  </div>
-                );
-              })}
-            </React.Fragment>
-          ); })}
-        </div>
-
-        <div className="main-stage">
-          {auction?.phase === 'lobby' && (
-            <div className="lobby-info">
-              <div className="lobby-status">⏳ Waiting for Auction to Begin</div>
-              <p style={{ color: 'var(--espn-text-secondary)', marginBottom: '20px' }}>The commissioner will start the auction shortly.</p>
-              {isComm && <button className="btn btn-primary" onClick={startAuc}>Start Auction</button>}
-            </div>
-          )}
-
-          {isTie && <div className="tiebreaker-banner">⚠️ TIE-BREAKER ROUND: {auction.tiedTeams?.map(t => t.name).join(' vs ')}</div>}
-
-          {cp && auction?.phase !== 'lobby' && (
-            <>
-              <div className="player-card">
-                <div className="player-card-header">
-                  <div><div className="player-name">{cp.name}</div><div className="player-meta">{cp.position} • {cp.team}</div></div>
-                  <span className={'arb-badge arb-' + cp.arbYear}>ARB {cp.arbYear}</span>
-                </div>
-                <div className="player-card-body">
-                  <div className="info-row"><div><div className="info-label">Current Owner</div><div className="info-value">{cp.owner}</div></div><div style={{ textAlign: 'right' }}><div className="info-label">Keep Discount</div><div className="info-value">{keepPct(cp.arbYear) * 100}%</div></div></div>
-                  <HitStats p={cp} />
-                  <PitStats p={cp} />
-                  <div className="points-box"><div className="points-label">{PREV_YR} Fantasy Points</div><div className="points-value">{fmt(cp.fantasyPoints)}</div></div>
-                </div>
-              </div>
-
-              <div className="timer-section">
-                {auction.phase === 'waiting' && <><div className="timer-display">{fmtTime(auction.timerDuration)}</div>{isComm ? <button className="btn btn-primary" onClick={startBid}>Start Bidding</button> : <p style={{ color: 'var(--espn-text-muted)', marginTop: '12px' }}>Waiting for commissioner to start bidding...</p>}</>}
-                {(auction.phase === 'bidding' || isTie) && <><div className={'timer-display ' + timerCls()}>{fmtTime(timeLeft)}</div>{isComm && <button className="btn btn-secondary" onClick={isTie ? endTie : endBid}>{isTie ? 'End Tiebreaker' : 'End Bidding'}</button>}</>}
-                {auction.phase === 'reveal' && isComm && <button className="btn btn-primary" style={{ fontSize: '18px', padding: '18px 36px' }} onClick={reveal}>🎯 Reveal All Bids</button>}
-                {auction.phase === 'tie-resolution' && isComm && <button className="btn btn-primary" onClick={() => setTieModal(true)}>Resolve Tie</button>}
-              </div>
-
-              {(auction.phase === 'bidding' || isTie) && canBid && (
-                <div className={'your-bid-section' + (bidOk ? ' submitted' : '')}>
-                  <h3>{bidOk ? '✓ Bid Submitted' : 'Enter Your Bid'}{isTie ? ' (Tiebreaker Round)' : ''}</h3>
-                  <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong> • Enter $0.00 to pass</div>
-                  <div className="bid-options" style={{ marginTop: '14px' }}>
-                    {pb > 0 && !isTie && <div className="bid-option"><label>Use Pre-Bid</label><div className={'prebid-value' + (usePre ? ' selected' : '')} onClick={() => setUsePre(true)}>${fmt(pb)}</div></div>}
-                    <div className="bid-option"><label>Enter Amount</label><input type="number" value={curBid} onChange={e => { setCurBid(e.target.value); setUsePre(false); }} min="0" step="0.01" onFocus={() => setUsePre(false)} placeholder="0.00" /></div>
-                    <button className="btn btn-blue" style={{ padding: '14px 28px', fontSize: '16px' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
-                  </div>
-                  {bidErr && <div className="bid-error">{bidErr}</div>}
-                </div>
-              )}
-
-              {(auction.phase === 'bidding' || isTie) && !canBid && (
-                <div className="your-bid-section" style={{ borderColor: '#ccc', background: '#f9f9f9', textAlign: 'center' }}>
-                  <p style={{ color: 'var(--espn-text-muted)', fontSize: '16px' }}>{cpOwn ? 'You own this player - waiting for bids' : isTie ? 'You are not in the tiebreaker' : 'Waiting...'}</p>
-                </div>
-              )}
-
-              {(auction.phase === 'bidding' || auction.phase === 'reveal' || isTie) && (
-                <div className="bid-status">
-                  <div className="bid-status-header">Bid Submission Status</div>
-                  <div className="bid-status-grid">
-                    {teams.map(([id, t]) => {
-                      const own = t.name === cp?.owner;
-                      const inTie = auction.tiebreakerTeams?.includes(id);
-                      const tied = auction.tiedTeams?.some(x => x.id === id);
-                      return <div key={id} className={'bid-status-item ' + (auction.bidStatuses?.[id] ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied' : '')} style={isTie && !inTie ? { opacity: 0.3 } : {}}>{t.name}{own ? ' 👤' : auction.bidStatuses?.[id] ? <span className="checkmark"> ✓</span> : ''}</div>;
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {(auction.phase === 'decision' || auction.phase === 'tie-resolution') && auction.highestBid && (
-                <div className="reveal-section">
-                  <div className="reveal-card">
-                    <div className="reveal-label">Highest Bid</div>
-                    <div className="reveal-amount">${fmt(hi)}</div>
-                    <div className="reveal-bidder">{allZero ? 'All teams passed' : 'High bidder revealed after decision'}</div>
-                    <div className="prices-row">
-                      <div className="price-box keep"><div className="price-label">Keep Price</div><div className="price-value">${fmt(allZero ? 1 : kp)}</div></div>
-                      <div className="price-box stick"><div className="price-label">Stick Price</div><div className="price-value">${fmt(sp)}</div></div>
-                    </div>
-                  </div>
-                  {canDecide() && auction.phase === 'decision' ? (
-                    <div className="decision-buttons">
-                      <button className="btn btn-decision btn-keep" onClick={() => decide('keep')}>🛡️ Keep<span className="btn-years">1yr @ ${fmt(allZero ? 1 : kp)}</span></button>
-                      <button className="btn btn-decision btn-stick" onClick={() => decide('stick')} disabled={allZero} style={allZero ? { opacity: 0.4 } : {}}>🎯 Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(sp)}</span></button>
-                      <button className="btn btn-decision btn-self-stick" onClick={() => decide('self-stick')}>💪 Self-Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(sp)}</span></button>
-                    </div>
-                  ) : <p style={{ textAlign: 'center', color: 'var(--espn-text-muted)', fontSize: '16px' }}>{auction.phase === 'tie-resolution' ? 'Commissioner resolving tie...' : 'Waiting for ' + cp.owner + '...'}</p>}
-                </div>
-              )}
-
-              {auction.phase === 'complete' && (
-                <div style={{ textAlign: 'center', padding: '48px', background: '#fff', borderRadius: '8px' }}>
-                  <h2 style={{ color: 'var(--espn-success)', fontSize: '2rem', marginBottom: '20px' }}>🏆 Auction Complete!</h2>
-                  <p style={{ color: 'var(--espn-text-secondary)', marginBottom: '24px' }}>All players assigned. View History tab for results.</p>
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                    {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Sheet</button>}
-                    <button className="btn btn-secondary" onClick={exportCSV}>📥 Export CSV</button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="sidebar-right">
-          <div className="sidebar-title">Team Budgets</div>
-          {teams.map(([id, t]) => {
-            const cap = t.cap || t.salaryCap || 100;
-            const sal = t.sal || t.currentSalary || 0;
-            const av = cap - sal;
-            const mb = maxBid(t);
-            const pct = (av / cap) * 100;
-            const fc = pct < 20 ? 'critical' : pct < 40 ? 'low' : '';
-            return (
-              <div key={id} className={'budget-item ' + (id === userTeamId ? 'current-user ' : '') + ((t.isCommissioner || t.isComm) ? 'is-commish' : '')}>
-                <div className="budget-team-name"><span>{t.name}{(t.isCommissioner || t.isComm) && <span className="commish-star">⭐</span>}</span><span className="budget-available">${fmt(av)}</span></div>
-                <div className="budget-details"><span>Spots: {t.spots || t.spotsAvailable || 0}</span><span>Max: ${fmt(mb)}</span></div>
-                <div className="budget-bar"><div className={'budget-bar-fill ' + fc} style={{ width: pct + '%' }}></div></div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {tieModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">Resolve Tie</div>
-            <div className="modal-body">
-              <p style={{ marginBottom: '16px', fontSize: '16px' }}>Teams tied at <strong>${fmt(auction.tiedTeams?.[0]?.amount || 0)}</strong>:</p>
-              <ul style={{ marginBottom: '20px', marginLeft: '24px', fontSize: '15px' }}>{auction.tiedTeams?.map(t => <li key={t.id} style={{ marginBottom: '6px' }}><strong>{t.name}</strong></li>)}</ul>
-              <div className="form-group"><label>Method</label><select value={tieMethod} onChange={e => setTieMethod(e.target.value)}><option value="random">Random</option><option value="choose">Commissioner Choice</option></select></div>
-              {tieMethod === 'choose' && <div className="form-group"><label>Winner</label><select value={tieWinner} onChange={e => setTieWinner(e.target.value)}><option value="">Select...</option>{auction.tiedTeams?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>}
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={resolveTie} disabled={tieMethod === 'choose' && !tieWinner}>Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {celeb && (
-        <div className="celebration-overlay">
-          {celeb.d === 'stick' ? bloodDrips() : confetti()}
-          <div className={'celebration-text ' + celeb.d}>{celeb.d === 'keep' ? '🛡️ KEPT!' : celeb.d === 'stick' ? '🩸 STUCK!' : '💪 SELF-STUCK!'}</div>
-          <div className="celebration-details"><strong>{celeb.player}</strong><br />→ <strong>{celeb.winner}</strong><br />${fmt(celeb.price)} • {celeb.years} year{celeb.years > 1 ? 's' : ''}</div>
-          <div className="high-bidder-reveal">High Bidder: <strong>{celeb.hiBidder}</strong></div>
-        </div>
-      )}
-    </>
-  );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+function doGet(e) {
+  return jsonResponse({ success: true, message: 'Auction Sync Ready!' });
+}
+
+function initializeSheet(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const teamNames = data.teamNames || [];
+  sheet.clear();
+  const headers = ['Player', 'Team', 'Position', 'Owner', 'Arb Year', 'Winner', 'Decision', 'Price', 'Years', 'High Bid', 'High Bidder'];
+  teamNames.forEach(name => headers.push(name));
+  const headerRange = sheet.getRange(1, 1, 1, headers.length);
+  headerRange.setValues([headers]);
+  headerRange.setFontWeight('bold');
+  headerRange.setBackground('#282828');
+  headerRange.setFontColor('#ffffff');
+  sheet.setFrozenRows(1);
+  return jsonResponse({ success: true, message: 'Sheet initialized' });
+}
+
+function syncPlayer(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const player = data.player;
+  const teamNames = data.teamNames || [];
+  if (!player) return jsonResponse({ success: false, error: 'No player data' });
+  const row = [player.name||'', player.team||'', player.position||'', player.owner||'', player.arbYear||'', player.winner||'', player.decision||'', player.price||0, player.years||1, player.highBid||0, player.highBidder||''];
+  teamNames.forEach(name => { row.push(player.bids && player.bids[name] !== undefined ? player.bids[name] : ''); });
+  const values = sheet.getDataRange().getValues();
+  const playerName = player.name || '';
+  let rowIndex = -1;
+  for (let i = 1; i < values.length; i++) { if (values[i][0] === playerName) { rowIndex = i + 1; break; } }
+  if (rowIndex > 0) { sheet.getRange(rowIndex, 1, 1, row.length).setValues([row]); }
+  else { sheet.appendRow(row); }
+  return jsonResponse({ success: true, message: 'Player synced' });
+}
+
+function jsonResponse(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}`;
+
+// Admin Login Component
+function AdminLogin({onLogin}){
+  const[isLogin,setIsLogin]=useState(true);
+  const[username,setUsername]=useState('');
+  const[password,setPassword]=useState('');
+  const[error,setError]=useState('');
+  const[loading,setLoading]=useState(false);
+  const[db,setDb]=useState(null);
+
+  useEffect(()=>{
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    setDb(firebase.database());
+  },[]);
+
+  const handleSubmit=async(e)=>{
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    
+    try{
+      if(isLogin){
+        const snapshot=await db.ref(`admins/${username}`).once('value');
+        const admin=snapshot.val();
+        if(!admin){setError('Admin account not found');setLoading(false);return}
+        if(hashPassword(password)!==admin.passwordHash){setError('Incorrect password');setLoading(false);return}
+        onLogin({username,...admin});
+      }else{
+        const snapshot=await db.ref(`admins/${username}`).once('value');
+        if(snapshot.exists()){setError('Username already taken');setLoading(false);return}
+        const adminData={username,passwordHash:hashPassword(password),createdAt:Date.now()};
+        await db.ref(`admins/${username}`).set(adminData);
+        onLogin({username,...adminData});
+      }
+    }catch(err){
+      setError('Error: '+err.message);
+      setLoading(false);
+    }
+  };
+
+  return<div className="login-container"><div className="login-card"><div className="login-title">Admin Portal</div>
+    <div className="login-tabs">
+      <button className={`login-tab ${isLogin?'active':''}`} onClick={()=>setIsLogin(true)}>Login</button>
+      <button className={`login-tab ${!isLogin?'active':''}`} onClick={()=>setIsLogin(false)}>Register</button>
+    </div>
+    <form onSubmit={handleSubmit}>
+      <div className="form-group"><label>Username</label><input type="text" value={username} onChange={e=>setUsername(e.target.value)} required/></div>
+      <div className="form-group"><label>Password</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/></div>
+      {error&&<div className="error-box" style={{marginBottom:'20px'}}>{error}</div>}
+      <button type="submit" className="btn btn-primary" style={{width:'100%'}} disabled={loading}>{loading?'Processing...':(isLogin?'Login':'Create Account')}</button>
+    </form>
+  </div></div>;
+}
+
+// League Dashboard Component
+function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
+  const[leagues,setLeagues]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[db,setDb]=useState(null);
+
+  useEffect(()=>{
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    setDb(firebase.database());
+  },[]);
+
+  useEffect(()=>{
+    if(!db)return;
+    const loadLeagues=async()=>{
+      try{
+        const snapshot=await db.ref(`admins/${admin.username}/leagues`).once('value');
+        const leaguesData=snapshot.val()||{};
+        const userLeagues=Object.entries(leaguesData).map(([id,data])=>({id,...data}));
+        setLeagues(userLeagues);
+      }catch(err){
+        console.error('Error loading leagues:',err);
+      }
+      setLoading(false);
+    };
+    loadLeagues();
+  },[db,admin.username]);
+
+  if(loading)return<div className="main-content">Loading...</div>;
+
+  return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user">Admin: {admin.username}<button className="logout-btn" onClick={onLogout}>Logout</button></div></header>
+    <main className="main-content">
+      <div className="page-header"><div className="page-title">Your Leagues</div><div className="page-subtitle">Select a league to manage or create a new one</div></div>
+      <div className="card"><div className="card-body"><button className="btn btn-primary" onClick={onCreateNew}>+ Create New League</button></div></div>
+      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></li>)}</ul>
+      :<div className="info-box"><h4>No leagues yet</h4><p>Create your first league to get started!</p></div>}
+    </main>
+  </>;
+}
+
+// Commissioner Setup Component (existing functionality)
+function CommissionerSetup({admin,leagueId,onComplete,onBack}){
+  const[step,setStep]=useState(1);
+  const[done,setDone]=useState([]);
+  const[db,setDb]=useState(null);
+  const[sheetUrl,setSheetUrl]=useState('');
+  const[sheetId,setSheetId]=useState('');
+  const[scriptUrl,setScriptUrl]=useState('');
+  const[sheetStatus,setSheetStatus]=useState('pending');
+  const[sheetErr,setSheetErr]=useState('');
+  const[league,setLeague]=useState('');
+  const[leagueCode,setLeagueCode]=useState('');
+  const[commCode,setCommCode]=useState('');
+  const[commName,setCommName]=useState('');
+  const[commPw,setCommPw]=useState('');
+  const[timer,setTimer]=useState(120);
+  const[hitScore,setHitScore]=useState(DEFAULT_HIT);
+  const[pitScore,setPitScore]=useState(DEFAULT_PIT);
+  const[teams,setTeams]=useState(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})));
+  const[players,setPlayers]=useState([]);
+  const[playerTxt,setPlayerTxt]=useState('');
+  const[fetching,setFetching]=useState(false);
+  const[fetchProg,setFetchProg]=useState({c:0,t:0});
+  const[aucId,setAucId]=useState(null);
+  const[created,setCreated]=useState(false);
+  const[copied,setCopied]=useState(false);
+
+  useEffect(()=>{
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    setDb(firebase.database());
+  },[]);
+
+  useEffect(()=>{if(sheetUrl){const id=extractSheetId(sheetUrl);setSheetId(id||'')}},[sheetUrl]);
+
+  useEffect(()=>{
+    if(leagueId&&db){
+      db.ref(`auctions/${leagueId}`).once('value',snap=>{
+        const d=snap.val();
+        if(d){
+          setLeague(d.leagueName||'');
+          setLeagueCode(d.leagueAccessCode||'');
+          setCommCode(d.commissionerAccessCode||'');
+          setCommName(d.commissionerName||'');
+          setTimer(d.timerDuration||120);
+          setHitScore(d.hittingScoring||DEFAULT_HIT);
+          setPitScore(d.pitchingScoring||DEFAULT_PIT);
+          if(d.teams){const tArr=Object.values(d.teams).map((t,i)=>({id:i+1,name:t.name,cap:t.cap||t.salaryCap||100,sal:t.sal||t.currentSalary||0,spots:t.spots||t.spotsAvailable||5,isComm:t.isCommissioner||t.isComm||false}));setTeams(tArr)}
+          if(d.players){setPlayers(d.players.map(p=>({...p})))}
+          if(d.sheetsConfig){setScriptUrl(d.sheetsConfig.scriptUrl||'');setSheetUrl(d.sheetsConfig.sheetUrl||'');setSheetId(d.sheetsConfig.sheetId||'')}
+          setAucId(leagueId);
+          setDone([1,2,3,4]);
+        }
+      });
+    }
+  },[leagueId,db]);
+
+  const testSheets=async()=>{
+    setSheetStatus('testing');setSheetErr('');
+    if(!scriptUrl){setSheetErr('Enter the Apps Script URL');setSheetStatus('error');return}
+    if(!scriptUrl.includes('script.google.com')){setSheetErr('Invalid Apps Script URL');setSheetStatus('error');return}
+    try{
+      await fetch(scriptUrl,{method:'GET',mode:'no-cors'});
+      setSheetStatus('connected');
+    }catch(e){setSheetErr('Could not reach script. Make sure it\'s deployed.');setSheetStatus('error')}
+  };
+
+  const copyScript=()=>{navigator.clipboard.writeText(APPS_SCRIPT_CODE);setCopied(true);setTimeout(()=>setCopied(false),2000)};
+  const goStep=s=>{if(s<=step||done.includes(s-1))setStep(s)};
+  const finish=s=>{if(!done.includes(s))setDone([...done,s]);setStep(s+1)};
+  const updTeam=(id,f,v)=>{setTeams(t=>t.map(x=>x.id===id?{...x,[f]:f==='name'?v:f==='isComm'?v:parseFloat(v)||0}:x))};
+  const updHit=(k,v)=>{setHitScore(s=>({...s,[k]:parseFloat(v)||0}))};
+  const updPit=(k,v)=>{setPitScore(s=>({...s,[k]:parseFloat(v)||0}))};
+
+  const parsePlayers=txt=>{const lines=txt.trim().split('\n');if(lines.length<2)return[];const hdrs=lines[0].toLowerCase().split(',').map(h=>h.trim());const out=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(',').map(v=>v.trim());if(vals.length<4)continue;const row={};hdrs.forEach((h,j)=>{row[h]=vals[j]||''});const type=(row.type||'').toLowerCase();const pos=(row.position||row.pos||'').toUpperCase();const isP=['SP','RP','P'].some(p=>pos.includes(p));const isH=!isP||type==='both'||pos.includes('/');out.push({id:i,name:row.name||'',team:row.team||'',position:pos,owner:row.owner||'',arbYear:parseInt(row.arbyear||row.arb||'1')||1,type:type==='both'?'both':(isP&&!isH?'pitcher':'hitter'),isHitter:isH||type==='both',isPitcher:isP||type==='both',fantasyPoints:parseFloat(row.points||'0')||0})}return out};
+  const handleFile=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{const txt=ev.target.result;setPlayerTxt(txt);const p=parsePlayers(txt);if(p.length>0)setPlayers(p)};r.readAsText(f)}};
+  const handleTxt=txt=>{setPlayerTxt(txt);const p=parsePlayers(txt);if(p.length>0)setPlayers(p)};
+  const updPts=(id,pts)=>{setPlayers(p=>p.map(x=>x.id===id?{...x,fantasyPoints:parseFloat(pts)||0}:x))};
+
+  const fetchMLB=async pl=>{try{const sr=await fetch(`https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(pl.name)}&sportIds=1&active=true`);const sd=await sr.json();if(!sd.people?.length)return null;const mp=sd.people.find(p=>p.currentTeam?.abbreviation===pl.team)||sd.people[0];const pid=mp.id;const st={hit:null,pit:null};if(pl.isHitter){const hr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=hitting&sportId=1`);const hd=await hr.json();if(hd.stats?.[0]?.splits?.[0]?.stat){const s=hd.stats[0].splits[0].stat;st.hit={H:s.hits||0,'2B':s.doubles||0,'3B':s.triples||0,HR:s.homeRuns||0,RBI:s.rbi||0,R:s.runs||0,SB:s.stolenBases||0,BB:s.baseOnBalls||0,HBP:s.hitByPitch||0}}}if(pl.isPitcher){const pr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=pitching&sportId=1`);const pd=await pr.json();if(pd.stats?.[0]?.splits?.[0]?.stat){const s=pd.stats[0].splits[0].stat;st.pit={IP:parseFloat(s.inningsPitched)||0,SO:s.strikeOuts||0,HA:s.hits||0,BBA:s.baseOnBalls||0,HBP_A:s.hitBatsmen||0,ER:s.earnedRuns||0,W:s.wins||0,SV:s.saves||0,HD:s.holds||0,CG:s.completeGames||0}}}return st}catch(e){return null}};
+
+  const fetchAll=async()=>{setFetching(true);setFetchProg({c:0,t:players.length});const upd=[...players];for(let i=0;i<upd.length;i++){setFetchProg({c:i+1,t:upd.length});const st=await fetchMLB(upd[i]);if(st){let pts=0;if(st.hit){pts+=calcPts(st.hit,hitScore,pitScore,true,false);upd[i].hittingStats=st.hit}if(st.pit){pts+=calcPts(st.pit,hitScore,pitScore,false,true);upd[i].pitchingStats=st.pit}upd[i].fantasyPoints=pts}await new Promise(r=>setTimeout(r,150))}upd.sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);setPlayers(upd);setFetching(false)};
+
+  const createAuc=async()=>{
+    const id=leagueId||genId();
+    const pwHash=hashPassword(commPw);
+    const sorted=[...players].sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);
+    const tObj={};
+    teams.forEach((t,i)=>{tObj[`team_${i+1}`]={...t,joined:false,claimedBy:null,passwordHash:''}});
+    const sheetsCfg=scriptUrl?{scriptUrl,sheetUrl,sheetId}:null;
+    const data={
+      leagueName:league,
+      leagueAccessCode:leagueCode,
+      commissionerAccessCode:commCode,
+      commissionerName:commName,
+      commissionerPasswordHash:pwHash,
+      timerDuration:timer,
+      teams:tObj,
+      players:sorted.map((p,i)=>({...p,status:'pending',order:i})),
+      hittingScoring:hitScore,
+      pitchingScoring:pitScore,
+      sheetsConfig:sheetsCfg,
+      currentPlayerIndex:0,
+      phase:'lobby',
+      createdBy:admin.username,
+      createdAt:Date.now(),
+      bidHistory:[]
+    };
+    if(db){
+      await db.ref(`auctions/${id}`).set(data);
+      await db.ref(`admins/${admin.username}/leagues/${id}`).set({name:league,createdAt:Date.now()});
+      setAucId(id);
+      setCreated(true);
+      onComplete(id,league);
+    }
+  };
+
+  const getUrl=()=>{const u=window.location.href;const i=u.lastIndexOf('/');return`${u.substring(0,i+1)}auction.html?league=${aucId||leagueId}`};
+  const enter=()=>{window.location.href=getUrl()+'&role=commissioner'};
+
+  const resetTab=()=>{
+    if(step===1){setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('')}
+    if(step===2){setHitScore(DEFAULT_HIT);setPitScore(DEFAULT_PIT)}
+    if(step===3){setLeague('');setLeagueCode('');setCommCode('');setCommName('');setCommPw('');setTimer(120);setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})))}
+    if(step===4){setPlayers([]);setPlayerTxt('')}
+  };
+
+  const resetAll=()=>{
+    if(confirm('Reset all settings? This cannot be undone.')){
+      setStep(1);setDone([]);setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('');setLeague('');setLeagueCode('');setCommCode('');setCommName('');setCommPw('');setTimer(120);setHitScore(DEFAULT_HIT);setPitScore(DEFAULT_PIT);setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})));setPlayers([]);setPlayerTxt('');setAucId(null);setCreated(false)
+    }
+  };
+
+  return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user" style={{display:'flex',gap:'12px'}}><button className="logout-btn" onClick={onBack}>← Dashboard</button><button className="logout-btn" onClick={resetTab}>Reset Tab</button><button className="logout-btn" onClick={resetAll}>Reset All</button></div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
+    <main className="main-content">
+      <div className="steps">{[1,2,3,4,5].map(s=><div key={s} className={`step ${step===s?'active':''} ${done.includes(s)?'completed':''} ${s>step&&!done.includes(s-1)?'disabled':''}`} onClick={()=>goStep(s)}><span className="step-number">{done.includes(s)?'✓':s}</span><span className="step-label">{s===1&&'Google Sheets'}{s===2&&'Scoring'}{s===3&&'League'}{s===4&&'Players'}{s===5&&'Launch'}</span></div>)}</div>
+
+      {step===1&&<><div className="page-header"><h1 className="page-title">Google Sheets Setup</h1><p className="page-subtitle">Live sync auction results to Google Sheets (optional but recommended)</p></div>
+        <div className="card"><div className="card-header">Google Sheets Configuration</div><div className="card-body">
+          <div className="info-box"><h4>📋 Setup Instructions</h4><ol>
+            <li>Create a new Google Sheet at <a href="https://sheets.google.com" target="_blank">sheets.google.com</a></li>
+            <li>In your sheet, go to <strong>Extensions → Apps Script</strong></li>
+            <li>Delete any existing code and paste the script below</li>
+            <li>Click <strong>Deploy → New deployment</strong></li>
+            <li>Select type: <strong>Web app</strong></li>
+            <li>Set "Who has access" to <strong>Anyone</strong></li>
+            <li>Click <strong>Deploy</strong> and authorize when prompted</li>
+            <li>Copy the <strong>Web app URL</strong> and paste below</li>
+          </ol></div>
+
+          <div className="form-group">
+            <label>1. Copy This Script</label>
+            <div className="script-box"><pre>{APPS_SCRIPT_CODE}</pre></div>
+            <button className="copy-btn" onClick={copyScript}>{copied?'✓ Copied!':'📋 Copy Script to Clipboard'}</button>
+          </div>
+
+          <div className="form-group">
+            <label>2. Paste Your Web App URL</label>
+            <input value={scriptUrl} onChange={e=>setScriptUrl(e.target.value)} placeholder="https://script.google.com/macros/s/.../exec"/>
+            <div className="form-hint">This URL is shown after you deploy the Apps Script</div>
+          </div>
+
+          <div className="form-group">
+            <label>3. Paste Your Google Sheet URL (optional, for easy access)</label>
+            <input value={sheetUrl} onChange={e=>setSheetUrl(e.target.value)} placeholder="https://docs.google.com/spreadsheets/d/.../edit"/>
+          </div>
+
+          {scriptUrl&&<button className="btn btn-blue" onClick={testSheets}>{sheetStatus==='testing'?'Testing...':'Verify Connection'}</button>}
+          {sheetStatus==='connected'&&<div className="success-box" style={{marginTop:'20px'}}><h4>✓ Google Sheets Ready!</h4><p>Your auction results will sync automatically.</p></div>}
+          {sheetStatus==='error'&&<div className="error-box" style={{marginTop:'20px'}}>{sheetErr}</div>}
+        </div></div>
+        <button className="btn btn-primary" onClick={()=>finish(1)}>{scriptUrl?'Continue →':'Skip for Now →'}</button>
+      </>}
+
+      {step===2&&<><div className="page-header"><h1 className="page-title">Scoring Settings</h1><p className="page-subtitle">Configure fantasy point values</p></div>
+        <div className="card"><div className="card-header">⚾ Hitting</div><div className="card-body"><div className="scoring-inline">{Object.entries(hitScore).map(([k,v])=><div key={k} className={`scoring-item ${v<0?'negative':''}`}><label>{k}</label><input type="number" step="0.5" value={v} onChange={e=>updHit(k,e.target.value)}/></div>)}</div></div></div>
+        <div className="card"><div className="card-header">⚾ Pitching</div><div className="card-body"><div className="scoring-inline">{Object.entries(pitScore).map(([k,v])=><div key={k} className={`scoring-item ${v<0?'negative':''}`}><label>{k}</label><input type="number" step="0.5" value={v} onChange={e=>updPit(k,e.target.value)}/></div>)}</div><div className="form-hint" style={{marginTop:'16px'}}>Negative = subtract points</div></div></div>
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(1)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(2)}>Continue →</button></div>
+      </>}
+
+      {step===3&&<><div className="page-header"><h1 className="page-title">League Settings</h1></div>
+        <div className="card"><div className="card-header">General</div><div className="card-body">
+          <div className="form-row">
+            <div className="form-group"><label>League Name</label><input value={league} onChange={e=>setLeague(e.target.value)}/></div>
+            <div className="form-group"><label>Commissioner</label><input value={commName} onChange={e=>setCommName(e.target.value)}/></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>League Access Code</label><input value={leagueCode} onChange={e=>setLeagueCode(e.target.value)} placeholder="All users need this"/><div className="form-hint">Share with all league members</div></div>
+            <div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e=>setCommCode(e.target.value)} placeholder="Only commissioners need this"/><div className="form-hint">Keep this private</div></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>Password</label><input type="password" value={commPw} onChange={e=>setCommPw(e.target.value)}/></div>
+            <div className="form-group"><label>Timer (sec)</label><input type="number" value={timer} onChange={e=>setTimer(parseInt(e.target.value)||120)}/></div>
+          </div>
+        </div></div>
+        <div className="card"><div className="card-header">Teams</div><div className="card-body">
+          <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>Max Bid = Cap - Salary - Spots + 1. Min salary $1.00.</p>
+          <div style={{overflowX:'auto'}}><table className="data-table"><thead><tr><th>#</th><th>Name</th><th>Comm</th><th>Cap</th><th>Salary</th><th>Spots</th><th>Avail</th><th>Max</th></tr></thead><tbody>
+            {teams.map((t,i)=>{const av=t.cap-t.sal;const mx=Math.max(0,t.cap-t.sal-t.spots+1);return<tr key={t.id}><td>{i+1}</td><td><input type="text" value={t.name} onChange={e=>updTeam(t.id,'name',e.target.value)}/></td><td style={{textAlign:'center'}}><input type="checkbox" checked={t.isComm||false} onChange={e=>updTeam(t.id,'isComm',e.target.checked)} style={{width:'20px',height:'20px'}}/></td><td><input type="number" value={t.cap} onChange={e=>updTeam(t.id,'cap',e.target.value)}/></td><td><input type="number" value={t.sal} onChange={e=>updTeam(t.id,'sal',e.target.value)}/></td><td><input type="number" value={t.spots} onChange={e=>updTeam(t.id,'spots',e.target.value)} min="1"/></td><td style={{color:'var(--espn-success)',fontWeight:600}}>${fmt(av)}</td><td style={{color:'var(--espn-blue)',fontWeight:600}}>${fmt(mx)}</td></tr>})}
+          </tbody></table></div>
+        </div></div>
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(2)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(3)} disabled={!league||!commPw||!leagueCode||!commCode}>Continue →</button></div>
+      </>}
+
+      {step===4&&<><div className="page-header"><h1 className="page-title">Players</h1></div>
+        <div className="card"><div className="card-header">Import</div><div className="card-body">
+          <div style={{display:'flex',gap:'16px',marginBottom:'20px',flexWrap:'wrap'}}><input type="file" accept=".csv" onChange={handleFile} style={{display:'none'}} id="csvUp"/><label htmlFor="csvUp" className="btn btn-secondary" style={{cursor:'pointer'}}>📁 Upload CSV</label><button className="btn btn-secondary" onClick={()=>downloadCSV(csvTemplate(),'template.csv')}>📥 Template</button><button className="btn btn-blue" onClick={fetchAll} disabled={players.length===0||fetching}>{fetching?`Fetching ${fetchProg.c}/${fetchProg.t}...`:'🔄 Fetch MLB Stats'}</button></div>
+          {fetching&&<div className="progress-bar"><div className="progress-bar-fill" style={{width:`${(fetchProg.c/fetchProg.t)*100}%`}}/></div>}
+          <div className="form-group"><label>Or Paste CSV</label><textarea style={{minHeight:'140px',fontFamily:'monospace'}} value={playerTxt} onChange={e=>handleTxt(e.target.value)} placeholder="Name,Team,Position,Owner,ArbYear,Type,Points"/></div>
+        </div></div>
+        {players.length>0&&<div className="card"><div className="card-header">Players ({players.length})</div><div className="card-body"><div style={{overflowX:'auto',maxHeight:'500px'}}><table className="data-table"><thead><tr><th>Name</th><th>Team</th><th>Pos</th><th>Owner</th><th>Arb</th><th>Type</th><th>Points</th></tr></thead><tbody>
+          {players.map(p=><tr key={p.id}><td style={{fontWeight:500}}>{p.name}</td><td>{p.team}</td><td>{p.position}</td><td>{p.owner}</td><td><span className={`arb-badge arb-${p.arbYear}`}>ARB {p.arbYear}</span></td><td style={{textTransform:'capitalize'}}>{p.type}</td><td><input type="number" step="0.01" value={p.fantasyPoints||''} onChange={e=>updPts(p.id,e.target.value)} style={{width:'100px'}}/></td></tr>)}
+        </tbody></table></div></div></div>}
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(3)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(4)} disabled={players.length===0}>Continue →</button></div>
+      </>}
+
+      {step===5&&<><div className="page-header"><h1 className="page-title">Launch Auction</h1></div>
+        <div className="card"><div className="card-header">Summary</div><div className="card-body">
+          <p style={{marginBottom:'10px'}}><strong>League:</strong> {league}</p>
+          <p style={{marginBottom:'10px'}}><strong>Teams:</strong> {teams.length}</p>
+          <p style={{marginBottom:'10px'}}><strong>Players:</strong> {players.length}</p>
+          <p style={{marginBottom:'10px'}}><strong>Timer:</strong> {timer}s</p>
+          <p><strong>Google Sheets:</strong> {scriptUrl?'✓ Configured':'Not configured'}</p>
+        </div></div>
+        {!created?<button className="btn btn-success" onClick={createAuc} style={{width:'100%',padding:'20px',fontSize:'18px'}}>🚀 Create Auction</button>
+        :<div className="success-box"><h4>✓ Auction Created!</h4><p style={{marginTop:'12px'}}>Auction ID: <strong>{aucId||leagueId}</strong></p><div className="auction-link"><input value={getUrl()} readOnly/><button className="btn btn-secondary" onClick={()=>navigator.clipboard.writeText(getUrl())}>Copy</button></div><button className="btn btn-primary" onClick={enter} style={{marginTop:'20px',width:'100%'}}>Enter Auction →</button></div>}
+      </>}
+    </main>
+  </>;
+}
+
+// League Management Component
+function LeagueManagement({leagueId,onBack,onEdit}){
+  const[league,setLeague]=useState(null);
+  const[db,setDb]=useState(null);
+  const[copied,setCopied]=useState(false);
+
+  useEffect(()=>{
+    if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+    setDb(firebase.database());
+  },[]);
+
+  useEffect(()=>{
+    if(leagueId&&db){
+      db.ref(`auctions/${leagueId}`).once('value',snap=>{
+        const d=snap.val();
+        if(d)setLeague({id:leagueId,...d});
+      });
+    }
+  },[leagueId,db]);
+
+  const getUrl=()=>`${window.location.href.substring(0,window.location.href.lastIndexOf('/')+1)}auction.html?league=${leagueId}`;
+  const copyUrl=()=>{navigator.clipboard.writeText(getUrl());setCopied(true);setTimeout(()=>setCopied(false),2000)};
+  const enterAuction=()=>{window.location.href=getUrl()+'&role=commissioner'};
+
+  if(!league)return<div className="loading-screen"><div className="loading-spinner"/><p>Loading league...</p></div>;
+
+  return<><header className="header"><div className="header-title">League Management</div></header>
+    <nav className="nav"><div className="nav-item active">{league.leagueName}</div></nav>
+    <main className="main-content">
+      <div className="page-header"><h1 className="page-title">{league.leagueName}</h1><p className="page-subtitle">League ID: {leagueId}</p></div>
+      
+      <div className="card"><div className="card-header">Auction Link</div><div className="card-body">
+        <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>Share this link with your league members to join the auction:</p>
+        <div className="auction-link"><input value={getUrl()} readOnly/><button className="btn btn-secondary" onClick={copyUrl}>{copied?'✓ Copied!':'Copy Link'}</button></div>
+        <button className="btn btn-primary" onClick={enterAuction} style={{marginTop:'20px',width:'100%'}}>Enter Auction as Commissioner →</button>
+      </div></div>
+
+      <div className="card"><div className="card-header">Access Codes</div><div className="card-body">
+        <div className="form-row">
+          <div><label style={{fontSize:'13px',fontWeight:600,color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px',display:'block'}}>League Access Code</label><p style={{fontSize:'18px',fontWeight:700,color:'var(--espn-blue)'}}>{league.leagueAccessCode}</p><p style={{fontSize:'13px',color:'var(--espn-text-muted)',marginTop:'4px'}}>Share with all league members</p></div>
+          <div><label style={{fontSize:'13px',fontWeight:600,color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px',display:'block'}}>Commissioner Access Code</label><p style={{fontSize:'18px',fontWeight:700,color:'var(--espn-orange)'}}>{league.commissionerAccessCode}</p><p style={{fontSize:'13px',color:'var(--espn-text-muted)',marginTop:'4px'}}>Only for commissioners</p></div>
+        </div>
+      </div></div>
+
+      <div className="card"><div className="card-header">League Summary</div><div className="card-body">
+        <div className="form-row">
+          <div><p style={{marginBottom:'10px'}}><strong>Teams:</strong> {league.teams?Object.keys(league.teams).length:0}</p><p style={{marginBottom:'10px'}}><strong>Players:</strong> {league.players?league.players.length:0}</p></div>
+          <div><p style={{marginBottom:'10px'}}><strong>Timer:</strong> {league.timerDuration}s</p><p style={{marginBottom:'10px'}}><strong>Google Sheets:</strong> {league.sheetsConfig?'✓ Configured':'Not configured'}</p></div>
+        </div>
+      </div></div>
+
+      <div style={{display:'flex',gap:'16px',marginTop:'32px'}}>
+        <button className="btn btn-secondary" onClick={onBack} style={{flex:1}}>← Back to Dashboard</button>
+        <button className="btn btn-blue" onClick={onEdit} style={{flex:1}}>Edit League Settings</button>
+      </div>
+    </main>
+  </>;
+}
+
+// Main App Component
+function App(){
+  const[admin,setAdmin]=useState(null);
+  const[view,setView]=useState('login');
+  const[currentLeagueId,setCurrentLeagueId]=useState(null);
+
+  const handleLogin=(adminData)=>{
+    setAdmin(adminData);
+    setView('dashboard');
+  };
+
+  const handleLogout=()=>{
+    setAdmin(null);
+    setView('login');
+  };
+
+  const handleCreateNew=()=>{
+    setCurrentLeagueId(null);
+    setView('setup');
+  };
+
+  const handleSelectLeague=(leagueId)=>{
+    setCurrentLeagueId(leagueId);
+    setView('setup');
+  };
+
+  const handleComplete=(leagueId,leagueName)=>{
+    setCurrentLeagueId(leagueId);
+    setView('manage');
+  };
+
+  const handleBackToDashboard=()=>{
+    setCurrentLeagueId(null);
+    setView('dashboard');
+  };
+
+  if(view==='login')return<AdminLogin onLogin={handleLogin}/>;
+  if(view==='dashboard')return<LeagueDashboard admin={admin} onSelectLeague={handleSelectLeague} onCreateNew={handleCreateNew} onLogout={handleLogout}/>;
+  if(view==='setup')return<CommissionerSetup admin={admin} leagueId={currentLeagueId} onComplete={handleComplete} onBack={handleBackToDashboard}/>;
+  if(view==='manage')return<LeagueManagement leagueId={currentLeagueId} onBack={handleBackToDashboard} onEdit={()=>setView('setup')}/>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
   </script>
 </body>
 </html>
