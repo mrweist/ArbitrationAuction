@@ -517,7 +517,7 @@ function App() {
     const pls = auction?.players || []; const t = auction?.teams?.[userTeamId]; const mx = maxBid(t);
     return (
       <>
-        <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info"><span>{userTeamName}</span></div></header>
+        <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auctionUser');window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div></header>
         <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
         <div style={{ maxWidth: '900px', margin: '24px auto', padding: '0 24px' }}>
           {auction?.phase === 'lobby' && <div className="lobby-info" style={{ marginBottom: '24px', background: '#e3f2fd' }}><div className="lobby-status">⏳ Waiting for Commissioner to Start</div></div>}
@@ -622,6 +622,92 @@ function App() {
     );
   }
 
+  // USERS TAB (Commissioner only)
+  if (activeTab === 'users' && isComm) {
+    const teams = Object.entries(auction?.teams || {});
+    const claimedTeams = teams.filter(([_, t]) => t.claimedBy);
+    const unclaimedTeams = teams.filter(([_, t]) => !t.claimedBy);
+    
+    const removeUser = async (teamId) => {
+      if (!confirm('Remove this user? The team will become claimable again.')) return;
+      try {
+        await db.ref(`auctions/${leagueId}/teams/${teamId}`).update({ claimedBy: null, passwordHash: '', joined: false });
+      } catch (e) {
+        alert('Error removing user: ' + e.message);
+      }
+    };
+
+    return (
+      <>
+        <header className="header">
+          <div className="header-title">Arbitration Auction</div>
+          <div className="user-info">
+            {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
+            <span>{userTeamName}</span>
+            {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
+            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auctionUser');window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
+          </div>
+        </header>
+        <nav className="nav">
+          <div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div>
+          <div className="nav-tabs">
+            <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
+            <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History ({auction?.bidHistory?.length || 0})</div>
+            <div className={'nav-tab ' + (activeTab === 'users' ? 'active' : '')} onClick={() => setActiveTab('users')}>Users</div>
+          </div>
+        </nav>
+        <div className="history-container">
+          <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem', marginBottom: '24px' }}>User Management</h2>
+          
+          <div className="card" style={{marginBottom:'24px'}}>
+            <div className="card-header">Claimed Teams ({claimedTeams.length})</div>
+            <div className="card-body">
+              {claimedTeams.length === 0 ? <p style={{color:'var(--espn-text-muted)'}}>No teams claimed yet.</p> :
+                <div style={{overflowX:'auto'}}>
+                  <table className="history-table">
+                    <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Action</th></tr></thead>
+                    <tbody>
+                      {claimedTeams.map(([id, t]) => (
+                        <tr key={id}>
+                          <td style={{fontWeight:600}}>{t.name}</td>
+                          <td>{t.claimedBy}</td>
+                          <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
+                          <td><button className="btn btn-secondary" onClick={() => removeUser(id)} style={{padding:'6px 12px',fontSize:'13px'}}>❌ Remove</button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-header">Unclaimed Teams ({unclaimedTeams.length})</div>
+            <div className="card-body">
+              {unclaimedTeams.length === 0 ? <p style={{color:'var(--espn-text-muted)'}}>All teams have been claimed!</p> :
+                <div style={{overflowX:'auto'}}>
+                  <table className="history-table">
+                    <thead><tr><th>Team</th><th>Commissioner</th><th>Status</th></tr></thead>
+                    <tbody>
+                      {unclaimedTeams.map(([id, t]) => (
+                        <tr key={id}>
+                          <td style={{fontWeight:600}}>{t.name}</td>
+                          <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
+                          <td style={{color:'var(--espn-orange)',fontWeight:600}}>Available</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   // MAIN AUCTION VIEW
   return (
     <>
@@ -631,6 +717,7 @@ function App() {
           {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
           <span>{userTeamName}</span>
           {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
+          <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auctionUser');window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
         </div>
       </header>
       <nav className="nav">
@@ -641,6 +728,7 @@ function App() {
         <div className="nav-tabs">
           <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
           <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History ({auction?.bidHistory?.length || 0})</div>
+          <div className={'nav-tab ' + (activeTab === 'users' ? 'active' : '')} onClick={() => setActiveTab('users')}>Users</div>
         </div>
       </nav>
 
