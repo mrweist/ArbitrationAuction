@@ -197,25 +197,13 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
     loadLeagues();
   },[db,admin.username]);
 
-  const deleteLeague=async(leagueId,e)=>{
-    e.stopPropagation();
-    if(!confirm('Delete this league? This cannot be undone.'))return;
-    try{
-      await db.ref(`admins/${admin.username}/leagues/${leagueId}`).remove();
-      await db.ref(`auctions/${leagueId}`).remove();
-      setLeagues(leagues.filter(l=>l.id!==leagueId));
-    }catch(err){
-      alert('Error deleting league: '+err.message);
-    }
-  };
-
   if(loading)return<div className="main-content">Loading...</div>;
 
   return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user">Admin: {admin.username}<button className="logout-btn" onClick={onLogout}>Logout</button></div></header>
     <main className="main-content">
       <div className="page-header"><div className="page-title">Your Leagues</div><div className="page-subtitle">Select a league to manage or create a new one</div></div>
       <div className="card"><div className="card-body"><button className="btn btn-primary" onClick={onCreateNew}>+ Create New League</button></div></div>
-      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item" onClick={()=>onSelectLeague(league.id)}><div style={{flex:1}}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><button className="btn btn-secondary" onClick={(e)=>deleteLeague(league.id,e)} style={{padding:'8px 16px',fontSize:'13px'}}>❌ Delete</button></li>)}</ul>
+      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></li>)}</ul>
       :<div className="info-box"><h4>No leagues yet</h4><p>Create your first league to get started!</p></div>}
     </main>
   </>;
@@ -298,10 +286,6 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
   const handleTxt=txt=>{setPlayerTxt(txt);const p=parsePlayers(txt);if(p.length>0)setPlayers(p)};
   const updPts=(id,pts)=>{setPlayers(p=>p.map(x=>x.id===id?{...x,fantasyPoints:parseFloat(pts)||0}:x))};
 
-  const teamTemplate=()=>'Name,Cap,Salary,Spots,IsCommissioner\nTeam 1,100,0,5,true\nTeam 2,100,0,5,false\nTeam 3,100,0,5,false';
-  const parseTeams=txt=>{const lines=txt.trim().split('\n');if(lines.length<2)return[];const hdrs=lines[0].toLowerCase().split(',').map(h=>h.trim());const out=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(',').map(v=>v.trim());if(vals.length<4)continue;const row={};hdrs.forEach((h,j)=>{row[h]=vals[j]||''});const isComm=(row.iscommissioner||row.commissioner||row.comm||'').toLowerCase();out.push({id:i,name:row.name||`Team ${i}`,cap:parseFloat(row.cap||'100')||100,sal:parseFloat(row.salary||row.sal||'0')||0,spots:parseInt(row.spots||'5')||5,isComm:isComm==='true'||isComm==='yes'||isComm==='1'})}return out};
-  const handleTeamFile=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{const txt=ev.target.result;const t=parseTeams(txt);if(t.length>0)setTeams(t)};r.readAsText(f)}};
-
   const fetchMLB=async pl=>{try{const sr=await fetch(`https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(pl.name)}&sportIds=1&active=true`);const sd=await sr.json();if(!sd.people?.length)return null;const mp=sd.people.find(p=>p.currentTeam?.abbreviation===pl.team)||sd.people[0];const pid=mp.id;const st={hit:null,pit:null,team:mp.currentTeam?.abbreviation||pl.team,position:mp.primaryPosition?.abbreviation||pl.position};const hr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=hitting&sportId=1`);const hd=await hr.json();if(hd.stats?.[0]?.splits?.[0]?.stat){const s=hd.stats[0].splits[0].stat;st.hit={H:s.hits||0,'2B':s.doubles||0,'3B':s.triples||0,HR:s.homeRuns||0,RBI:s.rbi||0,R:s.runs||0,SB:s.stolenBases||0,BB:s.baseOnBalls||0,HBP:s.hitByPitch||0}}const pr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=pitching&sportId=1`);const pd=await pr.json();if(pd.stats?.[0]?.splits?.[0]?.stat){const s=pd.stats[0].splits[0].stat;st.pit={IP:parseFloat(s.inningsPitched)||0,SO:s.strikeOuts||0,HA:s.hits||0,BBA:s.baseOnBalls||0,HBP_A:s.hitBatsmen||0,ER:s.earnedRuns||0,W:s.wins||0,SV:s.saves||0,HD:s.holds||0,CG:s.completeGames||0}}return st}catch(e){return null}};
 
   const fetchAll=async()=>{setFetching(true);setFetchProg({c:0,t:players.length});const upd=[...players];for(let i=0;i<upd.length;i++){setFetchProg({c:i+1,t:upd.length});const st=await fetchMLB(upd[i]);if(st){let pts=0;if(st.team)upd[i].team=st.team;if(st.position)upd[i].position=st.position;if(st.hit){pts+=calcPts(st.hit,hitScore,pitScore,true,false);upd[i].hittingStats=st.hit;upd[i].isHitter=true}if(st.pit){pts+=calcPts(st.pit,hitScore,pitScore,false,true);upd[i].pitchingStats=st.pit;upd[i].isPitcher=true}if(st.hit&&st.pit){upd[i].type='both'}else if(st.pit){upd[i].type='pitcher'}else{upd[i].type='hitter'}upd[i].fantasyPoints=pts;upd[i].needsDetection=false}await new Promise(r=>setTimeout(r,150))}upd.sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);setPlayers(upd);setFetching(false)};
@@ -345,7 +329,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
   const resetTab=()=>{
     if(step===1){setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('')}
     if(step===2){setHitScore(DEFAULT_HIT);setPitScore(DEFAULT_PIT)}
-    if(step===3){setLeague('');setLeagueCode('');setCommCode('');setCommName('');setTimer(120);setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0}))}
+    if(step===3){setLeague('');setLeagueCode('');setCommCode('');setCommName('');setCommPw('');setTimer(120);setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})))}
     if(step===4){setPlayers([]);setPlayerTxt('')}
   };
 
@@ -415,7 +399,6 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
           <div className="form-group"><label>Timer (sec)</label><input type="number" value={timer} onChange={e=>setTimer(parseInt(e.target.value)||120)}/><div className="form-hint">Countdown duration for each player</div></div>
         </div></div>
         <div className="card"><div className="card-header">Teams</div><div className="card-body">
-          <div style={{display:'flex',gap:'16px',marginBottom:'20px',flexWrap:'wrap'}}><input type="file" accept=".csv" onChange={handleTeamFile} style={{display:'none'}} id="teamCsvUp"/><label htmlFor="teamCsvUp" className="btn btn-secondary" style={{cursor:'pointer'}}>📁 Upload CSV</label><button className="btn btn-secondary" onClick={()=>downloadCSV(teamTemplate(),'team_template.csv')}>📥 Template</button>{teams.length>0&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Clear all teams?')){setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})))}}}>❌ Clear Teams</button>}</div>
           <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>Max Bid = Cap - Salary - Spots + 1. Min salary $1.00.</p>
           <div style={{overflowX:'auto'}}><table className="data-table"><thead><tr><th>#</th><th>Name</th><th>Comm</th><th>Cap</th><th>Salary</th><th>Spots</th><th>Avail</th><th>Max</th></tr></thead><tbody>
             {teams.map((t,i)=>{const av=t.cap-t.sal;const mx=Math.max(0,t.cap-t.sal-t.spots+1);return<tr key={t.id}><td>{i+1}</td><td><input type="text" value={t.name} onChange={e=>updTeam(t.id,'name',e.target.value)}/></td><td style={{textAlign:'center'}}><input type="checkbox" checked={t.isComm||false} onChange={e=>updTeam(t.id,'isComm',e.target.checked)} style={{width:'20px',height:'20px'}}/></td><td><input type="number" value={t.cap} onChange={e=>updTeam(t.id,'cap',e.target.value)}/></td><td><input type="number" value={t.sal} onChange={e=>updTeam(t.id,'sal',e.target.value)}/></td><td><input type="number" value={t.spots} onChange={e=>updTeam(t.id,'spots',e.target.value)} min="1"/></td><td style={{color:'var(--espn-success)',fontWeight:600}}>${fmt(av)}</td><td style={{color:'var(--espn-blue)',fontWeight:600}}>${fmt(mx)}</td></tr>})}
