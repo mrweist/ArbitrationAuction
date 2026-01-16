@@ -494,8 +494,8 @@ function App() {
 
   const downloadPrebidTemplate = () => {
     if (!auction?.players) return;
-    let csv = 'PlayerName,Bid\n';
-    auction.players.forEach(p => { csv += '"' + p.name + '",0.00\n'; });
+    let csv = 'Player,Team,Owner,Arb,Points,Bid\n';
+    auction.players.forEach(p => { csv += '"' + p.name + '","' + (p.team||'') + '","' + (p.owner||'') + '",' + (p.arbYear||'') + ',' + (p.fantasyPoints||0) + ',0\n'; });
     const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = auction.leagueName + '_prebid_template.csv'; a.click(); URL.revokeObjectURL(url);
   };
@@ -665,7 +665,8 @@ function App() {
           <div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div>
           <div className="nav-tabs">
             <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
-            <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History</div>
+            <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History ({auction?.bidHistory?.length || 0})</div>
+            {isComm && <div className={'nav-tab ' + (activeTab === 'users' ? 'active' : '')} onClick={() => setActiveTab('users')}>Users</div>}
           </div>
         </nav>
         <div className="history-container">
@@ -777,17 +778,20 @@ function App() {
               {claimedTeams.length === 0 ? <p style={{color:'var(--espn-text-muted)'}}>No teams claimed yet.</p> :
                 <div style={{overflowX:'auto'}}>
                   <table className="history-table">
-                    <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Actions</th></tr></thead>
                     <tbody>
-                      {claimedTeams.map(([id, t]) => (
+                      {claimedTeams.map(([id, t]) => {
+                        const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
+                        const prebidCount = hasPrebids ? Object.keys(auction.preBids[id]).length : 0;
+                        return (
                         <tr key={id}>
                           <td style={{fontWeight:600}}>{t.name}</td>
                           <td>{t.claimedBy}</td>
                           <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
-                          <td><input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 Upload</button></td>
-                          <td><button className="btn btn-secondary" onClick={() => removeUser(id)} style={{padding:'6px 12px',fontSize:'13px'}}>❌ Remove</button></td>
+                          <td>{hasPrebids ? <span style={{color:'var(--espn-green)',fontWeight:600}}>✅ {prebidCount} bids</span> : <span style={{color:'var(--espn-text-muted)'}}>None</span>}</td>
+                          <td><div style={{display:'flex',gap:'8px'}}><input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>{hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'6px 12px',fontSize:'13px'}}>🗑️ Delete</button>}<button className="btn btn-secondary" onClick={() => removeUser(id)} style={{padding:'6px 12px',fontSize:'13px'}}>❌ Remove</button></div></td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
                 </div>
