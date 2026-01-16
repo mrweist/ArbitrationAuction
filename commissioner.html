@@ -223,7 +223,6 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
   const[leagueCode,setLeagueCode]=useState('');
   const[commCode,setCommCode]=useState('');
   const[commName,setCommName]=useState('');
-  const[commPw,setCommPw]=useState('');
   const[timer,setTimer]=useState(120);
   const[hitScore,setHitScore]=useState(DEFAULT_HIT);
   const[pitScore,setPitScore]=useState(DEFAULT_PIT);
@@ -282,18 +281,18 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
   const updHit=(k,v)=>{setHitScore(s=>({...s,[k]:parseFloat(v)||0}))};
   const updPit=(k,v)=>{setPitScore(s=>({...s,[k]:parseFloat(v)||0}))};
 
-  const parsePlayers=txt=>{const lines=txt.trim().split('\n');if(lines.length<2)return[];const hdrs=lines[0].toLowerCase().split(',').map(h=>h.trim());const out=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(',').map(v=>v.trim());if(vals.length<4)continue;const row={};hdrs.forEach((h,j)=>{row[h]=vals[j]||''});const type=(row.type||'').toLowerCase();const pos=(row.position||row.pos||'').toUpperCase();const isP=['SP','RP','P'].some(p=>pos.includes(p));const isH=!isP||type==='both'||pos.includes('/');out.push({id:i,name:row.name||'',team:row.team||'',position:pos,owner:row.owner||'',arbYear:parseInt(row.arbyear||row.arb||'1')||1,type:type==='both'?'both':(isP&&!isH?'pitcher':'hitter'),isHitter:isH||type==='both',isPitcher:isP||type==='both',fantasyPoints:parseFloat(row.points||'0')||0})}return out};
+  const parsePlayers=txt=>{const lines=txt.trim().split('\n');if(lines.length<2)return[];const hdrs=lines[0].toLowerCase().split(',').map(h=>h.trim());const out=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(',').map(v=>v.trim());if(vals.length<3)continue;const row={};hdrs.forEach((h,j)=>{row[h]=vals[j]||''});const type=(row.type||'').toLowerCase();const pos=(row.position||row.pos||'').toUpperCase();const team=(row.team||'').toUpperCase();const isP=['SP','RP','P'].some(p=>pos.includes(p));const isH=!isP||type==='both'||pos.includes('/');out.push({id:i,name:row.name||'',team:team||'TBD',position:pos||'TBD',owner:row.owner||'',arbYear:parseInt(row.arbyear||row.arb||'1')||1,type:type||(pos?isP&&!isH?'pitcher':'hitter':'TBD'),isHitter:pos?isH||type==='both':true,isPitcher:pos?isP||type==='both':false,fantasyPoints:parseFloat(row.points||'0')||0,needsDetection:!team||!pos||!type})}return out};
   const handleFile=e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{const txt=ev.target.result;setPlayerTxt(txt);const p=parsePlayers(txt);if(p.length>0)setPlayers(p)};r.readAsText(f)}};
   const handleTxt=txt=>{setPlayerTxt(txt);const p=parsePlayers(txt);if(p.length>0)setPlayers(p)};
   const updPts=(id,pts)=>{setPlayers(p=>p.map(x=>x.id===id?{...x,fantasyPoints:parseFloat(pts)||0}:x))};
 
-  const fetchMLB=async pl=>{try{const sr=await fetch(`https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(pl.name)}&sportIds=1&active=true`);const sd=await sr.json();if(!sd.people?.length)return null;const mp=sd.people.find(p=>p.currentTeam?.abbreviation===pl.team)||sd.people[0];const pid=mp.id;const st={hit:null,pit:null};if(pl.isHitter){const hr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=hitting&sportId=1`);const hd=await hr.json();if(hd.stats?.[0]?.splits?.[0]?.stat){const s=hd.stats[0].splits[0].stat;st.hit={H:s.hits||0,'2B':s.doubles||0,'3B':s.triples||0,HR:s.homeRuns||0,RBI:s.rbi||0,R:s.runs||0,SB:s.stolenBases||0,BB:s.baseOnBalls||0,HBP:s.hitByPitch||0}}}if(pl.isPitcher){const pr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=pitching&sportId=1`);const pd=await pr.json();if(pd.stats?.[0]?.splits?.[0]?.stat){const s=pd.stats[0].splits[0].stat;st.pit={IP:parseFloat(s.inningsPitched)||0,SO:s.strikeOuts||0,HA:s.hits||0,BBA:s.baseOnBalls||0,HBP_A:s.hitBatsmen||0,ER:s.earnedRuns||0,W:s.wins||0,SV:s.saves||0,HD:s.holds||0,CG:s.completeGames||0}}}return st}catch(e){return null}};
+  const fetchMLB=async pl=>{try{const sr=await fetch(`https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(pl.name)}&sportIds=1&active=true`);const sd=await sr.json();if(!sd.people?.length)return null;const mp=sd.people.find(p=>p.currentTeam?.abbreviation===pl.team)||sd.people[0];const pid=mp.id;const st={hit:null,pit:null,team:mp.currentTeam?.abbreviation||pl.team,position:mp.primaryPosition?.abbreviation||pl.position};const hr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=hitting&sportId=1`);const hd=await hr.json();if(hd.stats?.[0]?.splits?.[0]?.stat){const s=hd.stats[0].splits[0].stat;st.hit={H:s.hits||0,'2B':s.doubles||0,'3B':s.triples||0,HR:s.homeRuns||0,RBI:s.rbi||0,R:s.runs||0,SB:s.stolenBases||0,BB:s.baseOnBalls||0,HBP:s.hitByPitch||0}}const pr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=pitching&sportId=1`);const pd=await pr.json();if(pd.stats?.[0]?.splits?.[0]?.stat){const s=pd.stats[0].splits[0].stat;st.pit={IP:parseFloat(s.inningsPitched)||0,SO:s.strikeOuts||0,HA:s.hits||0,BBA:s.baseOnBalls||0,HBP_A:s.hitBatsmen||0,ER:s.earnedRuns||0,W:s.wins||0,SV:s.saves||0,HD:s.holds||0,CG:s.completeGames||0}}return st}catch(e){return null}};
 
-  const fetchAll=async()=>{setFetching(true);setFetchProg({c:0,t:players.length});const upd=[...players];for(let i=0;i<upd.length;i++){setFetchProg({c:i+1,t:upd.length});const st=await fetchMLB(upd[i]);if(st){let pts=0;if(st.hit){pts+=calcPts(st.hit,hitScore,pitScore,true,false);upd[i].hittingStats=st.hit}if(st.pit){pts+=calcPts(st.pit,hitScore,pitScore,false,true);upd[i].pitchingStats=st.pit}upd[i].fantasyPoints=pts}await new Promise(r=>setTimeout(r,150))}upd.sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);setPlayers(upd);setFetching(false)};
+  const fetchAll=async()=>{setFetching(true);setFetchProg({c:0,t:players.length});const upd=[...players];for(let i=0;i<upd.length;i++){setFetchProg({c:i+1,t:upd.length});const st=await fetchMLB(upd[i]);if(st){let pts=0;if(st.team)upd[i].team=st.team;if(st.position)upd[i].position=st.position;if(st.hit){pts+=calcPts(st.hit,hitScore,pitScore,true,false);upd[i].hittingStats=st.hit;upd[i].isHitter=true}if(st.pit){pts+=calcPts(st.pit,hitScore,pitScore,false,true);upd[i].pitchingStats=st.pit;upd[i].isPitcher=true}if(st.hit&&st.pit){upd[i].type='both'}else if(st.pit){upd[i].type='pitcher'}else{upd[i].type='hitter'}upd[i].fantasyPoints=pts;upd[i].needsDetection=false}await new Promise(r=>setTimeout(r,150))}upd.sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);setPlayers(upd);setFetching(false)};
 
   const createAuc=async()=>{
     const id=leagueId||genId();
-    const pwHash=hashPassword(commPw);
+    // No commissioner password needed - using access codes only
     const sorted=[...players].sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);
     const tObj={};
     teams.forEach((t,i)=>{tObj[`team_${i+1}`]={...t,joined:false,claimedBy:null,passwordHash:''}});
@@ -303,7 +302,6 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
       leagueAccessCode:leagueCode,
       commissionerAccessCode:commCode,
       commissionerName:commName,
-      commissionerPasswordHash:pwHash,
       timerDuration:timer,
       teams:tObj,
       players:sorted.map((p,i)=>({...p,status:'pending',order:i})),
@@ -398,10 +396,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
             <div className="form-group"><label>League Access Code</label><input value={leagueCode} onChange={e=>setLeagueCode(e.target.value)} placeholder="All users need this"/><div className="form-hint">Share with all league members</div></div>
             <div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e=>setCommCode(e.target.value)} placeholder="Only commissioners need this"/><div className="form-hint">Keep this private</div></div>
           </div>
-          <div className="form-row">
-            <div className="form-group"><label>Password</label><input type="password" value={commPw} onChange={e=>setCommPw(e.target.value)}/></div>
-            <div className="form-group"><label>Timer (sec)</label><input type="number" value={timer} onChange={e=>setTimer(parseInt(e.target.value)||120)}/></div>
-          </div>
+          <div className="form-group"><label>Timer (sec)</label><input type="number" value={timer} onChange={e=>setTimer(parseInt(e.target.value)||120)}/><div className="form-hint">Countdown duration for each player</div></div>
         </div></div>
         <div className="card"><div className="card-header">Teams</div><div className="card-body">
           <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>Max Bid = Cap - Salary - Spots + 1. Min salary $1.00.</p>
@@ -409,14 +404,14 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
             {teams.map((t,i)=>{const av=t.cap-t.sal;const mx=Math.max(0,t.cap-t.sal-t.spots+1);return<tr key={t.id}><td>{i+1}</td><td><input type="text" value={t.name} onChange={e=>updTeam(t.id,'name',e.target.value)}/></td><td style={{textAlign:'center'}}><input type="checkbox" checked={t.isComm||false} onChange={e=>updTeam(t.id,'isComm',e.target.checked)} style={{width:'20px',height:'20px'}}/></td><td><input type="number" value={t.cap} onChange={e=>updTeam(t.id,'cap',e.target.value)}/></td><td><input type="number" value={t.sal} onChange={e=>updTeam(t.id,'sal',e.target.value)}/></td><td><input type="number" value={t.spots} onChange={e=>updTeam(t.id,'spots',e.target.value)} min="1"/></td><td style={{color:'var(--espn-success)',fontWeight:600}}>${fmt(av)}</td><td style={{color:'var(--espn-blue)',fontWeight:600}}>${fmt(mx)}</td></tr>})}
           </tbody></table></div>
         </div></div>
-        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(2)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(3)} disabled={!league||!commPw||!leagueCode||!commCode}>Continue →</button></div>
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(2)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(3)} disabled={!league||!leagueCode||!commCode}>Continue →</button></div>
       </>}
 
       {step===4&&<><div className="page-header"><h1 className="page-title">Players</h1></div>
         <div className="card"><div className="card-header">Import</div><div className="card-body">
-          <div style={{display:'flex',gap:'16px',marginBottom:'20px',flexWrap:'wrap'}}><input type="file" accept=".csv" onChange={handleFile} style={{display:'none'}} id="csvUp"/><label htmlFor="csvUp" className="btn btn-secondary" style={{cursor:'pointer'}}>📁 Upload CSV</label><button className="btn btn-secondary" onClick={()=>downloadCSV(csvTemplate(),'template.csv')}>📥 Template</button><button className="btn btn-blue" onClick={fetchAll} disabled={players.length===0||fetching}>{fetching?`Fetching ${fetchProg.c}/${fetchProg.t}...`:'🔄 Fetch MLB Stats'}</button></div>
+          <div style={{display:'flex',gap:'16px',marginBottom:'20px',flexWrap:'wrap'}}><input type="file" accept=".csv" onChange={handleFile} style={{display:'none'}} id="csvUp"/><label htmlFor="csvUp" className="btn btn-secondary" style={{cursor:'pointer'}}>📁 Upload CSV</label><button className="btn btn-secondary" onClick={()=>downloadCSV(csvTemplate(),'template.csv')}>📥 Template</button><button className="btn btn-blue" onClick={fetchAll} disabled={players.length===0||fetching}>{fetching?`Fetching ${fetchProg.c}/${fetchProg.t}...`:'🔄 Fetch MLB Stats'}</button>{players.length>0&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Clear all players?')){setPlayers([]);setPlayerTxt('')}}}>❌ Clear Players</button>}</div>
           {fetching&&<div className="progress-bar"><div className="progress-bar-fill" style={{width:`${(fetchProg.c/fetchProg.t)*100}%`}}/></div>}
-          <div className="form-group"><label>Or Paste CSV</label><textarea style={{minHeight:'140px',fontFamily:'monospace'}} value={playerTxt} onChange={e=>handleTxt(e.target.value)} placeholder="Name,Team,Position,Owner,ArbYear,Type,Points"/></div>
+          <div className="form-group"><label>Or Paste CSV</label><textarea style={{minHeight:'140px',fontFamily:'monospace'}} value={playerTxt} onChange={e=>handleTxt(e.target.value)} placeholder="Name,Owner,ArbYear\n(Team, Position, Type will be auto-detected)"/><div className="form-hint">Minimum required: Name, Owner, ArbYear. Click "Fetch MLB Stats" to auto-detect Team, Position, Type, and Points.</div></div>
         </div></div>
         {players.length>0&&<div className="card"><div className="card-header">Players ({players.length})</div><div className="card-body"><div style={{overflowX:'auto',maxHeight:'500px'}}><table className="data-table"><thead><tr><th>Name</th><th>Team</th><th>Pos</th><th>Owner</th><th>Arb</th><th>Type</th><th>Points</th></tr></thead><tbody>
           {players.map(p=><tr key={p.id}><td style={{fontWeight:500}}>{p.name}</td><td>{p.team}</td><td>{p.position}</td><td>{p.owner}</td><td><span className={`arb-badge arb-${p.arbYear}`}>ARB {p.arbYear}</span></td><td style={{textTransform:'capitalize'}}>{p.type}</td><td><input type="number" step="0.01" value={p.fantasyPoints||''} onChange={e=>updPts(p.id,e.target.value)} style={{width:'100px'}}/></td></tr>)}
