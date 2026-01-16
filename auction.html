@@ -179,7 +179,7 @@
 const { useState, useEffect, useRef, useCallback } = React;
 const PREV_YR = new Date().getFullYear() - 1;
 const fmt = n => (n || 0).toFixed(2);
-const getParams = () => { const p = new URLSearchParams(window.location.search); return { auctionId: p.get('id'), role: p.get('role') }; };
+const getParams = () => { const p = new URLSearchParams(window.location.search); return { league: p.get('league'), role: p.get('role') }; };
 const keepPct = a => ({ 1: 0.4, 2: 0.6, 3: 0.8 }[a] || 1);
 const yrs = a => ({ 1: 3, 2: 2, 3: 1 }[a] || 1);
 const enc = (b, k) => CryptoJS.AES.encrypt(JSON.stringify(b), k).toString();
@@ -200,7 +200,7 @@ const pitPts = (s, sc) => {
 };
 
 function App() {
-  const { auctionId, role: urlRole } = getParams();
+  const { league: leagueId, role: urlRole } = getParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [db, setDb] = useState(null);
@@ -213,6 +213,9 @@ function App() {
   const [loginName, setLoginName] = useState('');
   const [loginTeamId, setLoginTeamId] = useState('');
   const [loginPw, setLoginPw] = useState('');
+  const [leagueCode, setLeagueCode] = useState('');
+  const [commCode, setCommCode] = useState('');
+  const [username, setUsername] = useState('');
   const [loginErr, setLoginErr] = useState('');
   const [preBids, setPreBids] = useState({});
   const [curBid, setCurBid] = useState('');
@@ -226,7 +229,7 @@ function App() {
   const [tieMethod, setTieMethod] = useState('random');
   const [tieWinner, setTieWinner] = useState('');
   const [syncStatus, setSyncStatus] = useState('ok');
-  const sKey = auctionId || 'x';
+  const sKey = leagueId || 'x';
 
   // Sync to Google Sheets
   const syncToSheets = async (action, data) => {
@@ -248,24 +251,22 @@ function App() {
   };
 
   useEffect(() => {
-    if (!auctionId) { setError('No auction ID'); setLoading(false); return; }
-    const saved = localStorage.getItem('auction_' + auctionId);
-    if (saved) { const s = JSON.parse(saved); setUserTeamId(s.tid); setUserTeamName(s.tn); setPreBids(s.pb || {}); setIsComm(s.ic || false); }
-    const cfg = localStorage.getItem('firebaseConfig');
-    if (!cfg) { setError('Firebase not configured'); setLoading(false); return; }
+    if (!leagueId) { setError('No league ID'); setLoading(false); return; }
+    const saved = localStorage.getItem('auction_' + leagueId);
+    if (saved) { const s = JSON.parse(saved); setUserTeamId(s.tid); setUserTeamName(s.tn); setPreBids(s.pb || {}); setIsComm(s.ic || false); setUsername(s.un || ''); }
+    const cfg = {apiKey:"AIzaSyC09xnc-SIXcz95O_tfVes0t_uF-AtMmwo",authDomain:"arbitration-auction.firebaseapp.com",databaseURL:"https://arbitration-auction-default-rtdb.europe-west1.firebasedatabase.app",projectId:"arbitration-auction",storageBucket:"arbitration-auction.firebasestorage.app",messagingSenderId:"105886135634",appId:"1:105886135634:web:ef411018b3017a4c23768b"};
     try {
-      const config = JSON.parse(cfg);
-      if (!firebase.apps.length) firebase.initializeApp(config);
+      if (!firebase.apps.length) firebase.initializeApp(cfg);
       const database = firebase.database();
       setDb(database);
-      database.ref('auctions/' + auctionId).on('value', snap => {
+      database.ref('leagues/' + leagueId).on('value', snap => {
         const d = snap.val();
-        if (d) { setAuction(d); if (saved) { const s = JSON.parse(saved); setScreen(s.ic || urlRole === 'commissioner' ? 'auction' : d.phase === 'lobby' ? 'prebid' : 'auction'); } }
-        else setError('Auction not found');
+        if (d) { setAuction(d); if (saved) { const s = JSON.parse(saved); setScreen(s.ic || urlRole === 'commissioner' ? 'auction' : d.auction?.phase === 'lobby' ? 'prebid' : 'auction'); } }
+        else setError('League not found');
         setLoading(false);
       });
-    } catch (e) { setError('Connection failed'); setLoading(false); }
-  }, [auctionId, urlRole]);
+    } catch (e) { setError('Connection failed: ' + e.message); setLoading(false); }
+  }, [leagueId, urlRole]);
 
   useEffect(() => {
     if (auction?.timerEndTime && (auction.phase === 'bidding' || auction.phase === 'tiebreaker')) {
@@ -278,42 +279,71 @@ function App() {
 
   useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); }, [auction?.currentPlayerIndex, auction?.phase]);
 
-  const save = (tid, tn, pb = {}, ic = false) => { localStorage.setItem('auction_' + auctionId, JSON.stringify({ tid, tn, pb, ic })); };
-  const savePre = async bids => { if (db && userTeamId) await db.ref('auctions/' + auctionId + '/preBids/' + userTeamId).set(bids); };
+  const save = (tid, tn, pb = {}, ic = false, un = '') => { localStorage.setItem('auction_' + leagueId, JSON.stringify({ tid, tn, pb, ic, un })); };
+  const savePre = async bids => { if (db && userTeamId) await db.ref('auctions/' + leagueId + '/preBids/' + userTeamId).set(bids); };
 
-  const commLogin = async () => {
-    setLoginErr('');
-    if (!loginTeamId) return setLoginErr('Select team');
-    if (!loginPw) return setLoginErr('Enter password');
-    const t = auction.teams[loginTeamId];
-    if (!t?.isCommissioner && !t?.isComm) return setLoginErr('Not commissioner team');
-    if (CryptoJS.SHA256(loginPw).toString() !== auction.commissionerPasswordHash) return setLoginErr('Wrong password');
-    if (db && !t.joined) await db.ref('auctions/' + auctionId + '/teams/' + loginTeamId).update({ joined: true, ownerName: loginName || 'Commissioner' });
-    setUserTeamId(loginTeamId); setUserTeamName(t.name); setIsComm(true);
-    save(loginTeamId, t.name, preBids, true); setScreen('auction');
-  };
+
 
   const ownerLogin = async () => {
     setLoginErr('');
-    if (!loginTeamId || !loginName || !loginPw) return setLoginErr('Fill all fields');
+    if (!username || !loginPw || !leagueCode || !loginTeamId) return setLoginErr('Fill all required fields');
+    
+    // Check league access code
+    if (leagueCode !== auction.leagueAccessCode) return setLoginErr('Invalid league access code');
+    
     const t = auction.teams[loginTeamId];
     if (!t) return setLoginErr('Team not found');
-    if (t.isCommissioner || t.isComm) return setLoginErr('Use commissioner login');
-    if (t.joined && t.passwordHash) { if (CryptoJS.SHA256(loginPw).toString() !== t.passwordHash) return setLoginErr('Wrong password'); }
-    else { if (db) await db.ref('auctions/' + auctionId + '/teams/' + loginTeamId).update({ ownerName: loginName, passwordHash: CryptoJS.SHA256(loginPw).toString(), joined: true }); }
-    setUserTeamId(loginTeamId); setUserTeamName(t.name); setIsComm(false);
-    save(loginTeamId, t.name, preBids, false); setScreen('prebid');
+    
+    // Check commissioner access code if commissioner team
+    if (t.isCommissioner) {
+      if (!commCode) return setLoginErr('Commissioner access code required');
+      if (commCode !== auction.commissionerAccessCode) return setLoginErr('Invalid commissioner access code');
+    }
+    
+    // Check if team is already claimed
+    if (t.claimedBy && t.claimedBy !== username) {
+      // Team claimed by someone else - check if returning user
+      if (t.passwordHash && CryptoJS.SHA256(loginPw).toString() === t.passwordHash) {
+        // Correct password - allow login
+        setUserTeamId(loginTeamId);
+        setUserTeamName(t.name);
+        setIsComm(t.isCommissioner);
+        setUsername(t.claimedBy);
+        save(loginTeamId, t.name, preBids, t.isCommissioner, t.claimedBy);
+        setScreen(t.isCommissioner ? 'auction' : 'prebid');
+        return;
+      } else {
+        return setLoginErr('Team already claimed by another user');
+      }
+    }
+    
+    // New user claiming team
+    if (!t.claimedBy) {
+      if (db) {
+        await db.ref('auctions/' + leagueId + '/teams/' + loginTeamId).update({
+          claimedBy: username,
+          passwordHash: CryptoJS.SHA256(loginPw).toString(),
+          joined: true
+        });
+      }
+    }
+    
+    setUserTeamId(loginTeamId);
+    setUserTeamName(t.name);
+    setIsComm(t.isCommissioner);
+    save(loginTeamId, t.name, preBids, t.isCommissioner, username);
+    setScreen(t.isCommissioner ? 'auction' : 'prebid');
   };
 
-  const savePrebids = async () => { save(userTeamId, userTeamName, preBids, isComm); await savePre(preBids); setScreen('auction'); };
-  const updPre = (i, v) => { const nb = { ...preBids, [i]: parseFloat(v) || 0 }; setPreBids(nb); save(userTeamId, userTeamName, nb, isComm); savePre(nb); };
+  const savePrebids = async () => { save(userTeamId, userTeamName, preBids, isComm, username); await savePre(preBids); setScreen('auction'); };
+  const updPre = (i, v) => { const nb = { ...preBids, [i]: parseFloat(v) || 0 }; setPreBids(nb); save(userTeamId, userTeamName, nb, isComm, username); savePre(nb); };
 
   const startAuc = async () => {
-    if (db) await db.ref('auctions/' + auctionId).update({ phase: 'waiting' });
+    if (db) await db.ref('auctions/' + leagueId).update({ phase: 'waiting' });
     setTimeout(() => initSheets(), 500);
   };
 
-  const startBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'bidding', timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
+  const startBid = async () => { if (db) await db.ref('auctions/' + leagueId).update({ phase: 'bidding', timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
 
   const submitBid = async () => {
     setBidErr('');
@@ -322,11 +352,11 @@ function App() {
     const mx = maxBid(t);
     if (amt > mx) return setBidErr('Max $' + fmt(mx));
     const bid = { teamId: userTeamId, teamName: userTeamName, amount: amt, ts: Date.now() };
-    if (db) { await db.ref('auctions/' + auctionId + '/bids/' + userTeamId).set(enc(bid, sKey)); await db.ref('auctions/' + auctionId + '/bidStatuses/' + userTeamId).set(true); }
+    if (db) { await db.ref('auctions/' + leagueId + '/bids/' + userTeamId).set(enc(bid, sKey)); await db.ref('auctions/' + leagueId + '/bidStatuses/' + userTeamId).set(true); }
     setBidOk(true);
   };
 
-  const endBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'reveal', timerEndTime: null }); };
+  const endBid = async () => { if (db) await db.ref('auctions/' + leagueId).update({ phase: 'reveal', timerEndTime: null }); };
 
   const reveal = async () => {
     const decoded = {}; let mx = 0;
@@ -334,18 +364,18 @@ function App() {
     const top = Object.entries(decoded).filter(([_, b]) => b.amount === mx);
     const hi = top.length > 0 ? top[0][1] : { amount: 0, teamId: null, teamName: 'No bids' };
     const tied = top.length > 1 ? top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })) : null;
-    if (db) await db.ref('auctions/' + auctionId).update({ phase: 'decision', revealedBids: decoded, highestBid: hi, tiedTeams: tied });
+    if (db) await db.ref('auctions/' + leagueId).update({ phase: 'decision', revealedBids: decoded, highestBid: hi, tiedTeams: tied });
   };
 
   const hasTie = () => auction.tiedTeams && auction.tiedTeams.length > 1;
-  const startTie = async () => { const ids = auction.tiedTeams.map(t => t.id); if (db) await db.ref('auctions/' + auctionId).update({ phase: 'tiebreaker', tiebreakerTeams: ids, timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
+  const startTie = async () => { const ids = auction.tiedTeams.map(t => t.id); if (db) await db.ref('auctions/' + leagueId).update({ phase: 'tiebreaker', tiebreakerTeams: ids, timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
 
   const endTie = async () => {
     const decoded = {}; let mx = 0;
     if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (b.amount > mx) mx = b.amount; } });
     const top = Object.entries(decoded).filter(([_, b]) => b.amount === mx);
     if (top.length === 1) { const w = top[0][1]; await doStick(w.teamId, w.teamName, w.amount); }
-    else { const tied = top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })); if (db) await db.ref('auctions/' + auctionId).update({ phase: 'tie-resolution', tiedTeams: tied, revealedBids: decoded }); setTieModal(true); }
+    else { const tied = top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })); if (db) await db.ref('auctions/' + leagueId).update({ phase: 'tie-resolution', tiedTeams: tied, revealedBids: decoded }); setTieModal(true); }
   };
 
   const resolveTie = async () => {
@@ -375,13 +405,13 @@ function App() {
     upd['teams/' + wid + '/currentSalary'] = oldSal + price; upd['teams/' + wid + '/sal'] = oldSal + price;
     upd['teams/' + wid + '/spotsAvailable'] = Math.max(0, oldSpots - 1); upd['teams/' + wid + '/spots'] = Math.max(0, oldSpots - 1);
     upd['phase'] = 'celebration'; upd['bidHistory'] = [...(auction.bidHistory || []), hist];
-    if (db) await db.ref('auctions/' + auctionId).update(upd);
+    if (db) await db.ref('auctions/' + leagueId).update(upd);
     syncToSheets('sync', { player: { name: p.name, team: p.team, position: p.position, owner: p.owner, arbYear: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids } });
     setCeleb({ d, player: p.name, winner, price, years, hiBidder: hb?.teamName || 'None' });
     setTimeout(async () => {
       setCeleb(null); const nx = auction.currentPlayerIndex + 1;
-      if (nx < auction.players.length) { if (db) await db.ref('auctions/' + auctionId).update({ currentPlayerIndex: nx, phase: 'waiting', bids: null, bidStatuses: null, revealedBids: null, highestBid: null, tiedTeams: null, tiebreakerTeams: null }); }
-      else { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'complete' }); }
+      if (nx < auction.players.length) { if (db) await db.ref('auctions/' + leagueId).update({ currentPlayerIndex: nx, phase: 'waiting', bids: null, bidStatuses: null, revealedBids: null, highestBid: null, tiedTeams: null, tiebreakerTeams: null }); }
+      else { if (db) await db.ref('auctions/' + leagueId).update({ phase: 'complete' }); }
     }, 5000);
   };
 
@@ -394,7 +424,7 @@ function App() {
     upd['teams/' + r.winnerId + '/spotsAvailable'] = oldSpots + 1; upd['teams/' + r.winnerId + '/spots'] = oldSpots + 1;
     upd['currentPlayerIndex'] = idx; upd['phase'] = 'waiting'; upd['bids'] = null; upd['bidStatuses'] = null; upd['revealedBids'] = null; upd['highestBid'] = null; upd['tiedTeams'] = null;
     upd['bidHistory'] = (auction.bidHistory || []).filter(h => h.player !== p.name);
-    if (db) await db.ref('auctions/' + auctionId).update(upd);
+    if (db) await db.ref('auctions/' + leagueId).update(upd);
   };
 
   const exportCSV = () => {
@@ -460,32 +490,40 @@ function App() {
 
   // LOGIN SCREEN
   if (screen === 'login') {
-    const isCL = urlRole === 'commissioner';
     const teams = auction?.teams ? Object.entries(auction.teams) : [];
-    const cTeams = teams.filter(([_, t]) => t.isCommissioner || t.isComm);
-    const rTeams = teams.filter(([_, t]) => !t.isCommissioner && !t.isComm);
+    const availTeams = teams.filter(([_, t]) => !t.claimedBy);
+    const commTeams = availTeams.filter(([_, t]) => t.isCommissioner);
+    const regTeams = availTeams.filter(([_, t]) => !t.isCommissioner);
+    const [showComm, setShowComm] = useState(false);
+    
     return (
       <>
         <header className="header"><div className="header-title">Arbitration Auction</div></header>
         <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
         <div className="loading-screen" style={{ minHeight: 'calc(100vh - 110px)' }}>
           <div className="modal">
-            <div className="modal-header">{isCL ? 'Commissioner Login' : 'Join Auction'}</div>
+            <div className="modal-header">Join Auction</div>
             <div className="modal-body">
-              <div className="form-group"><label>Your Name</label><input value={loginName} onChange={e => setLoginName(e.target.value)} /></div>
+              <div className="form-group"><label>Username</label><input value={username} onChange={e => setUsername(e.target.value)} placeholder="Enter a username" /></div>
+              <div className="form-group"><label>Password</label><input type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} placeholder="Create a password" /></div>
+              <div className="form-group">
+                <label>League Access Code</label>
+                <input value={leagueCode} onChange={e => setLeagueCode(e.target.value)} placeholder="Required for all users" />
+              </div>
               <div className="form-group">
                 <label>Select Team</label>
-                <select value={loginTeamId} onChange={e => setLoginTeamId(e.target.value)}>
+                <select value={loginTeamId} onChange={e => { setLoginTeamId(e.target.value); const t = auction.teams[e.target.value]; setShowComm(t?.isCommissioner); }}>
                   <option value="">Choose your team...</option>
-                  {(isCL ? cTeams : rTeams).map(([id, t]) => <option key={id} value={id}>{t.name}{(t.isCommissioner || t.isComm) ? ' ⭐' : t.joined ? ' ✓' : ''}</option>)}
+                  {regTeams.map(([id, t]) => <option key={id} value={id}>{t.name}</option>)}
+                  {commTeams.map(([id, t]) => <option key={id} value={id}>{t.name} ⭐</option>)}
                 </select>
               </div>
-              <div className="form-group">
-                <label>Password</label>
-                <input type="password" value={loginPw} onChange={e => setLoginPw(e.target.value)} onKeyPress={e => e.key === 'Enter' && (isCL ? commLogin() : ownerLogin())} />
-                {loginErr && <div className="form-error">{loginErr}</div>}
-              </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={isCL ? commLogin : ownerLogin}>{isCL ? 'Login as Commissioner' : 'Join Auction'}</button>
+              {showComm && <div className="form-group">
+                <label>Commissioner Access Code</label>
+                <input value={commCode} onChange={e => setCommCode(e.target.value)} placeholder="Required for commissioner teams" />
+              </div>}
+              {loginErr && <div className="form-error">{loginErr}</div>}
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={ownerLogin}>Join Auction</button>
             </div>
           </div>
         </div>
