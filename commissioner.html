@@ -176,6 +176,7 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
   const[loading,setLoading]=useState(true);
   const[db,setDb]=useState(null);
   const[deleting,setDeleting]=useState(null);
+  const[duplicating,setDuplicating]=useState(null);
 
   useEffect(()=>{
     if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
@@ -212,13 +213,35 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
     setDeleting(null);
   };
 
+  const handleDuplicate=async(lid,lname,e)=>{
+    e.stopPropagation();
+    const newName=prompt('Enter name for duplicated league:',lname+' (Copy)');
+    if(!newName)return;
+    setDuplicating(lid);
+    try{
+      const snapshot=await db.ref('auctions/'+lid).once('value');
+      const leagueData=snapshot.val();
+      if(!leagueData){alert('League data not found');setDuplicating(null);return}
+      const newId=genId();
+      leagueData.leagueName=newName;
+      leagueData.leagueId=newId;
+      leagueData.createdAt=Date.now();
+      await db.ref('auctions/'+newId).set(leagueData);
+      await db.ref('admins/'+admin.username+'/leagues/'+newId).set({name:newName,createdAt:Date.now()});
+      setLeagues([...leagues,{id:newId,name:newName,createdAt:Date.now()}]);
+    }catch(err){
+      alert('Error: '+err.message);
+    }
+    setDuplicating(null);
+  };
+
   if(loading)return<div className="main-content">Loading...</div>;
 
   return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user">Admin: {admin.username}<button className="logout-btn" onClick={onLogout}>Logout</button></div></header>
     <main className="main-content">
       <div className="page-header"><div className="page-title">Your Leagues</div><div className="page-subtitle">Select a league to manage or create a new one</div></div>
       <div className="card"><div className="card-body"><button className="btn btn-primary" onClick={onCreateNew}>+ Create New League</button></div></div>
-      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item"><div className="league-item-content" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><button className="btn btn-secondary league-delete-btn" onClick={(e)=>handleDelete(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'Delete'}</button></li>)}</ul>
+      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item"><div className="league-item-content" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><button className="btn btn-blue league-delete-btn" onClick={(e)=>handleDuplicate(league.id,league.name,e)} disabled={duplicating===league.id}>{duplicating===league.id?'Duplicating...':'Duplicate'}</button><button className="btn btn-secondary league-delete-btn" onClick={(e)=>handleDelete(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'Delete'}</button></li>)}</ul>
       :<div className="info-box"><h4>No leagues yet</h4><p>Create your first league to get started!</p></div>}
     </main>
   </>;
@@ -303,7 +326,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
 
   const fetchMLB=async pl=>{try{const sr=await fetch(`https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(pl.name)}&sportIds=1&active=true`);const sd=await sr.json();if(!sd.people?.length)return null;const mp=sd.people.find(p=>p.currentTeam?.abbreviation===pl.team)||sd.people[0];const pid=mp.id;const st={hit:null,pit:null,team:mp.currentTeam?.abbreviation||pl.team,position:mp.primaryPosition?.abbreviation||pl.position};const hr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=hitting&sportId=1`);const hd=await hr.json();if(hd.stats?.[0]?.splits?.[0]?.stat){const s=hd.stats[0].splits[0].stat;st.hit={H:s.hits||0,'2B':s.doubles||0,'3B':s.triples||0,HR:s.homeRuns||0,RBI:s.rbi||0,R:s.runs||0,SB:s.stolenBases||0,BB:s.baseOnBalls||0,HBP:s.hitByPitch||0}}const pr=await fetch(`https://statsapi.mlb.com/api/v1/people/${pid}/stats?stats=season&season=${PREV_YR}&group=pitching&sportId=1`);const pd=await pr.json();if(pd.stats?.[0]?.splits?.[0]?.stat){const s=pd.stats[0].splits[0].stat;st.pit={IP:parseFloat(s.inningsPitched)||0,SO:s.strikeOuts||0,HA:s.hits||0,BBA:s.baseOnBalls||0,HBP_A:s.hitBatsmen||0,ER:s.earnedRuns||0,W:s.wins||0,SV:s.saves||0,HD:s.holds||0,CG:s.completeGames||0}}return st}catch(e){return null}};
 
-  const fetchAll=async()=>{setFetching(true);setFetchProg({c:0,t:players.length});const upd=[...players];for(let i=0;i<upd.length;i++){setFetchProg({c:i+1,t:upd.length});const st=await fetchMLB(upd[i]);if(st){let pts=0;if(st.team)upd[i].team=st.team;if(st.position)upd[i].position=st.position;if(st.hit){pts+=calcPts(st.hit,hitScore,pitScore,true,false);upd[i].hittingStats=st.hit;upd[i].isHitter=true}if(st.pit){pts+=calcPts(st.pit,hitScore,pitScore,false,true);upd[i].pitchingStats=st.pit;upd[i].isPitcher=true}if(st.hit&&st.pit){upd[i].type='both'}else if(st.pit){upd[i].type='pitcher'}else{upd[i].type='hitter'}upd[i].fantasyPoints=pts;upd[i].needsDetection=false}await new Promise(r=>setTimeout(r,150))}upd.sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);setPlayers(upd);setFetching(false)};
+  const fetchAll=async()=>{setFetching(true);setFetchProg({c:0,t:players.length});const upd=[...players];for(let i=0;i<upd.length;i++){setFetchProg({c:i+1,t:upd.length});const st=await fetchMLB(upd[i]);if(st){let pts=0;if(st.team&&(upd[i].team==='TBD'||!upd[i].team))upd[i].team=st.team;if(st.position&&(upd[i].position==='TBD'||!upd[i].position))upd[i].position=st.position;if(st.hit){pts+=calcPts(st.hit,hitScore,pitScore,true,false);upd[i].hittingStats=st.hit;upd[i].isHitter=true}if(st.pit){pts+=calcPts(st.pit,hitScore,pitScore,false,true);upd[i].pitchingStats=st.pit;upd[i].isPitcher=true}if(st.hit&&st.pit){upd[i].type='both'}else if(st.pit){upd[i].type='pitcher'}else{upd[i].type='hitter'}upd[i].fantasyPoints=pts;upd[i].needsDetection=false}await new Promise(r=>setTimeout(r,150))}upd.sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);setPlayers(upd);setFetching(false)};
 
   const createAuc=async()=>{
     const id=leagueId||genId();
