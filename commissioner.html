@@ -241,7 +241,7 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
     <main className="main-content">
       <div className="page-header"><div className="page-title">Your Leagues</div><div className="page-subtitle">Select a league to manage or create a new one</div></div>
       <div className="card"><div className="card-body"><button className="btn btn-primary" onClick={onCreateNew}>+ Create New League</button></div></div>
-      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item"><div className="league-item-content" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><button className="btn btn-blue league-delete-btn" onClick={(e)=>handleDuplicate(league.id,league.name,e)} disabled={duplicating===league.id}>{duplicating===league.id?'Duplicating...':'Duplicate'}</button><button className="btn btn-secondary league-delete-btn" onClick={(e)=>handleDelete(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'Delete'}</button></li>)}</ul>
+      {leagues.length>0?<ul className="league-list">{leagues.map(league=>{const status=league.phase==='completed'?'Completed':league.phase==='active'?'In Progress':'Created';const statusColor=league.phase==='completed'?'var(--espn-green)':league.phase==='active'?'var(--espn-blue)':'var(--espn-orange)';return<li key={league.id} className="league-item"><div className="league-item-content" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta"><span style={{color:statusColor,fontWeight:600}}>{status}</span> • Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><div style={{display:'flex',gap:'8px',alignItems:'center'}}>{(league.phase==='completed'||league.phase==='active')&&(league.sheetsUrl?<button className="btn btn-secondary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open(league.sheetsUrl,'_blank')}}>📊 Sheet</button>:<button className="btn btn-secondary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open('/auction.html?id='+league.id,'_blank')}}>📥 CSV</button>)}<button className="btn btn-blue league-delete-btn" onClick={(e)=>handleDuplicate(league.id,league.name,e)} disabled={duplicating===league.id}>{duplicating===league.id?'Duplicating...':'Duplicate'}</button><button className="btn btn-secondary league-delete-btn" onClick={(e)=>handleDelete(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'Delete'}</button></div></li>})}</ul>
       :<div className="info-box"><h4>No leagues yet</h4><p>Create your first league to get started!</p></div>}
     </main>
   </>;
@@ -354,7 +354,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
     };
     if(db){
       await db.ref(`auctions/${id}`).set(data);
-      await db.ref(`admins/${admin.username}/leagues/${id}`).set({name:league,createdAt:Date.now()});
+      await db.ref(`admins/${admin.username}/leagues/${id}`).set({name:league,createdAt:Date.now(),phase:'lobby',sheetsUrl:sheetUrl||null});
       setAucId(id);
       setCreated(true);
       onComplete(id,league);
@@ -498,10 +498,15 @@ function LeagueManagement({leagueId,onBack,onEdit}){
 
   if(!league)return<div className="loading-screen"><div className="loading-spinner"/><p>Loading league...</p></div>;
 
+  const status=league.phase==='completed'?'Completed':league.phase==='active'?'In Progress':'Created';
+  const statusColor=league.phase==='completed'?'var(--espn-green)':league.phase==='active'?'var(--espn-blue)':'var(--espn-orange)';
+  const hasResults=league.phase==='completed'||league.phase==='active';
+  const sheetsUrl=league.sheetsConfig?.sheetUrl;
+  
   return<><header className="header"><div className="header-title">League Management</div></header>
     <nav className="nav"><div className="nav-item active">{league.leagueName}</div></nav>
     <main className="main-content">
-      <div className="page-header"><h1 className="page-title">{league.leagueName}</h1><p className="page-subtitle">League ID: {leagueId}</p></div>
+      <div className="page-header"><h1 className="page-title">{league.leagueName}</h1><p className="page-subtitle">League ID: {leagueId} • <span style={{color:statusColor,fontWeight:600}}>{status}</span></p></div>
       
       <div className="card"><div className="card-header">Auction Link</div><div className="card-body">
         <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>Share this link with your league members to join the auction:</p>
@@ -515,6 +520,14 @@ function LeagueManagement({leagueId,onBack,onEdit}){
           <div><label style={{fontSize:'13px',fontWeight:600,color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px',display:'block'}}>Commissioner Access Code</label><p style={{fontSize:'18px',fontWeight:700,color:'var(--espn-orange)'}}>{league.commissionerAccessCode}</p><p style={{fontSize:'13px',color:'var(--espn-text-muted)',marginTop:'4px'}}>Only for commissioners</p></div>
         </div>
       </div></div>
+
+      {hasResults&&<div className="card"><div className="card-header">Bidding Results</div><div className="card-body">
+        <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>Access auction results and bid history:</p>
+        <div style={{display:'flex',gap:'12px'}}>
+          {sheetsUrl&&<button className="btn btn-primary" onClick={()=>window.open(sheetsUrl,'_blank')} style={{flex:1}}>📊 Open Google Sheet</button>}
+          <button className="btn btn-secondary" onClick={()=>window.open(getUrl(),'_blank')} style={{flex:1}}>📥 Download CSV</button>
+        </div>
+      </div></div>}
 
       <div className="card"><div className="card-header">League Summary</div><div className="card-body">
         <div className="form-row">
