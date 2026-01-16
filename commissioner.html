@@ -33,7 +33,7 @@
     .copy-btn{background:var(--espn-blue);color:white;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:13px;margin-top:10px}.copy-btn:hover{background:var(--espn-blue-hover)}
     .login-container{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--espn-bg-page)}.login-card{background:white;border-radius:8px;padding:40px;max-width:420px;width:90%;box-shadow:0 4px 12px rgba(0,0,0,.1)}.login-title{font-family:'Roboto Condensed',sans-serif;font-size:2rem;font-weight:700;text-align:center;margin-bottom:32px;color:var(--espn-red)}
     .login-tabs{display:flex;gap:8px;margin-bottom:24px}.login-tab{flex:1;padding:12px;background:var(--espn-bg-table-header);border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:15px}.login-tab.active{background:var(--espn-blue);color:white}
-    .league-list{list-style:none;padding:0}.league-item{background:white;border:1px solid var(--espn-border);border-radius:8px;padding:20px;margin-bottom:16px;cursor:pointer;transition:all .2s}.league-item:hover{border-color:var(--espn-blue);box-shadow:0 2px 8px rgba(0,0,0,.1)}.league-item-name{font-family:'Roboto Condensed',sans-serif;font-size:1.3rem;font-weight:700;color:var(--espn-blue);margin-bottom:8px}.league-item-meta{font-size:13px;color:var(--espn-text-muted)}
+    .league-list{list-style:none;padding:0}.league-item{background:white;border:1px solid var(--espn-border);border-radius:8px;padding:20px;margin-bottom:16px;transition:all .2s;display:flex;align-items:center;gap:16px}.league-item:hover{border-color:var(--espn-blue);box-shadow:0 2px 8px rgba(0,0,0,.1)}.league-item-content{flex:1;cursor:pointer}.league-item-name{font-family:'Roboto Condensed',sans-serif;font-size:1.3rem;font-weight:700;color:var(--espn-blue);margin-bottom:8px}.league-item-meta{font-size:13px;color:var(--espn-text-muted)}.league-delete-btn{padding:8px 16px;font-size:13px;white-space:nowrap}
   </style>
 </head>
 <body>
@@ -175,6 +175,7 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
   const[leagues,setLeagues]=useState([]);
   const[loading,setLoading]=useState(true);
   const[db,setDb]=useState(null);
+  const[deleting,setDeleting]=useState(null);
 
   useEffect(()=>{
     if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
@@ -197,13 +198,27 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
     loadLeagues();
   },[db,admin.username]);
 
+  const handleDelete=async(lid,lname,e)=>{
+    e.stopPropagation();
+    if(!confirm('Delete "'+lname+'"? Cannot be undone.'))return;
+    setDeleting(lid);
+    try{
+      await db.ref('auctions/'+lid).remove();
+      await db.ref('admins/'+admin.username+'/leagues/'+lid).remove();
+      setLeagues(leagues.filter(l=>l.id!==lid));
+    }catch(err){
+      alert('Error: '+err.message);
+    }
+    setDeleting(null);
+  };
+
   if(loading)return<div className="main-content">Loading...</div>;
 
   return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user">Admin: {admin.username}<button className="logout-btn" onClick={onLogout}>Logout</button></div></header>
     <main className="main-content">
       <div className="page-header"><div className="page-title">Your Leagues</div><div className="page-subtitle">Select a league to manage or create a new one</div></div>
       <div className="card"><div className="card-body"><button className="btn btn-primary" onClick={onCreateNew}>+ Create New League</button></div></div>
-      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></li>)}</ul>
+      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item"><div className="league-item-content" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><button className="btn btn-secondary league-delete-btn" onClick={(e)=>handleDelete(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'Delete'}</button></li>)}</ul>
       :<div className="info-box"><h4>No leagues yet</h4><p>Create your first league to get started!</p></div>}
     </main>
   </>;
