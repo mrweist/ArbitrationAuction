@@ -175,7 +175,6 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
   const[leagues,setLeagues]=useState([]);
   const[loading,setLoading]=useState(true);
   const[db,setDb]=useState(null);
-  const[deleting,setDeleting]=useState(null);
 
   useEffect(()=>{
     if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
@@ -198,27 +197,13 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
     loadLeagues();
   },[db,admin.username]);
 
-  const handleDeleteLeague=async(leagueId,leagueName,e)=>{
-    e.stopPropagation();
-    if(!confirm(`Are you sure you want to delete "${leagueName}"? This action cannot be undone.`))return;
-    setDeleting(leagueId);
-    try{
-      await db.ref(`auctions/${leagueId}`).remove();
-      await db.ref(`admins/${admin.username}/leagues/${leagueId}`).remove();
-      setLeagues(leagues.filter(l=>l.id!==leagueId));
-    }catch(err){
-      alert('Error deleting league: '+err.message);
-    }
-    setDeleting(null);
-  };
-
   if(loading)return<div className="main-content">Loading...</div>;
 
   return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user">Admin: {admin.username}<button className="logout-btn" onClick={onLogout}>Logout</button></div></header>
     <main className="main-content">
       <div className="page-header"><div className="page-title">Your Leagues</div><div className="page-subtitle">Select a league to manage or create a new one</div></div>
       <div className="card"><div className="card-body"><button className="btn btn-primary" onClick={onCreateNew}>+ Create New League</button></div></div>
-      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}<button className="btn btn-secondary" style={{marginLeft:'16px',padding:'6px 12px',fontSize:'12px'}} onClick={(e)=>handleDeleteLeague(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'❌ Delete'}</button></div></li>)}</ul>
+      {leagues.length>0?<ul className="league-list">{leagues.map(league=><li key={league.id} className="league-item" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta">Created: {new Date(league.createdAt).toLocaleDateString()}</div></li>)}</ul>
       :<div className="info-box"><h4>No leagues yet</h4><p>Create your first league to get started!</p></div>}
     </main>
   </>;
