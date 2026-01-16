@@ -294,6 +294,8 @@ function App() {
     if (!t?.isCommissioner && !t?.isComm) return setLoginErr('Not commissioner team');
     if (leagueCode !== auction.leagueAccessCode) return setLoginErr('Invalid league access code');
     if (commCode !== auction.commissionerAccessCode) return setLoginErr('Invalid commissioner access code');
+    const existingUser = Object.values(auction.teams).find(tm => tm.claimedBy === loginName && tm !== t);
+    if (existingUser && !t.claimedBy) return setLoginErr('Username already taken by another team');
     if (t.claimedBy && t.claimedBy !== loginName) return setLoginErr('Team claimed by another user');
     if (t.claimedBy && CryptoJS.SHA256(loginPw).toString() !== t.passwordHash) return setLoginErr('Wrong password');
     if (db) {
@@ -333,6 +335,8 @@ function App() {
     if (!t) return setLoginErr('Team not found');
     if (t.isCommissioner || t.isComm) return setLoginErr('Use commissioner login');
     if (leagueCode !== auction.leagueAccessCode) return setLoginErr('Invalid league access code');
+    const existingUser = Object.values(auction.teams).find(tm => tm.claimedBy === loginName && tm !== t);
+    if (existingUser && !t.claimedBy) return setLoginErr('Username already taken by another team');
     if (t.claimedBy && t.claimedBy !== loginName) return setLoginErr('Team already claimed by another user');
     if (t.claimedBy && CryptoJS.SHA256(loginPw).toString() !== t.passwordHash) return setLoginErr('Wrong password');
     if (db && !t.claimedBy) {
@@ -570,7 +574,7 @@ function App() {
                   <label>Select Team</label>
                   <select value={loginTeamId} onChange={e => setLoginTeamId(e.target.value)}>
                     <option value="">Choose your team...</option>
-                    {teams.map(([id, t]) => <option key={id} value={id}>{t.name}{(t.isCommissioner || t.isComm) ? ' ⭐' : t.claimedBy ? ' (Claimed)' : ''}</option>)}
+                    {teams.filter(([_,t])=>!t.claimedBy).map(([id, t]) => <option key={id} value={id}>{t.name}{(t.isCommissioner || t.isComm) ? ' ⭐' : ''}</option>)}
                   </select>
                 </div>
                 {loginTeamId&&(auction?.teams?.[loginTeamId]?.isCommissioner||auction?.teams?.[loginTeamId]?.isComm)&&<div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e => setCommCode(e.target.value)} placeholder="Commissioner code" /></div>}
@@ -591,7 +595,7 @@ function App() {
       <>
         <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+leagueId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div></header>
         <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
-        <div style={{ maxWidth: '900px', margin: '24px auto', padding: '0 24px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
           {auction?.phase === 'lobby' && <div className="lobby-info" style={{ marginBottom: '24px', background: '#e3f2fd' }}><div className="lobby-status">⏳ Waiting for Commissioner to Start</div></div>}
           <div className="modal" style={{ position: 'relative', maxWidth: 'none' }}>
             <div className="modal-header">Set Your Pre-Bids</div>
