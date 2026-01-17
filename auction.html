@@ -1119,7 +1119,7 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem' }}>Bid History ({hist.length} players)</h2>
             <div style={{display:'flex',gap:'8px'}}>
-              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={(e)=>{e.preventDefault();setExpandedTable('history');setExpandOrientation('landscape');setRenderTrigger(t=>t+1)}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={(e)=>{alert('Button clicked!');e.preventDefault();setExpandedTable('history');setExpandOrientation('landscape');setRenderTrigger(t=>t+1)}} style={{padding:'8px 16px',fontSize:'18px',position:'relative',zIndex:200}}>⛶</button>}
               {viewMode === 'desktop' && hist.length > 0 && <button className="btn btn-secondary" onClick={exportCSV}>📥 Export CSV</button>}
               {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Google Sheet</button>}
             </div>
