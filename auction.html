@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v1.9.3</title>
+  <title>Arbitration Auction v2.0.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
+    :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Roboto',sans-serif;background:var(--espn-bg-page);color:var(--espn-text-primary);font-size:16px}
     .header{background:var(--espn-red);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
@@ -169,7 +169,45 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .lobby-info{max-width:780px;margin:0 auto;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:32px;text-align:center;display:block}
     .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
-    @media(max-width:1100px){.app-container{grid-template-columns:1fr}.sidebar,.sidebar-right{display:none}}
+    /* View Mode Classes */
+    .view-mobile .app-container{display:flex;flex-direction:column;padding:var(--space-4)}
+    .view-mobile .sidebar,.view-mobile .sidebar-right{display:none}
+    .view-mobile .main-stage{padding:0}
+    .view-mobile .player-card,.view-mobile .timer-section,.view-mobile .bid-status,.view-mobile .your-bid-section{max-width:100%;margin-bottom:var(--space-6)}
+    .view-mobile .player-headshot{width:60px;height:60px}
+    .view-mobile .player-card-header .player-name{font-size:var(--text-xl)}
+    .view-mobile .timer-display{font-size:var(--text-5xl)}
+    .view-mobile .bid-status-grid{grid-template-columns:repeat(2,1fr)}
+    .view-mobile .bid-status-item{padding:var(--space-4);min-height:var(--touch-large)}
+    .view-mobile .btn,.view-mobile button{min-height:var(--touch-min);padding:var(--space-4) var(--space-6);font-size:var(--text-base)}
+    .view-mobile .bid-option input{padding:var(--space-4);font-size:var(--text-xl)}
+    .view-mobile .nav-tabs{display:none}
+    .view-mobile .bottom-nav{display:flex}
+    
+    /* Desktop Optimized (1920x1200) */
+    .view-desktop .app-container{max-width:1400px;margin:0 auto;grid-template-columns:320px 1fr 320px;gap:var(--space-12);padding:var(--space-8)}
+    .view-desktop .main-stage{padding:var(--space-8)}
+    .view-desktop .player-card,.view-desktop .timer-section,.view-desktop .bid-status,.view-desktop .your-bid-section{max-width:100%}
+    .view-desktop .player-headshot{width:120px;height:120px}
+    .view-desktop .player-card-header .player-name{font-size:var(--text-2xl)}
+    .view-desktop .timer-display{font-size:4.5rem}
+    .view-desktop body{font-size:18px}
+    .view-desktop .sidebar{width:320px}
+    .view-desktop .sidebar-right{width:320px}
+    
+    /* Toggle Button */
+    .view-toggle{position:fixed;top:12px;right:120px;z-index:1000;background:rgba(255,255,255,.9);border:1px solid var(--espn-border);border-radius:6px;padding:8px 12px;cursor:pointer;font-size:20px;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+    .view-toggle:hover{background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+    
+    /* Bottom Navigation (Mobile Only) */
+    .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--espn-nav-dark);height:var(--touch-comfortable);border-top:1px solid var(--espn-border);z-index:100;justify-content:space-around;align-items:center}
+    .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-1);color:rgba(255,255,255,.6);font-size:var(--text-xs);cursor:pointer;height:100%}
+    .bottom-nav-item.active{color:#fff;background:rgba(255,255,255,.1)}
+    .bottom-nav-item .icon{font-size:24px}
+    
+    /* Responsive Breakpoints (Auto-detect fallback) */
+    @media(max-width:768px){body:not(.view-desktop){display:block}body:not(.view-desktop) .app-container{display:flex;flex-direction:column;padding:var(--space-4)}body:not(.view-desktop) .sidebar,body:not(.view-desktop) .sidebar-right{display:none}body:not(.view-desktop) .main-stage{padding:0}body:not(.view-desktop) .bid-status-grid{grid-template-columns:repeat(2,1fr)}body:not(.view-desktop) .nav-tabs{display:none}body:not(.view-desktop) .bottom-nav{display:flex}}
+    @media(min-width:1920px){body:not(.view-mobile) .app-container{max-width:1400px;margin:0 auto;gap:var(--space-12);padding:var(--space-8)}body:not(.view-mobile) .main-stage{padding:var(--space-8)}body:not(.view-mobile) body{font-size:18px}}
   </style>
 </head>
 <body>
@@ -252,6 +290,7 @@ function App() {
   const [timerMinutes, setTimerMinutes] = useState('2');
   const [timerSeconds, setTimerSeconds] = useState('0');
   const [syncStatus, setSyncStatus] = useState('ok');
+  const [viewMode, setViewMode] = useState('auto'); // 'auto', 'mobile', 'desktop'
   const sKey = auctionId || 'x';
 
   // Sync to Google Sheets
@@ -324,6 +363,33 @@ function App() {
   }, [auction?.timerEndTime, auction?.phase, db, auctionId]);
 
   useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); }, [auction?.currentPlayerIndex, auction?.phase]);
+
+  // Device detection and view mode
+  useEffect(() => {
+    const detectDevice = () => {
+      const ua = navigator.userAgent;
+      const isMobileUA = /iPhone|iPod|Android.*Mobile/i.test(ua);
+      const isTabletUA = /iPad|Android(?!.*Mobile)/i.test(ua);
+      const width = window.innerWidth;
+      return isMobileUA || (width <= 768 && !isTabletUA) ? 'mobile' : 'desktop';
+    };
+    const stored = localStorage.getItem('viewMode_' + auctionId);
+    if (stored && (stored === 'mobile' || stored === 'desktop')) {
+      setViewMode(stored);
+      document.body.className = 'view-' + stored;
+    } else {
+      const detected = detectDevice();
+      setViewMode(detected);
+      document.body.className = 'view-' + detected;
+    }
+  }, [auctionId]);
+
+  const toggleView = () => {
+    const newMode = viewMode === 'mobile' ? 'desktop' : 'mobile';
+    setViewMode(newMode);
+    document.body.className = 'view-' + newMode;
+    localStorage.setItem('viewMode_' + auctionId, newMode);
+  };
 
   const save = (tid, tn, pb = {}, ic = false) => { localStorage.setItem('auction_' + auctionId, JSON.stringify({ tid, tn, pb, ic })); };
   const savePre = async bids => { if (db && userTeamId) await db.ref('auctions/' + auctionId + '/preBids/' + userTeamId).set(bids); };
@@ -1036,6 +1102,7 @@ function App() {
           {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
           <span>{userTeamName}</span>
           {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
+          <div className="view-toggle" onClick={toggleView} title={viewMode === 'mobile' ? 'Switch to Desktop View' : 'Switch to Mobile View'}>{viewMode === 'mobile' ? '🖥️' : '📱'}</div>
           <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
         </div>
       </header>
@@ -1253,6 +1320,24 @@ function App() {
           <div className="high-bidder-reveal">High Bidder: <strong>{celeb.hiBidder}</strong></div>
         </div>
       )}
+      
+      {/* Bottom Navigation (Mobile Only) */}
+      <div className="bottom-nav">
+        <div className={'bottom-nav-item ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>
+          <div className="icon">🏠</div>
+          <div>Auction</div>
+        </div>
+        <div className={'bottom-nav-item ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>
+          <div className="icon">📊</div>
+          <div>History</div>
+        </div>
+        {isComm && (
+          <div className={'bottom-nav-item ' + (activeTab === 'users' ? 'active' : '')} onClick={() => setActiveTab('users')}>
+            <div className="icon">👥</div>
+            <div>Users</div>
+          </div>
+        )}
+      </div>
     </>
   );
 }
