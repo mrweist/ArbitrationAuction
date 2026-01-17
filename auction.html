@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.30</title>
+  <title>Arbitration Auction v2.0.31</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -416,15 +416,96 @@ function App() {
     await syncToSheets('init', { teamNames });
   };
 
-  // Listen for custom expandTable events from native event listeners
+  // Global function to show/hide modal using direct DOM manipulation (bypasses broken React state)
   useEffect(() => {
-    const handleExpandTable = (e) => {
-      setExpandedTable(e.detail.table);
-      setExpandOrientation(e.detail.orientation);
+    // Define global function for opening modal
+    window.openExpandModal = (table, orientation) => {
+      const modal = document.getElementById('expanded-table-modal');
+      const modalContent = document.getElementById('modal-content');
+      const modalTitle = document.getElementById('modal-title');
+      const historyTable = document.getElementById('modal-table-history');
+      const usersTable = document.getElementById('modal-table-users');
+      const prebidTable = document.getElementById('modal-table-prebid');
+      
+      if (!modal) return;
+      
+      // Update title
+      if (modalTitle) {
+        modalTitle.textContent = table === 'history' ? 'Bid History' : table === 'users' ? 'User Management' : 'Set Your Pre-Bids';
+      }
+      
+      // Update orientation class
+      if (modalContent) {
+        modalContent.className = `expanded-table-content ${orientation}`;
+      }
+      
+      // Show correct table
+      if (historyTable) historyTable.style.display = table === 'history' ? 'block' : 'none';
+      if (usersTable) usersTable.style.display = table === 'users' ? 'block' : 'none';
+      if (prebidTable) prebidTable.style.display = table === 'prebid' ? 'block' : 'none';
+      
+      // Show modal
+      modal.style.display = 'flex';
+      
+      // Also update React state for data rendering (but don't rely on it for visibility)
+      setExpandedTable(table);
+      setExpandOrientation(orientation);
     };
-    window.addEventListener('expandTable', handleExpandTable);
-    return () => window.removeEventListener('expandTable', handleExpandTable);
+    
+    // Define global function for closing modal
+    window.closeExpandModal = () => {
+      const modal = document.getElementById('expanded-table-modal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      setExpandedTable(null);
+    };
+    
+    // Attach close button listener
+    const closeBtn = document.getElementById('modal-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', window.closeExpandModal);
+    }
+    
+    // Cleanup
+    return () => {
+      delete window.openExpandModal;
+      delete window.closeExpandModal;
+    };
   }, []);
+
+  // Attach native event listeners to expand buttons when they appear in DOM
+  useEffect(() => {
+    const attachListeners = () => {
+      const historyBtn = document.getElementById('expand-history-btn');
+      const usersBtn = document.getElementById('expand-users-btn');
+      const prebidBtn = document.getElementById('expand-prebid-btn');
+      
+      if (historyBtn && !historyBtn.dataset.listenerAttached) {
+        historyBtn.addEventListener('click', () => {
+          if (window.openExpandModal) window.openExpandModal('history', 'landscape');
+        });
+        historyBtn.dataset.listenerAttached = 'true';
+      }
+      
+      if (usersBtn && !usersBtn.dataset.listenerAttached) {
+        usersBtn.addEventListener('click', () => {
+          if (window.openExpandModal) window.openExpandModal('users', 'landscape');
+        });
+        usersBtn.dataset.listenerAttached = 'true';
+      }
+      
+      if (prebidBtn && !prebidBtn.dataset.listenerAttached) {
+        prebidBtn.addEventListener('click', () => {
+          if (window.openExpandModal) window.openExpandModal('prebid', 'portrait');
+        });
+        prebidBtn.dataset.listenerAttached = 'true';
+      }
+    };
+    
+    // Attach listeners after a short delay to ensure DOM is ready
+    setTimeout(attachListeners, 100);
+  }, [activeTab]);
 
   useEffect(() => {
     if (!auctionId) { setError('No auction ID'); setLoading(false); return; }
@@ -1629,15 +1710,14 @@ function App() {
         <div className="sidebar-overlay open" onClick={() => { setLeftSidebarOpen(false); setRightSidebarOpen(false); }} />
       )}
 
-      {/* Expanded Table Modal */}
-      {expandedTable && (
-          <div key={expandedTable} className="expanded-table-overlay open">
+      {/* Expanded Table Modal - Always rendered, controlled by direct DOM manipulation */}
+      <div id="expanded-table-modal" className="expanded-table-overlay" style={{display: 'none'}}>
           <div className="expanded-table-header">
-            <h3>{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
-            <button className="expanded-table-close" onClick={(e) => {e.preventDefault();setExpandedTable(null)}}>×</button>
+            <h3 id="modal-title">{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
+            <button id="modal-close-btn" className="expanded-table-close">×</button>
           </div>
-          <div className={`expanded-table-content ${expandOrientation}`}>
-            {expandedTable === 'history' && (
+          <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
+            <div id="modal-table-history" style={{display: expandedTable === 'history' ? 'block' : 'none'}}>
               <table className="history-table">
                 <thead><tr><th>Player</th><th>Owner</th><th>Winner</th><th>Decision</th><th>Price</th><th>Years</th><th>High Bid</th>{teamNames.map((n, i) => <th key={i} className="team-bid">{n}</th>)}</tr></thead>
                 <tbody>
@@ -1655,8 +1735,8 @@ function App() {
                   ))}
                 </tbody>
               </table>
-            )}
-            {expandedTable === 'users' && (
+            </div>
+            <div id="modal-table-users" style={{display: expandedTable === 'users' ? 'block' : 'none'}}>
               <table className="history-table">
                 <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Status</th></tr></thead>
                 <tbody>
@@ -1676,8 +1756,8 @@ function App() {
                   })}
                 </tbody>
               </table>
-            )}
-            {expandedTable === 'prebid' && (
+            </div>
+            <div id="modal-table-prebid" style={{display: expandedTable === 'prebid' ? 'block' : 'none'}}>
               <table className="history-table">
                 <thead><tr><th>Player</th><th>Team</th><th>Owner</th><th>Arb</th><th>Points</th><th>Your Bid</th></tr></thead>
                 <tbody>
@@ -1697,10 +1777,9 @@ function App() {
                   })}
                 </tbody>
               </table>
-            )}
+            </div>
           </div>
         </div>
-      )}
 
       {/* Diagnostic: Show expandedTable state */}
       {viewMode === 'mobile' && expandedTable && (
@@ -1712,32 +1791,6 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-
-// Attach native event listeners to expand buttons (React's synthetic events don't work)
-setTimeout(() => {
-  const historyBtn = document.getElementById('expand-history-btn');
-  const usersBtn = document.getElementById('expand-users-btn');
-  const prebidBtn = document.getElementById('expand-prebid-btn');
-  
-  if (historyBtn) {
-    historyBtn.addEventListener('click', () => {
-      // Trigger React state update by dispatching a custom event
-      window.dispatchEvent(new CustomEvent('expandTable', { detail: { table: 'history', orientation: 'landscape' } }));
-    });
-  }
-  
-  if (usersBtn) {
-    usersBtn.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('expandTable', { detail: { table: 'users', orientation: 'landscape' } }));
-    });
-  }
-  
-  if (prebidBtn) {
-    prebidBtn.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('expandTable', { detail: { table: 'prebid', orientation: 'portrait' } }));
-    });
-  }
-}, 500);
   </script>
 </body>
 </html>
