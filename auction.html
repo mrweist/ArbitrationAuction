@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.32</title>
+  <title>Arbitration Auction v2.0.37</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -415,64 +415,6 @@ function App() {
     const teamNames = Object.values(auction.teams).map(t => t.name);
     await syncToSheets('init', { teamNames });
   };
-
-  // Global function to show/hide modal using direct DOM manipulation (bypasses broken React state)
-  useEffect(() => {
-    // Define global function for opening modal
-    window.openExpandModal = (table, orientation) => {
-      const modal = document.getElementById('expanded-table-modal');
-      const modalContent = document.getElementById('modal-content');
-      const modalTitle = document.getElementById('modal-title');
-      const historyTable = document.getElementById('modal-table-history');
-      const usersTable = document.getElementById('modal-table-users');
-      const prebidTable = document.getElementById('modal-table-prebid');
-      
-      if (!modal) return;
-      
-      // Update title
-      if (modalTitle) {
-        modalTitle.textContent = table === 'history' ? 'Bid History' : table === 'users' ? 'User Management' : 'Set Your Pre-Bids';
-      }
-      
-      // Update orientation class
-      if (modalContent) {
-        modalContent.className = `expanded-table-content ${orientation}`;
-      }
-      
-      // Show correct table
-      if (historyTable) historyTable.style.display = table === 'history' ? 'block' : 'none';
-      if (usersTable) usersTable.style.display = table === 'users' ? 'block' : 'none';
-      if (prebidTable) prebidTable.style.display = table === 'prebid' ? 'block' : 'none';
-      
-      // Show modal
-      modal.style.display = 'flex';
-      
-      // Also update React state for data rendering (but don't rely on it for visibility)
-      setExpandedTable(table);
-      setExpandOrientation(orientation);
-    };
-    
-    // Define global function for closing modal
-    window.closeExpandModal = () => {
-      const modal = document.getElementById('expanded-table-modal');
-      if (modal) {
-        modal.style.display = 'none';
-      }
-      setExpandedTable(null);
-    };
-    
-    // Attach close button listener
-    const closeBtn = document.getElementById('modal-close-btn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', window.closeExpandModal);
-    }
-    
-    // Cleanup
-    return () => {
-      delete window.openExpandModal;
-      delete window.closeExpandModal;
-    };
-  }, []);
 
   // Attach native event listeners to expand buttons when they appear in DOM
   useEffect(() => {
@@ -1011,6 +953,65 @@ function App() {
     </div>;
   };
 
+  // Global function to show/hide modal using direct DOM manipulation (bypasses broken React state)
+  // MUST be before conditional returns so it runs for all screens
+  useEffect(() => {
+    // Define global function for opening modal
+    window.openExpandModal = (table, orientation) => {
+      const modal = document.getElementById('expanded-table-modal');
+      const modalContent = document.getElementById('modal-content');
+      const modalTitle = document.getElementById('modal-title');
+      const historyTable = document.getElementById('modal-table-history');
+      const usersTable = document.getElementById('modal-table-users');
+      const prebidTable = document.getElementById('modal-table-prebid');
+      
+      if (!modal) return;
+      
+      // Update title
+      if (modalTitle) {
+        modalTitle.textContent = table === 'history' ? 'Bid History' : table === 'users' ? 'User Management' : 'Set Your Pre-Bids';
+      }
+      
+      // Update orientation class
+      if (modalContent) {
+        modalContent.className = `expanded-table-content ${orientation}`;
+      }
+      
+      // Show correct table
+      if (historyTable) historyTable.style.display = table === 'history' ? 'block' : 'none';
+      if (usersTable) usersTable.style.display = table === 'users' ? 'block' : 'none';
+      if (prebidTable) prebidTable.style.display = table === 'prebid' ? 'block' : 'none';
+      
+      // Show modal
+      modal.style.display = 'flex';
+      
+      // Also update React state for data rendering (but don't rely on it for visibility)
+      setExpandedTable(table);
+      setExpandOrientation(orientation);
+    };
+    
+    // Define global function for closing modal
+    window.closeExpandModal = () => {
+      const modal = document.getElementById('expanded-table-modal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      setExpandedTable(null);
+    };
+    
+    // Attach close button listener
+    const closeBtn = document.getElementById('modal-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', window.closeExpandModal);
+    }
+    
+    // Cleanup
+    return () => {
+      delete window.openExpandModal;
+      delete window.closeExpandModal;
+    };
+  }, []);
+
   if (loading) return <div className="loading-screen"><div className="loading-spinner"></div><div>Loading auction...</div></div>;
   if (error) return <div className="loading-screen"><div style={{ color: 'var(--espn-error)', fontSize: '20px' }}>⚠️ {error}</div></div>;
 
@@ -1060,7 +1061,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.37 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>Pending Start</div>
           <div className="user-info">
@@ -1119,7 +1120,7 @@ function App() {
                     <td>{p.owner}</td>
                     <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                     {viewMode !== 'mobile' && <td>{fmt(p.fantasyPoints)}</td>}
-                    <td>{!own && !done ? <input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'right' }} onClick={(e)=>{if(viewMode==='mobile'){e.target.blur();setExpandedTable('prebid');setExpandOrientation('portrait')}}} /> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                    <td>{!own && !done ? <input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'right' }} /> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                   </tr>
                 ); })}
               </tbody>
@@ -1180,7 +1181,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.37 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
@@ -1259,6 +1260,34 @@ function App() {
               <div>Users</div>
             </div>
           )}
+        </div>}
+        {/* Expanded Table Modal for History */}
+        <div id="expanded-table-modal" className="expanded-table-overlay" style={{display: 'none'}}>
+          <div className="expanded-table-header">
+            <h3 id="modal-title">Bid History</h3>
+            <button id="modal-close-btn" className="expanded-table-close" onClick={() => window.closeExpandModal()}>×</button>
+          </div>
+          <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
+            <div id="modal-table-history" style={{display: 'block'}}>
+              <table className="history-table">
+                <thead><tr><th>Player</th><th>Arb</th><th>Winner</th><th>Result</th><th>Keep</th><th>Stick</th><th>Winning Bid</th><th>Final Price</th></tr></thead>
+                <tbody>
+                  {hist.map((h, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 600 }}>{h.playerName}</td>
+                      <td>{h.arbYear}</td>
+                      <td>{h.winnerName}</td>
+                      <td><span className={`result-badge ${h.result.toLowerCase()}`}>{h.result}</span></td>
+                      <td>${h.keepPrice}</td>
+                      <td>${h.stickPrice}</td>
+                      <td>${h.winningBid}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--espn-blue)' }}>${h.finalPrice}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </>
     );
@@ -1315,7 +1344,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.37 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
@@ -1410,6 +1439,37 @@ function App() {
             </div>
           )}
         </div>
+
+        {/* Expanded Table Modal - Always rendered, controlled by direct DOM manipulation */}
+        <div id="expanded-table-modal" className="expanded-table-overlay" style={{display: 'none'}}>
+          <div className="expanded-table-header">
+            <h3 id="modal-title">User Management</h3>
+            <button id="modal-close-btn" className="expanded-table-close" onClick={() => window.closeExpandModal()}>×</button>
+          </div>
+          <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
+            <div id="modal-table-users" style={{display: 'block'}}>
+              <table className="history-table">
+                <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Status</th></tr></thead>
+                <tbody>
+                  {Object.entries(auction?.teams || {}).map(([id, t]) => {
+                    const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
+                    const prebidCount = hasPrebids ? Object.keys(auction.preBids[id]).length : 0;
+                    const claimed = t.claimedBy;
+                    return (
+                      <tr key={id}>
+                        <td style={{ fontWeight: 600 }}>{t.name}</td>
+                        <td style={{ textAlign: 'center' }}>{t.username || '-'}</td>
+                        <td style={{ textAlign: 'center' }}>{t.isCommissioner ? <span style={{fontSize:'18px'}}>⭐</span> : 'No'} {t.isCommissioner ? 'Yes' : ''}</td>
+                        <td style={{ textAlign: 'center' }}>{hasPrebids ? <span style={{background:'var(--espn-success)',color:'#fff',padding:'4px 8px',borderRadius:'4px',fontSize:'12px',fontWeight:600}}>✓ {prebidCount}</span> : '0'}</td>
+                        <td style={{ textAlign: 'center' }}><span style={{color:claimed?'var(--espn-success)':'var(--espn-orange)',fontWeight:600}}>{claimed ? 'Active' : 'Available'}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </>
     );
   }
@@ -1418,7 +1478,7 @@ function App() {
   return (
     <>
       <header className="header">
-        <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
+        <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.37 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
         <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
           {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
@@ -1716,7 +1776,7 @@ function App() {
       <div id="expanded-table-modal" className="expanded-table-overlay" style={{display: 'none'}}>
           <div className="expanded-table-header">
             <h3 id="modal-title">{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
-            <button id="modal-close-btn" className="expanded-table-close">×</button>
+            <button id="modal-close-btn" className="expanded-table-close" onClick={() => window.closeExpandModal()}>×</button>
           </div>
           <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
             <div id="modal-table-history" style={{display: expandedTable === 'history' ? 'block' : 'none'}}>
