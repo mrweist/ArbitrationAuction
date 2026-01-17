@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v1.9</title>
+  <title>Arbitration Auction - Commissioner Setup v1.9.1</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -369,10 +369,10 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
     }
   };
 
-  const unlaunchAuc=async()=>{if(!confirm('WARNING: All auction data will be lost if the auction has been started.\n\nThis will remove the auction and return the league to Building state. League settings will be preserved.\n\nContinue?'))return;if(db&&(aucId||leagueId)){await db.ref(`auctions/${aucId||leagueId}`).remove();await db.ref(`admins/${admin.username}/leagues/${aucId||leagueId}`).update({phase:'building',auctionId:null});setCreated(false);setAucId(null);setDone(done.filter(s=>s!==5))}};  
+  const unlaunchAuc=async()=>{if(!confirm('WARNING: All auction data will be lost if the auction has been started.\n\nThis will return the league to Building state. All settings will be preserved.\n\nContinue?'))return;if(db&&(aucId||leagueId)){await db.ref(`auctions/${aucId||leagueId}`).update({phase:'building',currentPlayerIndex:0,bidHistory:[]});await db.ref(`admins/${admin.username}/leagues/${aucId||leagueId}`).update({phase:'building'});setPhase('building');setCreated(false);setAucId(null);setDone(done.filter(s=>s!==5))}};  
 
   const getUrl=()=>{const u=window.location.href;const i=u.lastIndexOf('/');return`${u.substring(0,i+1)}auction.html?league=${aucId||leagueId}`};
-  const enter=()=>{window.location.href=getUrl()+'&role=commissioner'};
+  const enter=()=>{window.open(getUrl()+'&role=commissioner','_blank')};
 
   const resetTab=()=>{
     if(step===1){setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('')}
