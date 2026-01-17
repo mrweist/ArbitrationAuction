@@ -389,7 +389,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
     }
   };
 
-  return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user" style={{display:'flex',gap:'12px'}}><button className="logout-btn" onClick={onBack}>← Dashboard</button><button className="logout-btn" onClick={resetTab}>Reset Tab</button><button className="logout-btn" onClick={resetAll}>Reset All</button><button className="logout-btn" onClick={handleLogout}>Logout</button></div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
+  return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user" style={{display:'flex',gap:'12px'}}><button className="logout-btn" onClick={onBack}>← Dashboard</button><button className="logout-btn" onClick={resetTab}>Reset Tab</button><button className="logout-btn" onClick={resetAll}>Reset All</button><button className="logout-btn" onClick={onLogout}>Logout</button></div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
     <main className="main-content">
       <div className="steps">{[1,2,3,4,5].map(s=><div key={s} className={`step ${step===s?'active':''} ${done.includes(s)?'completed':''} ${s>step&&!done.includes(s-1)?'disabled':''}`} onClick={()=>goStep(s)}><span className="step-number">{done.includes(s)?'✓':s}</span><span className="step-label">{s===1&&'Google Sheets'}{s===2&&'Scoring'}{s===3&&'League'}{s===4&&'Players'}{s===5&&'Launch'}</span></div>)}</div>
 
