@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.11</title>
+  <title>Arbitration Auction v2.0.12</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -123,7 +123,7 @@
     .price-box.keep .price-value{color:var(--espn-success)}
     .price-box.stick .price-value{color:var(--espn-blue)}
     .decision-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;font-size:14px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;font-size:14px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .btn:disabled{opacity:.4;cursor:not-allowed}
     .btn-primary{background:var(--espn-red);color:#fff}
     .btn-secondary{background:var(--espn-bg-table-header);color:var(--espn-text-primary);border:1px solid var(--espn-border)}
@@ -228,12 +228,12 @@
     
     /* Bottom Navigation (Mobile Only) */
     .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--espn-nav-dark);height:var(--touch-comfortable);border-top:1px solid var(--espn-border);z-index:100;justify-content:space-around;align-items:center}
-    .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-1);color:rgba(255,255,255,.6);font-size:var(--text-xs);cursor:pointer;height:100%}
+    .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-1);color:rgba(255,255,255,.6);font-size:var(--text-xs);cursor:pointer;height:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .bottom-nav-item.active{color:#fff;background:rgba(255,255,255,.1)}
     .bottom-nav-item .icon{font-size:24px}
     
     /* Collapsible Sections (Mobile) */
-    .collapsible-header{background:var(--espn-blue);color:#fff;padding:12px 16px;font-size:13px;font-weight:700;text-transform:uppercase;cursor:pointer;display:flex;justify-content:space-between;align-items:center;letter-spacing:0.5px;position:sticky;top:0;z-index:10}
+    .collapsible-header{background:var(--espn-blue);color:#fff;padding:12px 16px;font-size:13px;font-weight:700;text-transform:uppercase;cursor:pointer;display:flex;justify-content:space-between;align-items:center;letter-spacing:0.5px;position:sticky;top:0;z-index:10;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
     .collapsible-header:hover{background:#0956a5}
     .collapsible-arrow{transition:transform .3s;font-size:20px;font-weight:700;color:#fff}
     .collapsible-arrow.open{transform:rotate(180deg)}
@@ -986,7 +986,7 @@ function App() {
               </>}
               {viewMode === 'mobile' && <>
                 <div style={{background:'var(--espn-blue)',color:'#fff',padding:'10px 12px',borderRadius:'6px',fontWeight:700,fontSize:'13px',height:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>💰 Max: ${fmt(mx)}</div>
-                <button className="btn btn-secondary" onClick={()=>{setExpandedTable('prebid');setExpandOrientation('portrait')}} style={{padding:'10px 12px',fontSize:'18px',height:'48px',minWidth:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>⛶</button>
+                <button className="btn btn-secondary" onClick={()=>{setExpandedTable('prebid');setExpandOrientation('portrait')}} onTouchStart={()=>{setExpandedTable('prebid');setExpandOrientation('portrait')}} style={{padding:'10px 12px',fontSize:'18px',height:'48px',minWidth:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>⛶</button>
               </>}
             </div>
           </div>
@@ -1101,7 +1101,7 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem' }}>Bid History ({hist.length} players)</h2>
             <div style={{display:'flex',gap:'8px'}}>
-              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{setExpandedTable('history');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{setExpandedTable('history');setExpandOrientation('landscape')}} onTouchStart={()=>{setExpandedTable('history');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
               {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Google Sheet</button>}
             </div>
           </div>
@@ -1234,7 +1234,7 @@ function App() {
         <div className="history-container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem', margin: 0 }}>User Management</h2>
-            {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{setExpandedTable('users');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+            {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{setExpandedTable('users');setExpandOrientation('landscape')}} onTouchStart={()=>{setExpandedTable('users');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
           </div>
           
           <div className="card">
@@ -1338,7 +1338,7 @@ function App() {
       <div className={viewMode === 'mobile' ? 'app-container view-mobile' : 'app-container'}>
         <div className="sidebar">
           {viewMode === 'mobile' ? (
-            <div className="collapsible-header" onClick={() => {setQueueCollapsed(!queueCollapsed)}}>
+            <div className="collapsible-header" onClick={() => {setQueueCollapsed(!queueCollapsed)}} onTouchStart={() => {setQueueCollapsed(!queueCollapsed)}}>
               <span>Player Queue</span>
               <span className={'collapsible-arrow' + (queueCollapsed ? '' : ' open')}>▼</span>
             </div>
@@ -1493,7 +1493,7 @@ function App() {
 
         <div className="sidebar-right">
           {viewMode === 'mobile' ? (
-            <div className="collapsible-header" onClick={() => {setBudgetCollapsed(!budgetCollapsed)}}>
+            <div className="collapsible-header" onClick={() => {setBudgetCollapsed(!budgetCollapsed)}} onTouchStart={() => {setBudgetCollapsed(!budgetCollapsed)}}>
               <span>Team Budgets</span>
               <span className={'collapsible-arrow' + (budgetCollapsed ? '' : ' open')}>▼</span>
             </div>
@@ -1626,10 +1626,11 @@ function App() {
 
       {/* Expanded Table Modal */}
       {expandedTable && (
-        <div key={expandedTable} className="expanded-table-overlay" style={{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:9999,display:'flex',flexDirection:'column'}}>
+        <div>
+          <div key={expandedTable} className="expanded-table-overlay" style={{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:9999,display:'flex',flexDirection:'column'}}>
           <div className="expanded-table-header">
             <h3>{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
-            <button className="expanded-table-close" onClick={() => setExpandedTable(null)}>×</button>
+            <button className="expanded-table-close" onClick={() => setExpandedTable(null)} onTouchStart={() => setExpandedTable(null)}>×</button>
           </div>
           <div className={`expanded-table-content ${expandOrientation}`}>
             {expandedTable === 'history' && (
@@ -1694,6 +1695,7 @@ function App() {
               </table>
             )}
           </div>
+        </div>
         </div>
       )}
 
