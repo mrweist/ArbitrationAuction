@@ -36,26 +36,26 @@
     .app-container{display:grid;grid-template-columns:320px 1fr 320px;min-height:calc(100vh - 110px);gap:0;max-width:100%;margin:0;padding:0}
     .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px);position:sticky;top:0}
     .sidebar-title{font-size:13px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-nav-dark);padding:12px 16px;position:sticky;top:0;z-index:10;letter-spacing:0.5px}
-    .arb-group-header{background:var(--espn-bg-table-header);padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border)}
-    .player-queue-item{padding:12px 16px;border-bottom:1px solid var(--espn-border);font-size:14px;display:flex;align-items:stretch;gap:12px}
+    .arb-group-header{background:var(--espn-bg-table-header);padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);display:flex;justify-content:space-between;align-items:center}
+    .player-queue-item{padding:8px 12px;border-bottom:1px solid var(--espn-border);font-size:14px;display:flex;align-items:center;gap:8px;min-height:48px}
     .player-queue-item.current{background:#e3f2fd;border-left:4px solid var(--espn-blue)}
     .player-queue-item.own-player{background:#fff3cd}
     .player-queue-item.won-player{background:#d4edda}
     .player-queue-item.completed{opacity:.5}
     .player-queue-header{display:flex;flex-direction:column;justify-content:center;flex:1;gap:4px}
-    .player-queue-name{font-weight:700;font-size:16px;color:var(--espn-blue);line-height:1.2}
+    .player-queue-name{font-weight:700;font-size:14px;color:var(--espn-blue);line-height:1.2}
     .arb-badge{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#fff}
-    .arb-badge-queue{width:60px;height:60px;border-radius:6px;font-size:24px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .arb-badge-queue{width:32px;height:32px;border-radius:4px;font-size:16px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
     .arb-badge.arb-3{background:var(--espn-red)}
     .arb-badge-queue.arb-3{background:var(--espn-red)}
     .arb-badge.arb-2{background:var(--espn-orange)}
     .arb-badge-queue.arb-2{background:var(--espn-orange)}
     .arb-badge.arb-1{background:var(--espn-success)}
     .arb-badge-queue.arb-1{background:var(--espn-success)}
-    .player-queue-details{font-size:13px;color:var(--espn-text-secondary);line-height:1.3}
-    .prebid-input{display:flex;flex-direction:column;justify-content:center;gap:4px}
-    .prebid-input input{width:60px;height:60px;padding:8px;font-size:18px;font-weight:700;border:2px solid var(--espn-border);border-radius:6px;text-align:center}
-    .prebid-input label{font-size:10px;color:var(--espn-text-muted);text-transform:uppercase;font-weight:600;text-align:center}
+    .player-queue-details{font-size:12px;color:var(--espn-text-secondary);line-height:1.2}
+    .prebid-input{display:flex;align-items:center;justify-content:flex-end;margin-left:auto}
+    .prebid-input input{width:70px;height:28px;padding:4px 8px;font-size:13px;font-weight:600;border:1px solid var(--espn-border);border-radius:4px;text-align:right}
+    .prebid-input label{display:none}
     .result-badge{font-size:11px;padding:3px 8px;border-radius:4px;margin-top:6px;display:inline-block}
     .result-badge.keep{background:#d4edda;color:#155724}
     .result-badge.stick{background:#cce5ff;color:#004085}
@@ -133,7 +133,7 @@
     .btn-self-stick{background:#6f42c1;color:#fff}
     .btn-years{font-size:11px;opacity:.8}
     .sidebar-right{background:var(--espn-bg-card);border-left:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px);position:sticky;top:0}
-    .budget-item{padding:9px 12px;border-bottom:1px solid var(--espn-border);font-size:12px}
+    .budget-item{padding:12px;border-bottom:1px solid var(--espn-border);font-size:12px}
     .budget-item.current-user{background:#e3f2fd}
     .budget-item.is-commish{border-left:3px solid var(--espn-orange)}
     .budget-team-name{font-weight:700;display:flex;justify-content:space-between;margin-bottom:3px;font-size:13px}
@@ -236,8 +236,8 @@
     .collapsible-header:hover{background:#333}
     .collapsible-arrow{transition:transform .3s;font-size:20px;font-weight:700;color:#fff}
     .collapsible-arrow.open{transform:rotate(180deg)}
-    .collapsible-content{max-height:0;overflow:hidden;transition:max-height .3s ease-out}
-    .collapsible-content.open{max-height:2000px;transition:max-height .5s ease-in}
+    .collapsible-content{max-height:0;overflow:hidden;transition:max-height .3s ease-out;visibility:hidden}
+    .collapsible-content.open{max-height:5000px;transition:max-height .5s ease-in;visibility:visible}
     
     /* Pre-bid Modal (Mobile) */
     .prebid-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
@@ -374,8 +374,6 @@ function App() {
   const [prebidModalValue, setPrebidModalValue] = useState('');
   const [expandedTable, setExpandedTable] = useState(null); // 'history', 'users', 'prebid', or null
   const [expandOrientation, setExpandOrientation] = useState('landscape'); // 'landscape' or 'portrait'
-  const [debugLogs, setDebugLogs] = useState([]);
-  const addDebugLog = (msg) => setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`].slice(-10))
   const abbreviateName = (name) => { if (!name) return ''; const parts = name.split(' '); if (parts.length === 1) return name; return parts[0].charAt(0) + '. ' + parts.slice(1).join(' '); };
   const sKey = auctionId || 'x';
 
@@ -961,10 +959,10 @@ function App() {
             {isComm && <button style={{display:viewMode==='mobile'?'none':'inline-flex',alignItems:'center',justifyContent:'center',height:'40px',padding:'0 16px',background:'var(--espn-orange)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>⭐ Commissioner</button>}
             {isComm && viewMode === 'mobile' && <span style={{fontSize:'24px',lineHeight:'48px'}}>⭐</span>}
             <button className="view-toggle" onClick={toggleView} title={viewMode === 'mobile' ? 'Switch to Desktop View' : 'Switch to Mobile View'} style={{height:'40px',width:'40px',padding:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>{viewMode === 'mobile' ? '🖥️' : '📱'}</button>
-            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{height:'40px',padding:'0 16px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button>
+            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{height:'40px',padding:'0 24px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button>
           </div>
         </header>
-        {viewMode === 'mobile' && <div className="mobile-header-line2">⏳ Pending Start{mx > 0 && <span style={{marginLeft:'12px',background:'var(--espn-blue)',padding:'4px 12px',borderRadius:'4px',fontWeight:700}}>💰 Max: ${fmt(mx)}</span>}</div>}
+        {viewMode === 'mobile' && <div className="mobile-header-line2">⏳ Pending Start</div>}
         <nav className="nav"><div className="nav-left"></div></nav>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: viewMode === 'mobile' ? '12px' : '24px', paddingBottom: viewMode === 'mobile' ? '80px' : '24px' }}>
           
@@ -972,13 +970,16 @@ function App() {
           <div style={{ background: 'var(--espn-bg-card)', borderRadius: '8px', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: viewMode === 'mobile' ? '1.2rem' : '1.6rem', margin: 0 }}>Set Your Pre-Bids</h2>
             <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-              <div style={{background:'var(--espn-blue)',color:'#fff',padding:'8px 16px',borderRadius:'6px',fontWeight:700,fontSize:'14px'}}>💰 Max: ${fmt(mx)}</div>
               {viewMode !== 'mobile' && <>
-                <button className="btn btn-blue" onClick={downloadPrebidTemplate} style={{padding:'8px 16px',fontSize:'14px'}}>📥 DOWNLOAD TEMPLATE</button>
+                <div style={{background:'var(--espn-blue)',color:'#fff',padding:'8px 16px',borderRadius:'6px',fontWeight:700,fontSize:'14px'}}>💰 Max: ${fmt(mx)}</div>
+                <button className="btn btn-blue" onClick={downloadPrebidTemplate} style={{padding:'8px 16px',fontSize:'14px'}}>📅 DOWNLOAD TEMPLATE</button>
                 <input type="file" accept=".csv" id="bulk-upload" style={{display:'none'}} onChange={bulkUploadPreBids} />
                 <button className="btn btn-secondary" onClick={()=>document.getElementById('bulk-upload').click()} style={{padding:'8px 16px',fontSize:'14px'}}>📤 UPLOAD PRE-BIDS</button>
               </>}
-              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{addDebugLog('Prebid ⛶ clicked');alert('Prebid expand button clicked!');setExpandedTable('prebid');setExpandOrientation('portrait')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+              {viewMode === 'mobile' && <>
+                <div style={{background:'var(--espn-blue)',color:'#fff',padding:'8px 16px',borderRadius:'6px',fontWeight:700,fontSize:'14px'}}>💰 Max: ${fmt(mx)}</div>
+                <button className="btn btn-secondary" onClick={()=>{setExpandedTable('prebid');setExpandOrientation('portrait')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>
+              </>}
             </div>
           </div>
           
@@ -1074,7 +1075,7 @@ function App() {
             {isComm && <button style={{display:viewMode==='mobile'?'none':'inline-flex',alignItems:'center',justifyContent:'center',height:'40px',padding:'0 16px',background:'var(--espn-orange)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>⭐ Commissioner</button>}
             {isComm && viewMode === 'mobile' && <span style={{fontSize:'24px',lineHeight:'48px'}}>⭐</span>}
             <button className="view-toggle" onClick={toggleView} title={viewMode === 'mobile' ? 'Switch to Desktop View' : 'Switch to Mobile View'} style={{height:'40px',width:'40px',padding:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>{viewMode === 'mobile' ? '🖥️' : '📱'}</button>
-            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{height:'40px',padding:'0 16px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button>
+            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{height:'40px',padding:'0 24px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button>
           </div>
         </header>
         {viewMode === 'mobile' && <div className="mobile-header-line2">
@@ -1092,7 +1093,7 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem' }}>Bid History ({hist.length} players)</h2>
             <div style={{display:'flex',gap:'8px'}}>
-              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{addDebugLog('History ⛶ clicked');alert('History expand button clicked!');setExpandedTable('history');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{setExpandedTable('history');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
               {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Google Sheet</button>}
             </div>
           </div>
@@ -1208,7 +1209,7 @@ function App() {
             {isComm && <button style={{display:viewMode==='mobile'?'none':'inline-flex',alignItems:'center',justifyContent:'center',height:'40px',padding:'0 16px',background:'var(--espn-orange)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>⭐ Commissioner</button>}
             {isComm && viewMode === 'mobile' && <span style={{fontSize:'24px',lineHeight:'48px'}}>⭐</span>}
             <button className="view-toggle" onClick={toggleView} title={viewMode === 'mobile' ? 'Switch to Desktop View' : 'Switch to Mobile View'} style={{height:'40px',width:'40px',padding:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>{viewMode === 'mobile' ? '🖥️' : '📱'}</button>
-            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{height:'40px',padding:'0 16px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button>
+            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{height:'40px',padding:'0 24px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button>
           </div>
         </header>
         {viewMode === 'mobile' && <div className="mobile-header-line2">
@@ -1225,7 +1226,7 @@ function App() {
         <div className="history-container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem', margin: 0 }}>User Management</h2>
-            {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{addDebugLog('Users ⛶ clicked');alert('Users expand button clicked!');setExpandedTable('users');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+            {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{setExpandedTable('users');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
           </div>
           
           <div className="card">
@@ -1308,10 +1309,10 @@ function App() {
         <div className="user-info">
           {hasSheets && viewMode !== 'mobile' && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
           <span style={{display:viewMode==='mobile'?'none':'inline'}}>{userTeamName}</span>
-          {isComm && <span className="role-badge commish" style={{display:viewMode==='mobile'?'none':'inline-block'}}>⭐ Commissioner</span>}
+          {isComm && <button style={{display:viewMode==='mobile'?'none':'inline-flex',alignItems:'center',justifyContent:'center',height:'40px',padding:'0 16px',background:'var(--espn-orange)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>⭐ Commissioner</button>}
             {isComm && viewMode === 'mobile' && <span style={{fontSize:'24px',lineHeight:'48px'}}>⭐</span>}
-          <div className="view-toggle" onClick={toggleView} title={viewMode === 'mobile' ? 'Switch to Desktop View' : 'Switch to Mobile View'}>{viewMode === 'mobile' ? '🖥️' : '📱'}</div>
-          <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>Logout</button>
+          <button className="view-toggle" onClick={toggleView} title={viewMode === 'mobile' ? 'Switch to Desktop View' : 'Switch to Mobile View'} style={{height:'40px',width:'40px',padding:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'20px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>{viewMode === 'mobile' ? '🖥️' : '📱'}</button>
+          <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{height:'40px',padding:'0 24px',background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button>
         </div>
       </header>
       {viewMode === 'mobile' && <div className="mobile-header-line2">
@@ -1329,17 +1330,17 @@ function App() {
       <div className={viewMode === 'mobile' ? 'app-container view-mobile' : 'app-container'}>
         <div className="sidebar">
           {viewMode === 'mobile' ? (
-            <div className="collapsible-header" onClick={() => {addDebugLog('Queue header clicked');alert('Player Queue clicked!');setQueueCollapsed(!queueCollapsed)}}>
+            <div className="collapsible-header" onClick={() => {setQueueCollapsed(!queueCollapsed)}}>
               <span>Player Queue</span>
               <span className={'collapsible-arrow' + (queueCollapsed ? '' : ' open')}>▼</span>
             </div>
           ) : (
             <div className="sidebar-title">Player Queue</div>
           )}
-          <div className={'collapsible-content' + (viewMode === 'mobile' && queueCollapsed ? '' : ' open')} style={{maxHeight: viewMode !== 'mobile' || !queueCollapsed ? '2000px' : '0'}}>
+          <div className={'collapsible-content' + (viewMode === 'mobile' && queueCollapsed ? '' : ' open')}>
           {[3, 2, 1].map(ay => { const pls = grp[ay] || []; if (!pls.length) return null; return (
             <React.Fragment key={ay}>
-              <div className="arb-group-header">Arbitration Year {ay}</div>
+              <div className="arb-group-header"><span>Arbitration Year {ay}</span><span style={{fontSize:'10px',color:'var(--espn-text-muted)'}}>PRE-BID</span></div>
               {pls.map(p => {
                 const cur = p.idx === auction?.currentPlayerIndex;
                 const own = auction?.teams?.[userTeamId]?.name === p.owner;
@@ -1353,7 +1354,7 @@ function App() {
                       <div className="player-queue-name">{p.name}</div>
                       <div className="player-queue-details">{p.owner}</div>
                     </div>
-                    {!done && !own && <div className="prebid-input"><label>Pre-bid</label><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} onClick={viewMode === 'mobile' ? () => {setPrebidModalPlayer(p);setPrebidModalValue(preBids[p.idx] || '');setPrebidModalOpen(true)} : undefined} readOnly={viewMode === 'mobile'} min="0" step="1" /></div>}
+                    {!done && !own && <div className="prebid-input"><span style={{fontSize:'12px',marginRight:'4px'}}>$</span><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} onClick={viewMode === 'mobile' ? () => {setPrebidModalPlayer(p);setPrebidModalValue(preBids[p.idx] || '');setPrebidModalOpen(true)} : undefined} readOnly={viewMode === 'mobile'} min="0" step="0.01" placeholder="0.00" /></div>}
                     {p.result && <div style={{display:'flex',flexDirection:'column',justifyContent:'center',gap:'4px'}}><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</div>}
                   </div>
                 );
@@ -1484,14 +1485,14 @@ function App() {
 
         <div className="sidebar-right">
           {viewMode === 'mobile' ? (
-            <div className="collapsible-header" onClick={() => {addDebugLog('Budget header clicked');alert('Team Budgets clicked!');setBudgetCollapsed(!budgetCollapsed)}}>
+            <div className="collapsible-header" onClick={() => {setBudgetCollapsed(!budgetCollapsed)}}>
               <span>Team Budgets</span>
               <span className={'collapsible-arrow' + (budgetCollapsed ? '' : ' open')}>▼</span>
             </div>
           ) : (
             <div className="sidebar-title">Team Budgets</div>
           )}
-          <div className={'collapsible-content' + (viewMode === 'mobile' && budgetCollapsed ? '' : ' open')} style={{maxHeight: viewMode !== 'mobile' || !budgetCollapsed ? '2000px' : '0'}}>
+          <div className={'collapsible-content' + (viewMode === 'mobile' && budgetCollapsed ? '' : ' open')}>
           {teams.sort((a,b) => {
             const [idA] = a;
             const [idB] = b;
@@ -1688,23 +1689,7 @@ function App() {
         </div>
       )}
 
-      {/* Debug Panel */}
-      {viewMode === 'mobile' && (
-        <div style={{position:'fixed',bottom:'60px',left:0,right:0,background:'rgba(0,0,0,0.95)',color:'lime',padding:'8px',fontSize:'10px',maxHeight:'150px',overflowY:'auto',zIndex:9999,borderTop:'2px solid lime'}}>
-          <div style={{fontWeight:'bold',marginBottom:'4px',color:'yellow'}}>🐛 DEBUG PANEL</div>
-          <div><strong>expandedTable:</strong> {expandedTable || 'null'}</div>
-          <div><strong>viewMode:</strong> {viewMode}</div>
-          <div><strong>queueCollapsed:</strong> {queueCollapsed ? 'true' : 'false'}</div>
-          <div><strong>budgetCollapsed:</strong> {budgetCollapsed ? 'true' : 'false'}</div>
-          <div style={{marginTop:'4px',borderTop:'1px solid lime',paddingTop:'4px'}}><strong>Logs:</strong></div>
-          {debugLogs.map((log, i) => <div key={i} style={{fontSize:'9px'}}>{log}</div>)}
-        </div>
-      )}
 
-      {/* Visual Markers for Debugging */}
-      {viewMode === 'mobile' && expandedTable && (
-        <div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'yellow',color:'black',padding:'20px',fontSize:'16px',fontWeight:'bold',zIndex:10000,border:'5px solid red'}}>Modal should be visible! expandedTable={expandedTable}</div>
-      )}
     </>
   );
 }
