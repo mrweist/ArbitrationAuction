@@ -10,6 +10,7 @@
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Roboto',sans-serif;background:var(--espn-bg-page);color:var(--espn-text-primary);font-size:16px}
     .header{background:var(--espn-red);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+    .mobile-header-line2{background:#c00;height:44px;display:none;align-items:center;justify-content:center;padding:0 16px;font-size:14px;color:#fff;border-top:1px solid rgba(0,0,0,.1)}
     .header-title{font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.5rem;color:#fff;text-transform:uppercase}
     .user-info{display:flex;align-items:center;gap:14px;color:#fff;font-size:14px}
     .role-badge{background:rgba(255,255,255,.2);padding:5px 12px;border-radius:4px;font-size:12px;font-weight:600}
@@ -205,8 +206,9 @@
     .bottom-nav-item.active{color:#fff;background:rgba(255,255,255,.1)}
     .bottom-nav-item .icon{font-size:24px}
     
-    /* Responsive Breakpoints (Auto-detect fallback) */
-    @media(max-width:768px){body:not(.view-desktop){display:block}body:not(.view-desktop) .app-container{display:flex;flex-direction:column;padding:var(--space-4)}body:not(.view-desktop) .sidebar,body:not(.view-desktop) .sidebar-right{display:none}body:not(.view-desktop) .main-stage{padding:0}body:not(.view-desktop) .bid-status-grid{grid-template-columns:repeat(2,1fr)}body:not(.view-desktop) .nav-tabs{display:none}body:not(.view-desktop) .bottom-nav{display:flex}}
+    /* Responsive Breakpoints (Auto-detect fallback) */    @media (max-width:768px){
+      .mobile-header-line2{display:flex}
+      .header{height:60px}body:not(.view-desktop){display:block}body:not(.view-desktop) .app-container{display:flex;flex-direction:column;padding:var(--space-4)}body:not(.view-desktop) .sidebar,body:not(.view-desktop) .sidebar-right{display:none}body:not(.view-desktop) .main-stage{padding:0}body:not(.view-desktop) .bid-status-grid{grid-template-columns:repeat(2,1fr)}body:not(.view-desktop) .nav-tabs{display:none}body:not(.view-desktop) .bottom-nav{display:flex}}
     @media(min-width:1920px){body:not(.view-mobile) .app-container{max-width:1400px;margin:0 auto;gap:var(--space-12);padding:var(--space-8)}body:not(.view-mobile) .main-stage{padding:var(--space-8)}body:not(.view-mobile) body{font-size:18px}}
   </style>
 </head>
@@ -291,6 +293,7 @@ function App() {
   const [timerSeconds, setTimerSeconds] = useState('0');
   const [syncStatus, setSyncStatus] = useState('ok');
   const [viewMode, setViewMode] = useState('auto'); // 'auto', 'mobile', 'desktop'
+  const abbreviateName = (name) => { if (!name) return ''; const parts = name.split(' '); if (parts.length === 1) return name; return parts[0].charAt(0) + '. ' + parts.slice(1).join(' '); };
   const sKey = auctionId || 'x';
 
   // Sync to Google Sheets
@@ -849,9 +852,9 @@ function App() {
           <div className="modal" style={{ position: 'relative', maxWidth: 'none', margin: '0 auto' }}>
             <div className="modal-header">Set Your Pre-Bids</div>
             <div className="modal-body">
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px',flexWrap:'wrap',gap:'12px'}}>
                 <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong></div>
-                <div style={{display:'flex',gap:'8px'}}><button className="btn btn-blue" onClick={downloadPrebidTemplate} style={{padding:'8px 16px',fontSize:'14px'}}>📥 Download Template</button><input type="file" accept=".csv" id="bulk-upload" style={{display:'none'}} onChange={bulkUploadPreBids} /><button className="btn btn-secondary" onClick={()=>document.getElementById('bulk-upload').click()} style={{padding:'8px 16px',fontSize:'14px'}}>📁 Upload Pre-Bids</button></div>
+                {viewMode !== 'mobile' && <div style={{display:'flex',gap:'8px'}}><button className="btn btn-blue" onClick={downloadPrebidTemplate} style={{padding:'8px 16px',fontSize:'14px'}}>📥 Download Template</button><input type="file" accept=".csv" id="bulk-upload" style={{display:'none'}} onChange={bulkUploadPreBids} /><button className="btn btn-secondary" onClick={()=>document.getElementById('bulk-upload').click()} style={{padding:'8px 16px',fontSize:'14px'}}>📁 Upload Pre-Bids</button></div>}
               </div>
               <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
                 <table className="history-table">
@@ -926,6 +929,7 @@ function App() {
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
             <span>{userTeamName}</span>
             {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
+            <div className="view-toggle" onClick={toggleView} title={viewMode === 'mobile' ? 'Switch to Desktop View' : 'Switch to Mobile View'}>{viewMode === 'mobile' ? '🖥️' : '📱'}</div>
             <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
           </div>
         </header>
@@ -1053,6 +1057,7 @@ function App() {
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
             <span>{userTeamName}</span>
             {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
+            <div className="view-toggle" onClick={toggleView} title={viewMode === 'mobile' ? 'Switch to Desktop View' : 'Switch to Mobile View'}>{viewMode === 'mobile' ? '🖥️' : '📱'}</div>
             <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
           </div>
         </header>
@@ -1084,9 +1089,11 @@ function App() {
                         <td style={{textAlign:'center'}}>
                           <div style={{display:'flex',alignItems:'center',gap:'8px',justifyContent:'center'}}>
                             {hasPrebids ? <span style={{color:'var(--espn-green)',fontWeight:600}}>✅ {prebidCount}</span> : <span style={{color:'var(--espn-text-muted)'}}>0</span>}
-                            <input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} />
-                            <button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'4px 8px',fontSize:'12px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>
-                            {hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'4px 8px',fontSize:'12px'}}>🗑️ Delete</button>}
+                            {viewMode !== 'mobile' && <>
+                              <input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} />
+                              <button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'4px 8px',fontSize:'12px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>
+                              {hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'4px 8px',fontSize:'12px'}}>🗑️ Delete</button>}
+                            </>}
                           </div>
                         </td>
                         <td style={{textAlign:'center'}}>
@@ -1129,19 +1136,25 @@ function App() {
   return (
     <>
       <header className="header">
-        <div className="header-title">Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
-        <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>
+        <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
+        <div className="header-title" style={{display:viewMode==='mobile'?'block':'none',fontSize:'1.2rem'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
+        <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
           {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
           {auction?.players && ` | Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` (${auction.players[auction.currentPlayerIndex].name})` : ''}`}
         </div>
         <div className="user-info">
-          {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
-          <span>{userTeamName}</span>
-          {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
+          {hasSheets && viewMode !== 'mobile' && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
+          <span style={{display:viewMode==='mobile'?'none':'inline'}}>{userTeamName}</span>
+          {isComm && <span className="role-badge commish" style={{display:viewMode==='mobile'?'none':'inline-block'}}>⭐ Commissioner</span>}
+          {isComm && viewMode === 'mobile' && <span style={{fontSize:'18px'}}>⭐</span>}
           <div className="view-toggle" onClick={toggleView} title={viewMode === 'mobile' ? 'Switch to Desktop View' : 'Switch to Mobile View'}>{viewMode === 'mobile' ? '🖥️' : '📱'}</div>
           <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
         </div>
       </header>
+      {viewMode === 'mobile' && <div className="mobile-header-line2">
+        {auction?.phase === 'complete' ? '✅ Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? '⏳ Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? '🟢 In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? '⏳ Pending' : '🟢 In Progress'}
+        {auction?.players && ` • ${(auction.currentPlayerIndex || 0) + 1}/${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` • ${abbreviateName(auction.players[auction.currentPlayerIndex].name)}` : ''}`}
+      </div>}
       <nav className="nav">
         <div className="nav-tabs">
           <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
