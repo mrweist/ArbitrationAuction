@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v1.9.9</title>
+  <title>Arbitration Auction - Commissioner Setup v1.9.10</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -248,7 +248,7 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
 }
 
 // Commissioner Setup Component (existing functionality)
-function CommissionerSetup({admin,leagueId,onComplete,onBack}){
+function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
   const[step,setStep]=useState(1);
   const[done,setDone]=useState([]);
   const[db,setDb]=useState(null);
@@ -389,7 +389,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
     }
   };
 
-  return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user" style={{display:'flex',gap:'12px'}}><button className="logout-btn" onClick={onBack}>← Dashboard</button><button className="logout-btn" onClick={resetTab}>Reset Tab</button><button className="logout-btn" onClick={resetAll}>Reset All</button></div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
+  return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user" style={{display:'flex',gap:'12px'}}><button className="logout-btn" onClick={onBack}>← Dashboard</button><button className="logout-btn" onClick={resetTab}>Reset Tab</button><button className="logout-btn" onClick={resetAll}>Reset All</button><button className="logout-btn" onClick={handleLogout}>Logout</button></div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
     <main className="main-content">
       <div className="steps">{[1,2,3,4,5].map(s=><div key={s} className={`step ${step===s?'active':''} ${done.includes(s)?'completed':''} ${s>step&&!done.includes(s-1)?'disabled':''}`} onClick={()=>goStep(s)}><span className="step-number">{done.includes(s)?'✓':s}</span><span className="step-label">{s===1&&'Google Sheets'}{s===2&&'Scoring'}{s===3&&'League'}{s===4&&'Players'}{s===5&&'Launch'}</span></div>)}</div>
 
@@ -623,7 +623,7 @@ function App(){
 
   if(view==='login')return<AdminLogin onLogin={handleLogin}/>;
   if(view==='dashboard')return<LeagueDashboard admin={admin} onSelectLeague={handleSelectLeague} onCreateNew={handleCreateNew} onLogout={handleLogout}/>;
-  if(view==='setup')return<CommissionerSetup admin={admin} leagueId={currentLeagueId} onComplete={handleComplete} onBack={handleBackToDashboard}/>;
+  if(view==='setup')return<CommissionerSetup admin={admin} leagueId={currentLeagueId} onComplete={handleComplete} onBack={handleBackToDashboard} onLogout={handleLogout}/>;
   if(view==='manage')return<LeagueManagement leagueId={currentLeagueId} onBack={handleBackToDashboard} onEdit={()=>setView('setup')}/>;
 }
 
