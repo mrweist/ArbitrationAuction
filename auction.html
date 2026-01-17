@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.18</title>
+  <title>Arbitration Auction v2.0.22</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -40,7 +40,6 @@
     .sidebar-close-btn:active{background:rgba(255,255,255,.3)}
     .view-mobile .sidebar-close-btn{display:flex}
     .arb-group-header{background:var(--espn-bg-table-header);padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:37px;z-index:5}
-    .view-mobile .arb-group-header{position:relative;top:0}
     .arb-group-header .prebid-header{font-size:10px;color:var(--espn-text-muted);text-align:center;width:70px}
     .player-queue-item{padding:8px 12px;border-bottom:1px solid var(--espn-border);font-size:14px;display:flex;align-items:center;gap:8px;min-height:56px}
     .player-queue-item.current{background:#e3f2fd;border-left:4px solid var(--espn-blue)}
@@ -186,7 +185,7 @@
     .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
     /* View Mode Classes */
     .view-mobile .app-container{display:flex;flex-direction:column;padding:var(--space-4)}
-    .view-mobile .sidebar,.view-mobile .sidebar-right{position:fixed;top:10px;bottom:60px;width:95vw;max-width:95vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);overflow-y:auto;z-index:1200;-webkit-overflow-scrolling:touch;border:none;display:none}
+    .view-mobile .sidebar,.view-mobile .sidebar-right{position:fixed;top:92px;bottom:60px;width:95vw;max-width:95vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);overflow-y:auto;z-index:1200;-webkit-overflow-scrolling:touch;border:none;display:none}
     .view-mobile .sidebar{left:0}
     .view-mobile .sidebar-right{right:0}
     .view-mobile .sidebar.open{display:block !important}
@@ -592,10 +591,8 @@ function App() {
           if (playerIndex !== -1) {
             newBids[playerIndex] = bidAmount;
             count++;
-          )}
-      </div>
-
-      {/* Sidebar Overlay
+          }
+        }
         if (count === 0) return alert('No matching players found');
         setPreBids(newBids);
         save(userTeamId, userTeamName, newBids, isComm);
@@ -1613,7 +1610,41 @@ function App() {
             <div className="icon">👥</div>
             <div>Users</div>
           </div>
-        )}(Mobile Off-Canvas) */}
+        )}
+      </div>
+
+      {/* Pre-bid Modal (Mobile) */}
+      {prebidModalOpen && viewMode === 'mobile' && (
+        <div className="prebid-modal-overlay" onClick={() => setPrebidModalOpen(false)}>
+          <div className="prebid-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="prebid-modal-header">
+              Set Pre-Bid: {prebidModalPlayer?.name}
+            </div>
+            <input
+              type="number"
+              className="prebid-modal-input"
+              value={prebidModalValue}
+              onChange={(e) => setPrebidModalValue(e.target.value)}
+              placeholder="Enter amount"
+              autoFocus
+              min="0"
+              step="1"
+            />
+            <div className="prebid-modal-buttons">
+              <button className="btn btn-secondary" onClick={() => setPrebidModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => {
+                const v = parseFloat(prebidModalValue) || 0;
+                if (v === 0 || v >= 1) {
+                  updPre(prebidModalPlayer.idx, prebidModalValue);
+                  setPrebidModalOpen(false);
+                }
+              }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar Overlay (Mobile Off-Canvas) */}
       {viewMode === 'mobile' && (leftSidebarOpen || rightSidebarOpen) && (
         <div className="sidebar-overlay open" onClick={() => { setLeftSidebarOpen(false); setRightSidebarOpen(false); }} />
       )}
