@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.37</title>
+  <title>Arbitration Auction v2.0.38</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -265,10 +265,10 @@
     /* Expanded Table Modal */
     .expanded-table-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:2000;display:none;flex-direction:column;padding:0}
     .expanded-table-overlay.open{display:flex !important}
-    .expanded-table-header{background:var(--espn-red);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;color:#fff;flex-shrink:0}
+    .expanded-table-header{background:var(--espn-red);height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:#fff;flex-shrink:0}
     .expanded-table-header h3{font-family:'Roboto Condensed',sans-serif;font-size:1.3rem;font-weight:700;margin:0}
     .expanded-table-close{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
-    .expanded-table-content{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:16px;background:var(--espn-bg-page);position:relative;z-index:2100}
+    .expanded-table-content{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px;background:var(--espn-bg-page);position:relative;z-index:2100;max-height:calc(100vh - 48px)}
     .expanded-table-content.landscape{}
     .expanded-table-content table{width:100%;font-size:13px;background:#fff;border-radius:8px;overflow:hidden}
     .expanded-table-content th,.expanded-table-content td{padding:10px 8px;white-space:nowrap}
@@ -1061,7 +1061,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.37 ⚾ {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.38 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>Pending Start</div>
           <div className="user-info">
@@ -1139,6 +1139,37 @@ function App() {
             <button className="btn btn-primary" style={{ flex: 1 }} onClick={savePrebids}>Save & Enter Auction</button>
           </div>}
         </div>
+
+        {/* Expanded Table Modal for Prebids */}
+        <div id="expanded-table-modal" className="expanded-table-overlay" style={{display: 'none'}}>
+          <div className="expanded-table-header">
+            <h3 id="modal-title">Set Your Pre-Bids</h3>
+            <button id="modal-close-btn" className="expanded-table-close" onClick={() => window.closeExpandModal()}>×</button>
+          </div>
+          <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
+            <div id="modal-table-prebid" style={{display: 'block'}}>
+              <table className="history-table">
+                <thead><tr><th>Player</th><th>Team</th><th>Owner</th><th>Arb</th><th>Points</th><th>Your Bid</th></tr></thead>
+                <tbody>
+                  {pls.map((p, i) => {
+                    const own = p.owner === userTeamName;
+                    const done = p.status === 'completed';
+                    return (
+                      <tr key={i} style={done ? { opacity: 0.4 } : {}}>
+                        <td style={{ fontWeight: 600 }}>{p.name}</td>
+                        <td>{p.team}</td>
+                        <td>{p.owner}</td>
+                        <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
+                        <td>{fmt(p.fantasyPoints)}</td>
+                        <td>{!own && !done ? <input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'right' }} /> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </>
     );
   }
@@ -1178,10 +1209,12 @@ function App() {
   // HISTORY TAB
   if (activeTab === 'history') {
     const hist = auction?.bidHistory || [];
+    const teamList = Object.values(auction?.teams || {});
+    const teamNames = teamList.map(t => t.name);
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.37 ⚾ {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.38 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
@@ -1344,7 +1377,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.37 ⚾ {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.38 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
@@ -1449,7 +1482,7 @@ function App() {
           <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
             <div id="modal-table-users" style={{display: 'block'}}>
               <table className="history-table">
-                <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Status</th></tr></thead>
+                <thead><tr><th style={{textAlign:'center'}}>Team</th><th style={{textAlign:'center'}}>Username</th><th style={{textAlign:'center'}}>Commissioner</th><th style={{textAlign:'center'}}>Pre-Bids</th><th style={{textAlign:'center'}}>Status</th></tr></thead>
                 <tbody>
                   {Object.entries(auction?.teams || {}).map(([id, t]) => {
                     const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
@@ -1457,7 +1490,7 @@ function App() {
                     const claimed = t.claimedBy;
                     return (
                       <tr key={id}>
-                        <td style={{ fontWeight: 600 }}>{t.name}</td>
+                        <td style={{ fontWeight: 600, textAlign: 'center' }}>{t.name}</td>
                         <td style={{ textAlign: 'center' }}>{t.username || '-'}</td>
                         <td style={{ textAlign: 'center' }}>{t.isCommissioner ? <span style={{fontSize:'18px'}}>⭐</span> : 'No'} {t.isCommissioner ? 'Yes' : ''}</td>
                         <td style={{ textAlign: 'center' }}>{hasPrebids ? <span style={{background:'var(--espn-success)',color:'#fff',padding:'4px 8px',borderRadius:'4px',fontSize:'12px',fontWeight:600}}>✓ {prebidCount}</span> : '0'}</td>
@@ -1478,7 +1511,7 @@ function App() {
   return (
     <>
       <header className="header">
-        <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.37 ⚾ {auction?.leagueName || 'Loading...'}</div>
+        <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.38 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
         <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
           {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
@@ -1800,7 +1833,7 @@ function App() {
             </div>
             <div id="modal-table-users" style={{display: expandedTable === 'users' ? 'block' : 'none'}}>
               <table className="history-table">
-                <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Status</th></tr></thead>
+                <thead><tr><th style={{textAlign:'center'}}>Team</th><th style={{textAlign:'center'}}>Username</th><th style={{textAlign:'center'}}>Commissioner</th><th style={{textAlign:'center'}}>Pre-Bids</th><th style={{textAlign:'center'}}>Status</th></tr></thead>
                 <tbody>
                   {Object.entries(auction?.teams || {}).map(([id, t]) => {
                     const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
@@ -1808,7 +1841,7 @@ function App() {
                     const claimed = t.claimedBy;
                     return (
                       <tr key={id}>
-                        <td style={{ fontWeight: 600 }}>{t.name}</td>
+                        <td style={{ fontWeight: 600, textAlign: 'center' }}>{t.name}</td>
                         <td style={{ textAlign: 'center' }}>{t.username || '-'}</td>
                         <td style={{ textAlign: 'center' }}>{t.isCommissioner ? <span style={{fontSize:'18px'}}>⭐</span> : 'No'} {t.isCommissioner ? 'Yes' : ''}</td>
                         <td style={{ textAlign: 'center' }}>{hasPrebids ? <span style={{background:'var(--espn-success)',color:'#fff',padding:'4px 8px',borderRadius:'4px',fontSize:'12px',fontWeight:600}}>✓ {prebidCount}</span> : '0'}</td>
