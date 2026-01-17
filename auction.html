@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.12</title>
+  <title>Arbitration Auction v2.0.13</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -36,7 +36,7 @@
     .app-container{display:grid;grid-template-columns:320px 1fr 320px;min-height:calc(100vh - 110px);gap:0;max-width:100%;margin:0;padding:0}
     .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px);position:sticky;top:0}
     .sidebar-title{font-size:13px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-blue);padding:12px 16px;position:sticky;top:0;z-index:10;letter-spacing:0.5px}
-    .arb-group-header{background:var(--espn-bg-table-header);padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);display:flex;justify-content:space-between;align-items:center}
+    .arb-group-header{background:var(--espn-bg-table-header);padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
     .arb-group-header .prebid-header{font-size:10px;color:var(--espn-text-muted);text-align:center;width:70px}
     .player-queue-item{padding:8px 12px;border-bottom:1px solid var(--espn-border);font-size:14px;display:flex;align-items:center;gap:8px;min-height:56px}
     .player-queue-item.current{background:#e3f2fd;border-left:4px solid var(--espn-blue)}
@@ -410,11 +410,11 @@ function App() {
         if (d) {
           // Map commissioner phases to auction phases
           if (d.phase === 'created' || d.phase === 'building') d.phase = 'lobby';
-          // Store starting values if not already stored
-          if (d.teams && !d.startingValuesStored) {
+          // Initialize currentSalary and spotsAvailable from commissioner values if not set
+          if (d.teams) {
             Object.keys(d.teams).forEach(tid => {
-              if (!d.teams[tid].startingSalary) d.teams[tid].startingSalary = d.teams[tid].sal || d.teams[tid].currentSalary || 0;
-              if (!d.teams[tid].startingSpots) d.teams[tid].startingSpots = d.teams[tid].spots || d.teams[tid].spotsAvailable || 40;
+              if (d.teams[tid].currentSalary === undefined) d.teams[tid].currentSalary = d.teams[tid].sal || 0;
+              if (d.teams[tid].spotsAvailable === undefined) d.teams[tid].spotsAvailable = d.teams[tid].spots || 28;
             });
           }
           setAuction(d);
@@ -623,12 +623,11 @@ function App() {
       // Reset all teams' salary cap and roster spots to starting values from commissioner
       if (auction.teams) {
         Object.entries(auction.teams).forEach(([tid, t]) => {
-          const startSalary = t.startingSalary ?? 0;
-          const startSpots = t.startingSpots ?? 28;
-          updates[`teams/${tid}/currentSalary`] = startSalary;
-          updates[`teams/${tid}/sal`] = startSalary;
-          updates[`teams/${tid}/spotsAvailable`] = startSpots;
-          updates[`teams/${tid}/spots`] = startSpots;
+          // Copy commissioner values (sal, spots) to auction working values (currentSalary, spotsAvailable)
+          const commSalary = t.sal ?? 0;
+          const commSpots = t.spots ?? 28;
+          updates[`teams/${tid}/currentSalary`] = commSalary;
+          updates[`teams/${tid}/spotsAvailable`] = commSpots;
         });
       }
       await db.ref('auctions/' + auctionId).update(updates);
@@ -756,10 +755,10 @@ function App() {
     const allBids = {}; if (auction.revealedBids) Object.entries(auction.revealedBids).forEach(([tid, b]) => { allBids[auction.teams[tid]?.name || tid] = b.amount; });
     const hist = { player: p.name, team: p.team, pos: p.position, owner: p.owner, arb: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids, ts: Date.now() };
     upd['players/' + auction.currentPlayerIndex] = { ...p, status: 'completed', result: { decision: d, winner, winnerId: wid, price, contractYears: years, topBid: hb?.amount || 0, topBidder: hb?.teamName || 'None' } };
-    const wt = auction.teams[wid]; const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots ?? wt?.spotsAvailable ?? 28;
+    const wt = auction.teams[wid]; const oldSal = wt?.currentSalary || 0; const oldSpots = wt?.spotsAvailable ?? 28;
     const newSal = parseFloat((oldSal + price).toFixed(2));
-    upd['teams/' + wid + '/currentSalary'] = newSal; upd['teams/' + wid + '/sal'] = newSal;
-    upd['teams/' + wid + '/spotsAvailable'] = Math.max(0, oldSpots - 1); upd['teams/' + wid + '/spots'] = Math.max(0, oldSpots - 1);
+    upd['teams/' + wid + '/currentSalary'] = newSal;
+    upd['teams/' + wid + '/spotsAvailable'] = Math.max(0, oldSpots - 1);
     upd['phase'] = 'celebration'; upd['bidHistory'] = [...(auction.bidHistory || []), hist];
     if (db) await db.ref('auctions/' + auctionId).update(upd);
     syncToSheets('sync', { player: { name: p.name, team: p.team, position: p.position, owner: p.owner, arbYear: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids } });
@@ -784,10 +783,10 @@ function App() {
     if (!isComm) return; const p = auction.players[idx]; if (!p?.result) return;
     const r = p.result; const wt = auction.teams[r.winnerId]; const upd = {};
     upd['players/' + idx] = { ...p, status: 'pending', result: null };
-    const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots ?? wt?.spotsAvailable ?? 28;
+    const oldSal = wt?.currentSalary || 0; const oldSpots = wt?.spotsAvailable ?? 28;
     const newSal = parseFloat(Math.max(0, oldSal - r.price).toFixed(2));
-    upd['teams/' + r.winnerId + '/currentSalary'] = newSal; upd['teams/' + r.winnerId + '/sal'] = newSal;
-    upd['teams/' + r.winnerId + '/spotsAvailable'] = oldSpots + 1; upd['teams/' + r.winnerId + '/spots'] = oldSpots + 1;
+    upd['teams/' + r.winnerId + '/currentSalary'] = newSal;
+    upd['teams/' + r.winnerId + '/spotsAvailable'] = oldSpots + 1;
     upd['currentPlayerIndex'] = idx; upd['phase'] = 'waiting';
     const histEntry = (auction.bidHistory || []).find(h => h.player === p.name);
     const ownerId = Object.entries(auction.teams || {}).find(([tid, t]) => t.name === p.owner)?.[0];
@@ -1102,6 +1101,7 @@ function App() {
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem' }}>Bid History ({hist.length} players)</h2>
             <div style={{display:'flex',gap:'8px'}}>
               {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{setExpandedTable('history');setExpandOrientation('landscape')}} onTouchStart={()=>{setExpandedTable('history');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+              {viewMode === 'desktop' && hist.length > 0 && <button className="btn btn-secondary" onClick={exportCSV}>📥 Export CSV</button>}
               {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Google Sheet</button>}
             </div>
           </div>
