@@ -296,7 +296,9 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
           if(d.players){setPlayers(d.players.map(p=>({...p})))}
           if(d.sheetsConfig){setScriptUrl(d.sheetsConfig.scriptUrl||'');setSheetUrl(d.sheetsConfig.sheetUrl||'');setSheetId(d.sheetsConfig.sheetId||'')}
           setAucId(leagueId);
-          setDone([1,2,3,4]);
+          setCreated(true);
+          setDone([1,2,3,4,5]);
+          setStep(5);
         }
       });
     }
@@ -363,10 +365,11 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack}){
       await db.ref(`admins/${admin.username}/leagues/${id}`).set({name:league,createdAt:Date.now(),phase:'lobby',sheetsUrl:sheetUrl||null});
       setAucId(id);
       setCreated(true);
+      setDone([...done,5]);
     }
   };
 
-  const unlaunchAuc=async()=>{if(!confirm('Are you sure you want to unlaunch this auction? This will reset it to Created status.'))return;if(db&&(aucId||leagueId)){await db.ref(`auctions/${aucId||leagueId}`).remove();await db.ref(`admins/${admin.username}/leagues/${aucId||leagueId}`).remove();setCreated(false);setAucId(null)}};  
+  const unlaunchAuc=async()=>{if(!confirm('Are you sure you want to unlaunch this auction? This will reset it to Created status.'))return;if(db&&(aucId||leagueId)){await db.ref(`auctions/${aucId||leagueId}`).remove();await db.ref(`admins/${admin.username}/leagues/${aucId||leagueId}`).remove();setCreated(false);setAucId(null);setDone(done.filter(s=>s!==5))}};  
 
   const getUrl=()=>{const u=window.location.href;const i=u.lastIndexOf('/');return`${u.substring(0,i+1)}auction.html?league=${aucId||leagueId}`};
   const enter=()=>{window.location.href=getUrl()+'&role=commissioner'};
