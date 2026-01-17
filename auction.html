@@ -407,16 +407,44 @@ function App() {
     setTimeout(() => initSheets(), 500);
   };
 
+  const restartAuc = async () => {
+    if (!confirm('Restart auction from beginning? This will clear all results and bid history, but keep pre-bids.')) return;
+    if (db) {
+      const updates = {
+        phase: 'lobby',
+        currentPlayerIndex: 0,
+        bidHistory: [],
+        bids: null,
+        bidStatuses: null,
+        revealedBids: null,
+        highestBid: null,
+        tiedTeams: null,
+        tiebreakerTeams: null,
+        timerEndTime: null
+      };
+      // Clear results from all players
+      if (auction.players) {
+        auction.players.forEach((p, idx) => {
+          updates[`players/${idx}/result`] = null;
+          updates[`players/${idx}/status`] = 'pending';
+        });
+      }
+      await db.ref('auctions/' + auctionId).update(updates);
+      alert('Auction restarted. Pre-bids preserved.');
+    }
+  };
+
   const startBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'bidding', timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
 
   const submitBid = async () => {
     setBidErr('');
     const amt = usePre ? (preBids[auction.currentPlayerIndex] || 0) : parseFloat(curBid) || 0;
+    if (amt > 0 && amt < 1) return setBidErr('Minimum bid is $1 (or $0 to pass)');
     const t = auction.teams[userTeamId];
     const mx = maxBid(t);
     if (amt > mx) return setBidErr('Max $' + fmt(mx));
-    const bid = { teamId: userTeamId, teamName: userTeamName, amount: amt, ts: Date.now() };
-    if (db) { await db.ref('auctions/' + auctionId + '/bids/' + userTeamId).set(enc(bid, sKey)); await db.ref('auctions/' + auctionId + '/bidStatuses/' + userTeamId).set(true); }
+    const bid = { teamId: userTeamId, teamName: userTeamName, amount: amt, ts: Date.now(), status: usePre ? 'prebid' : 'manual' };
+    if (db) { await db.ref('auctions/' + auctionId + '/bids/' + userTeamId).set(enc(bid, sKey)); await db.ref('auctions/' + auctionId + '/bidStatuses/' + userTeamId).set(usePre ? 'prebid' : 'submitted'); }
     setBidOk(true);
   };
 
@@ -689,17 +717,22 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title">Arbitration Auction</div>
+          <div className="header-title">ARBITRATION AUCTION</div>
+          <div style={{flex:1,textAlign:'center',color:'#fff'}}>
+            <div style={{fontSize:'1.2rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</div>
+            <div style={{fontSize:'14px',opacity:0.9,marginTop:'2px'}}>
+              {auction?.players && `Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}`}
+              {auction?.players && (auction.currentPlayerIndex || 0) >= 4 && auction.players[auction.currentPlayerIndex] && `: ${auction.players[auction.currentPlayerIndex].name}`}
+            </div>
+          </div>
           <div className="user-info">
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
             <span>{userTeamName}</span>
             {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
-            {auction?.players && <span style={{marginLeft:'12px',color:'rgba(255,255,255,0.8)',fontSize:'14px'}}>Player {(auction.currentPlayerIndex || 0) + 1} of {auction.players.length}</span>}
             <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
           </div>
         </header>
         <nav className="nav">
-          <div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div>
           <div className="nav-tabs">
             <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
             <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History ({auction?.bidHistory?.length || 0})</div>
@@ -867,7 +900,14 @@ function App() {
   return (
     <>
       <header className="header">
-        <div className="header-title">Arbitration Auction</div>
+        <div className="header-title">ARBITRATION AUCTION</div>
+        <div style={{flex:1,textAlign:'center',color:'#fff'}}>
+          <div style={{fontSize:'1.2rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</div>
+          <div style={{fontSize:'14px',opacity:0.9,marginTop:'2px'}}>
+            {auction?.players && `Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}`}
+            {auction?.players && (auction.currentPlayerIndex || 0) >= 4 && auction.players[auction.currentPlayerIndex] && `: ${auction.players[auction.currentPlayerIndex].name}`}
+          </div>
+        </div>
         <div className="user-info">
           {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
           <span>{userTeamName}</span>
@@ -876,10 +916,6 @@ function App() {
         </div>
       </header>
       <nav className="nav">
-        <div className="nav-left">
-          <span className="league-name">{auction?.leagueName}</span>
-          <span className="nav-info">Player {(auction?.currentPlayerIndex || 0) + 1} of {auction?.players?.length || 0}</span>
-        </div>
         <div className="nav-tabs">
           <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
           <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History ({auction?.bidHistory?.length || 0})</div>
@@ -903,7 +939,7 @@ function App() {
                   <div key={p.idx} className={cn}>
                     <div className="player-queue-header"><span className="player-queue-name">{p.name}</span><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></div>
                     <div className="player-queue-details"><span>{p.owner}</span><span>{fmt(p.fantasyPoints)} pts</span></div>
-                    {!done && !own && <div className="prebid-input"><label>Pre-bid: $</label><input type="number" value={preBids[p.idx] || ''} onChange={e => updPre(p.idx, e.target.value)} min="0" /></div>}
+                    {!done && !own && <div className="prebid-input"><label>Pre-bid: $</label><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} min="0" step="1" /></div>}
                     {p.result && <><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</>}
                   </div>
                 );
@@ -942,7 +978,7 @@ function App() {
               </div>
 
               <div className="timer-section">
-                {auction.phase === 'waiting' && <><div className="timer-display">{fmtTime(auction.timerDuration)}</div>{isComm ? <button className="btn btn-primary" onClick={startBid}>Start Bidding</button> : <p style={{ color: 'var(--espn-text-muted)', marginTop: '12px' }}>Waiting for commissioner to start bidding...</p>}</>}
+                {auction.phase === 'waiting' && <><div className="timer-display">{fmtTime(auction.timerDuration)}</div>{isComm ? <><button className="btn btn-primary" onClick={startBid}>Start Bidding</button><button className="btn btn-secondary" onClick={restartAuc} style={{marginTop:'8px'}}>Restart Auction</button></> : <p style={{ color: 'var(--espn-text-muted)', marginTop: '12px' }}>Waiting for commissioner to start bidding...</p>}</>}
                 {(auction.phase === 'bidding' || isTie) && <><div className={'timer-display ' + timerCls()}>{fmtTime(timeLeft)}</div>{isComm && <button className="btn btn-secondary" onClick={isTie ? endTie : endBid}>{isTie ? 'End Tiebreaker' : 'End Bidding'}</button>}</>}
                 {auction.phase === 'reveal' && isComm && <button className="btn btn-primary" style={{ fontSize: '18px', padding: '18px 36px' }} onClick={reveal}>🎯 Reveal All Bids</button>}
                 {auction.phase === 'tie-resolution' && isComm && <button className="btn btn-primary" onClick={() => setTieModal(true)}>Resolve Tie</button>}
@@ -975,7 +1011,9 @@ function App() {
                       const own = t.name === cp?.owner;
                       const inTie = auction.tiebreakerTeams?.includes(id);
                       const tied = auction.tiedTeams?.some(x => x.id === id);
-                      return <div key={id} className={'bid-status-item ' + (auction.bidStatuses?.[id] ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied' : '')} style={isTie && !inTie ? { opacity: 0.3 } : {}}>{t.name}{own ? ' 👤' : auction.bidStatuses?.[id] ? <span className="checkmark"> ✓</span> : ''}</div>;
+                      const status = auction.bidStatuses?.[id];
+                      const icon = status === 'prebid' ? ' 🎯' : status === 'submitted' ? ' ✅' : '';
+                      return <div key={id} className={'bid-status-item ' + (status ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied' : '')} style={isTie && !inTie ? { opacity: 0.3 } : {}}>{t.name}{own ? ' 👤' : icon}</div>;
                     })}
                   </div>
                 </div>
