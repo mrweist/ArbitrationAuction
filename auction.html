@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.28</title>
+  <title>Arbitration Auction v2.0.26</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -39,7 +39,7 @@
     .sidebar-close-btn{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:20px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;padding:0;line-height:1}
     .sidebar-close-btn:active{background:rgba(255,255,255,.3)}
     .view-mobile .sidebar-close-btn{display:flex}
-    .arb-group-header{background:var(--espn-bg-table-header);padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:44px;z-index:5}
+    .arb-group-header{background:var(--espn-bg-table-header);padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:37px;z-index:5}
     .arb-group-header .prebid-header{font-size:10px;color:var(--espn-text-muted);text-align:center;width:70px}
     .player-queue-item{padding:8px 12px;border-bottom:1px solid var(--espn-border);font-size:14px;display:flex;align-items:center;gap:8px;min-height:56px}
     .player-queue-item.current{background:#e3f2fd;border-left:4px solid var(--espn-blue)}
@@ -185,12 +185,11 @@
     .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
     /* View Mode Classes */
     .view-mobile .app-container{display:flex;flex-direction:column;padding:var(--space-4);position:relative}
-    .view-mobile .sidebar,.view-mobile .sidebar-right{position:fixed;top:0;bottom:60px;width:95vw;max-width:95vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:1200;border:none;display:none;overflow:visible}
+    .view-mobile .sidebar,.view-mobile .sidebar-right{position:absolute;top:0;bottom:60px;width:95vw;max-width:95vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);overflow-y:auto;z-index:1200;-webkit-overflow-scrolling:touch;border:none;display:none}
     .view-mobile .sidebar{left:0}
     .view-mobile .sidebar-right{right:0}
     .view-mobile .sidebar.open{display:block !important}
     .view-mobile .sidebar-right.open{display:block !important}
-    .view-mobile .sidebar-scroll-wrapper{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
     .view-mobile .main-stage{padding:0;padding-bottom:120px !important}
     .view-mobile .player-card,.view-mobile .timer-section,.view-mobile .bid-status,.view-mobile .your-bid-section{max-width:100%;margin-bottom:8px}
     .view-mobile .player-card{margin-bottom:6px}
@@ -389,11 +388,10 @@ function App() {
   const [viewMode, setViewMode] = useState('auto'); // 'auto', 'mobile', 'desktop'
   const [queueCollapsed, setQueueCollapsed] = useState(true); // Player Queue collapsed by default on mobile
   const [budgetCollapsed, setBudgetCollapsed] = useState(true); // Team Budgets collapsed by default on mobile
-  const [prebidModalOpen, setPrebidModalOpen] = useState(false);
-  const [prebidModalPlayer, setPrebidModalPlayer] = useState(null);
-  const [prebidModalValue, setPrebidModalValue] = useState('');
+  // Prebid modal removed - users type directly into inputs
   const [expandedTable, setExpandedTable] = useState(null); // 'history', 'users', 'prebid', or null
   const [expandOrientation, setExpandOrientation] = useState('landscape'); // 'landscape' or 'portrait'
+  const [renderTrigger, setRenderTrigger] = useState(0); // Force re-render trigger
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // Mobile off-canvas left sidebar
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false); // Mobile off-canvas right sidebar
   const abbreviateName = (name) => { if (!name) return ''; const parts = name.split(' '); if (parts.length === 1) return name; return parts[0].charAt(0) + '. ' + parts.slice(1).join(' '); };
@@ -1006,7 +1004,7 @@ function App() {
               </>}
               {viewMode === 'mobile' && <>
                 <div style={{background:'var(--espn-blue)',color:'#fff',padding:'10px 12px',borderRadius:'6px',fontWeight:700,fontSize:'13px',height:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>💰 Max: ${fmt(mx)}</div>
-                <button className="btn btn-secondary" onClick={()=>{setExpandedTable('prebid');setExpandOrientation('portrait')}} onTouchStart={()=>{setExpandedTable('prebid');setExpandOrientation('portrait')}} style={{padding:'10px 12px',fontSize:'18px',height:'48px',minWidth:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>⛶</button>
+                <button className="btn btn-secondary" onClick={(e)=>{e.preventDefault();setExpandedTable('prebid');setExpandOrientation('portrait');setRenderTrigger(t=>t+1)}} style={{padding:'10px 12px',fontSize:'18px',height:'48px',minWidth:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>⛶</button>
               </>}
             </div>
           </div>
@@ -1121,7 +1119,7 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem' }}>Bid History ({hist.length} players)</h2>
             <div style={{display:'flex',gap:'8px'}}>
-              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{setExpandedTable('history');setExpandOrientation('landscape')}} onTouchStart={()=>{setExpandedTable('history');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={(e)=>{e.preventDefault();setExpandedTable('history');setExpandOrientation('landscape');setRenderTrigger(t=>t+1)}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
               {viewMode === 'desktop' && hist.length > 0 && <button className="btn btn-secondary" onClick={exportCSV}>📥 Export CSV</button>}
               {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Google Sheet</button>}
             </div>
@@ -1255,7 +1253,7 @@ function App() {
         <div className="history-container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem', margin: 0 }}>User Management</h2>
-            {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={()=>{setExpandedTable('users');setExpandOrientation('landscape')}} onTouchStart={()=>{setExpandedTable('users');setExpandOrientation('landscape')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+            {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={(e)=>{e.preventDefault();setExpandedTable('users');setExpandOrientation('landscape');setRenderTrigger(t=>t+1)}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
           </div>
           
           <div className="card">
@@ -1379,7 +1377,7 @@ function App() {
                       <div className="player-queue-name">{p.name}</div>
                       <div className="player-queue-details">{p.owner}</div>
                     </div>
-                    {!done && !own && <div className="prebid-input"><span style={{fontSize:'12px',marginRight:'4px'}}>$</span><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} onClick={viewMode === 'mobile' ? () => {setPrebidModalPlayer(p);setPrebidModalValue(preBids[p.idx] || '');setPrebidModalOpen(true)} : undefined} readOnly={viewMode === 'mobile'} min="0" step="0.01" placeholder="0.00" /></div>}
+                    {!done && !own && <div className="prebid-input"><span style={{fontSize:'12px',marginRight:'4px'}}>$</span><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} min="0" step="0.01" placeholder="0.00" /></div>}
                     {p.result && <div style={{display:'flex',flexDirection:'column',justifyContent:'center',gap:'4px'}}><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</div>}
                   </div>
                 );
@@ -1506,7 +1504,6 @@ function App() {
               )}
             </>
           )}
-          </div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>
@@ -1615,36 +1612,7 @@ function App() {
         )}
       </div>
 
-      {/* Pre-bid Modal (Mobile) */}
-      {prebidModalOpen && viewMode === 'mobile' && (
-        <div className="prebid-modal-overlay" onClick={() => setPrebidModalOpen(false)}>
-          <div className="prebid-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="prebid-modal-header">
-              Set Pre-Bid: {prebidModalPlayer?.name}
-            </div>
-            <input
-              type="number"
-              className="prebid-modal-input"
-              value={prebidModalValue}
-              onChange={(e) => setPrebidModalValue(e.target.value)}
-              placeholder="Enter amount"
-              autoFocus
-              min="0"
-              step="1"
-            />
-            <div className="prebid-modal-buttons">
-              <button className="btn btn-secondary" onClick={() => setPrebidModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => {
-                const v = parseFloat(prebidModalValue) || 0;
-                if (v === 0 || v >= 1) {
-                  updPre(prebidModalPlayer.idx, prebidModalValue);
-                  setPrebidModalOpen(false);
-                }
-              }}>Save</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Pre-bid Modal removed - users can now type directly into prebid inputs */}
 
       {/* Sidebar Overlay (Mobile Off-Canvas) */}
       {viewMode === 'mobile' && (leftSidebarOpen || rightSidebarOpen) && (
@@ -1656,7 +1624,7 @@ function App() {
           <div key={expandedTable} className="expanded-table-overlay open">
           <div className="expanded-table-header">
             <h3>{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
-            <button className="expanded-table-close" onClick={() => setExpandedTable(null)} onTouchStart={() => setExpandedTable(null)}>×</button>
+            <button className="expanded-table-close" onClick={(e) => {e.preventDefault();setExpandedTable(null)}}>×</button>
           </div>
           <div className={`expanded-table-content ${expandOrientation}`}>
             {expandedTable === 'history' && (
