@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.26</title>
+  <title>Arbitration Auction v2.0.30</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -415,6 +415,16 @@ function App() {
     const teamNames = Object.values(auction.teams).map(t => t.name);
     await syncToSheets('init', { teamNames });
   };
+
+  // Listen for custom expandTable events from native event listeners
+  useEffect(() => {
+    const handleExpandTable = (e) => {
+      setExpandedTable(e.detail.table);
+      setExpandOrientation(e.detail.orientation);
+    };
+    window.addEventListener('expandTable', handleExpandTable);
+    return () => window.removeEventListener('expandTable', handleExpandTable);
+  }, []);
 
   useEffect(() => {
     if (!auctionId) { setError('No auction ID'); setLoading(false); return; }
@@ -1004,7 +1014,7 @@ function App() {
               </>}
               {viewMode === 'mobile' && <>
                 <div style={{background:'var(--espn-blue)',color:'#fff',padding:'10px 12px',borderRadius:'6px',fontWeight:700,fontSize:'13px',height:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>💰 Max: ${fmt(mx)}</div>
-                <button className="btn btn-secondary" onClick={(e)=>{e.preventDefault();setExpandedTable('prebid');setExpandOrientation('portrait');setRenderTrigger(t=>t+1)}} style={{padding:'10px 12px',fontSize:'18px',height:'48px',minWidth:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>⛶</button>
+                <button id="expand-prebid-btn" className="btn btn-secondary" style={{padding:'10px 12px',fontSize:'18px',height:'48px',minWidth:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>⛶</button>
               </>}
             </div>
           </div>
@@ -1119,7 +1129,7 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem' }}>Bid History ({hist.length} players)</h2>
             <div style={{display:'flex',gap:'8px'}}>
-              {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={(e)=>{alert('Button clicked!');e.preventDefault();setExpandedTable('history');setExpandOrientation('landscape');setRenderTrigger(t=>t+1)}} style={{padding:'8px 16px',fontSize:'18px',position:'relative',zIndex:200}}>⛶</button>}
+              {viewMode === 'mobile' && <button id="expand-history-btn" className="btn btn-secondary" style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
               {viewMode === 'desktop' && hist.length > 0 && <button className="btn btn-secondary" onClick={exportCSV}>📥 Export CSV</button>}
               {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Google Sheet</button>}
             </div>
@@ -1253,7 +1263,7 @@ function App() {
         <div className="history-container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem', margin: 0 }}>User Management</h2>
-            {viewMode === 'mobile' && <button className="btn btn-secondary" onClick={(e)=>{e.preventDefault();setExpandedTable('users');setExpandOrientation('landscape');setRenderTrigger(t=>t+1)}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+            {viewMode === 'mobile' && <button id="expand-users-btn" className="btn btn-secondary" style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
           </div>
           
           <div className="card">
@@ -1702,6 +1712,32 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+// Attach native event listeners to expand buttons (React's synthetic events don't work)
+setTimeout(() => {
+  const historyBtn = document.getElementById('expand-history-btn');
+  const usersBtn = document.getElementById('expand-users-btn');
+  const prebidBtn = document.getElementById('expand-prebid-btn');
+  
+  if (historyBtn) {
+    historyBtn.addEventListener('click', () => {
+      // Trigger React state update by dispatching a custom event
+      window.dispatchEvent(new CustomEvent('expandTable', { detail: { table: 'history', orientation: 'landscape' } }));
+    });
+  }
+  
+  if (usersBtn) {
+    usersBtn.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('expandTable', { detail: { table: 'users', orientation: 'landscape' } }));
+    });
+  }
+  
+  if (prebidBtn) {
+    prebidBtn.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('expandTable', { detail: { table: 'prebid', orientation: 'portrait' } }));
+    });
+  }
+}, 500);
   </script>
 </body>
 </html>
