@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v1.7.2</title>
+  <title>Arbitration Auction v1.7.3</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -185,8 +185,8 @@ const keepPct = a => ({ 1: 0.4, 2: 0.6, 3: 0.8 }[a] || 1);
 const yrs = a => ({ 1: 3, 2: 2, 3: 1 }[a] || 1);
 const enc = (b, k) => CryptoJS.AES.encrypt(JSON.stringify(b), k).toString();
 const dec = (e, k) => { try { return JSON.parse(CryptoJS.AES.decrypt(e, k).toString(CryptoJS.enc.Utf8)); } catch { return null; } };
-const maxBid = t => t ? Math.max(0, (t.cap || t.salaryCap || 100) - (t.sal || t.currentSalary || 0) - (t.spots || t.spotsAvailable || 1) + 1) : 0;
-const keepPr = (b, a) => Math.max(1, Math.ceil(b * keepPct(a)));
+const maxBid = t => t ? parseFloat(Math.max(0, (t.cap || t.salaryCap || 100) - (t.sal || t.currentSalary || 0) - (t.spots || t.spotsAvailable || 1) + 1).toFixed(2)) : 0;
+const keepPr = (b, a) => Math.max(1, parseFloat((b * keepPct(a)).toFixed(2)));
 const stickPr = b => Math.max(1, b);
 
 const hitPts = (s, sc) => {
@@ -451,7 +451,10 @@ function App() {
     const statuses = {};
     const teams = auction?.teams ? Object.entries(auction.teams) : [];
     const curIdx = auction.currentPlayerIndex || 0;
+    const currentPlayer = auction?.players?.[curIdx];
     teams.forEach(([tid, t]) => {
+      // Ignore pre-bid if this team owns the current player
+      if (currentPlayer && t.name === currentPlayer.owner) return;
       const teamPreBids = auction?.preBids?.[tid] || {};
       const preBid = teamPreBids[curIdx];
       if (preBid && preBid > 0) {
@@ -479,8 +482,10 @@ function App() {
 
   const reveal = async () => {
     const decoded = {}; let mx = 0;
-    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (b.amount > mx) mx = b.amount; } });
-    const top = Object.entries(decoded).filter(([_, b]) => b.amount === mx);
+    const currentPlayer = auction?.players?.[auction.currentPlayerIndex];
+    const ownerTeamId = currentPlayer ? Object.entries(auction.teams || {}).find(([_, t]) => t.name === currentPlayer.owner)?.[0] : null;
+    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (tid !== ownerTeamId && b.amount > mx) mx = b.amount; } });
+    const top = Object.entries(decoded).filter(([tid, b]) => tid !== ownerTeamId && b.amount === mx);
     const hi = top.length > 0 ? top[0][1] : { amount: 0, teamId: null, teamName: 'No bids' };
     const tied = top.length > 1 ? top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })) : null;
     if (db) await db.ref('auctions/' + auctionId).update({ phase: 'decision', revealedBids: decoded, highestBid: hi, tiedTeams: tied });
@@ -491,8 +496,10 @@ function App() {
 
   const endTie = async () => {
     const decoded = {}; let mx = 0;
-    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (b.amount > mx) mx = b.amount; } });
-    const top = Object.entries(decoded).filter(([_, b]) => b.amount === mx);
+    const currentPlayer = auction?.players?.[auction.currentPlayerIndex];
+    const ownerTeamId = currentPlayer ? Object.entries(auction.teams || {}).find(([_, t]) => t.name === currentPlayer.owner)?.[0] : null;
+    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (tid !== ownerTeamId && b.amount > mx) mx = b.amount; } });
+    const top = Object.entries(decoded).filter(([tid, b]) => tid !== ownerTeamId && b.amount === mx);
     if (top.length === 1) { const w = top[0][1]; await doStick(w.teamId, w.teamName, w.amount); }
     else { const tied = top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })); if (db) await db.ref('auctions/' + auctionId).update({ phase: 'tie-resolution', tiedTeams: tied, revealedBids: decoded }); setTieModal(true); }
   };
@@ -520,8 +527,9 @@ function App() {
     const allBids = {}; if (auction.revealedBids) Object.entries(auction.revealedBids).forEach(([tid, b]) => { allBids[auction.teams[tid]?.name || tid] = b.amount; });
     const hist = { player: p.name, team: p.team, pos: p.position, owner: p.owner, arb: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids, ts: Date.now() };
     upd['players/' + auction.currentPlayerIndex] = { ...p, status: 'completed', result: { decision: d, winner, winnerId: wid, price, contractYears: years, topBid: hb?.amount || 0, topBidder: hb?.teamName || 'None' } };
-    const wt = auction.teams[wid]; const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots || wt?.spotsAvailable || 1;
-    upd['teams/' + wid + '/currentSalary'] = oldSal + price; upd['teams/' + wid + '/sal'] = oldSal + price;
+    const wt = auction.teams[wid]; const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots ?? wt?.spotsAvailable ?? (wt?.rosterSpots || 40);
+    const newSal = parseFloat((oldSal + price).toFixed(2));
+    upd['teams/' + wid + '/currentSalary'] = newSal; upd['teams/' + wid + '/sal'] = newSal;
     upd['teams/' + wid + '/spotsAvailable'] = Math.max(0, oldSpots - 1); upd['teams/' + wid + '/spots'] = Math.max(0, oldSpots - 1);
     upd['phase'] = 'celebration'; upd['bidHistory'] = [...(auction.bidHistory || []), hist];
     if (db) await db.ref('auctions/' + auctionId).update(upd);
@@ -547,8 +555,9 @@ function App() {
     if (!isComm) return; const p = auction.players[idx]; if (!p?.result) return;
     const r = p.result; const wt = auction.teams[r.winnerId]; const upd = {};
     upd['players/' + idx] = { ...p, status: 'pending', result: null };
-    const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots || wt?.spotsAvailable || 0;
-    upd['teams/' + r.winnerId + '/currentSalary'] = Math.max(0, oldSal - r.price); upd['teams/' + r.winnerId + '/sal'] = Math.max(0, oldSal - r.price);
+    const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots ?? wt?.spotsAvailable ?? (wt?.rosterSpots || 40);
+    const newSal = parseFloat(Math.max(0, oldSal - r.price).toFixed(2));
+    upd['teams/' + r.winnerId + '/currentSalary'] = newSal; upd['teams/' + r.winnerId + '/sal'] = newSal;
     upd['teams/' + r.winnerId + '/spotsAvailable'] = oldSpots + 1; upd['teams/' + r.winnerId + '/spots'] = oldSpots + 1;
     upd['currentPlayerIndex'] = idx; upd['phase'] = 'waiting';
     const histEntry = (auction.bidHistory || []).find(h => h.player === p.name);
@@ -896,7 +905,6 @@ function App() {
           <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem', marginBottom: '24px' }}>User Management</h2>
           
           <div className="card">
-            <div className="card-header">All Teams ({teams.length})</div>
             <div className="card-body">
               <div style={{overflowX:'auto'}}>
                 <table className="history-table">
@@ -1107,7 +1115,7 @@ function App() {
             return (
               <div key={id} className={'budget-item ' + (id === userTeamId ? 'current-user ' : '') + ((t.isCommissioner || t.isComm) ? 'is-commish' : '')}>
                 <div className="budget-team-name"><span>{t.name}{(t.isCommissioner || t.isComm) && <span className="commish-star">⭐</span>}</span><span className="budget-available">${fmt(av)}</span></div>
-                <div className="budget-details"><span>Spots: {t.spots || t.spotsAvailable || 0}</span><span>Max: ${fmt(mb)}</span></div>
+                <div className="budget-details"><span>Spots Available: {t.spots || t.spotsAvailable || 0}</span><span>Max: ${fmt(mb)}</span></div>
                 <div className="budget-bar"><div className={'budget-bar-fill ' + fc} style={{ width: pct + '%' }}></div></div>
               </div>
             );
