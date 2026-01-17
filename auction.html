@@ -452,7 +452,8 @@ function App() {
     const teams = auction?.teams ? Object.entries(auction.teams) : [];
     const curIdx = auction.currentPlayerIndex || 0;
     teams.forEach(([tid, t]) => {
-      const preBid = preBids[curIdx];
+      const teamPreBids = auction?.preBids?.[tid] || {};
+      const preBid = teamPreBids[curIdx];
       if (preBid && preBid > 0) {
         const bid = { teamId: tid, teamName: t.name, amount: preBid, ts: Date.now(), status: 'prebid' };
         bids[tid] = enc(bid, sKey);
@@ -685,7 +686,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title">Arbitration Auction | {auction?.leagueName}</div>
+          <div className="header-title">Arbitration Auction ⚾ {auction?.leagueName}</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>Pending Start</div>
           <div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div>
         </header>
@@ -763,7 +764,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title">Arbitration Auction | {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title">Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
             {auction?.players && ` | Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` (${auction.players[auction.currentPlayerIndex].name})` : ''}`}
@@ -872,7 +873,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title">Arbitration Auction | {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title">Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
             {auction?.players && ` | Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` (${auction.players[auction.currentPlayerIndex].name})` : ''}`}
@@ -940,13 +941,10 @@ function App() {
   return (
     <>
       <header className="header">
-        <div className="header-title">ARBITRATION AUCTION</div>
-        <div style={{flex:1,textAlign:'center',color:'#fff'}}>
-          <div style={{fontSize:'1.2rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</div>
-          <div style={{fontSize:'14px',opacity:0.9,marginTop:'2px'}}>
-            {auction?.players && `Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}`}
-            {auction?.players && (auction.currentPlayerIndex || 0) >= 4 && auction.players[auction.currentPlayerIndex] && `: ${auction.players[auction.currentPlayerIndex].name}`}
-          </div>
+        <div className="header-title">Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
+        <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>
+          {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
+          {auction?.players && ` | Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` (${auction.players[auction.currentPlayerIndex].name})` : ''}`}
         </div>
         <div className="user-info">
           {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
