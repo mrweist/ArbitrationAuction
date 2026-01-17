@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v1.5</title>
+  <title>Arbitration Auction v1.6</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -27,8 +27,8 @@
     .sync-dot.ok{background:#4ade80}
     .sync-dot.pending{background:var(--espn-orange);animation:pulse 1s infinite}
     .sync-dot.error{background:var(--espn-error)}
-    .app-container{display:grid;grid-template-columns:320px 1fr 240px;min-height:calc(100vh - 110px)}
-    .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto}
+    .app-container{display:grid;grid-template-columns:280px 1fr 240px;min-height:calc(100vh - 110px)}
+    .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto;max-height:calc(100vh - 110px)}
     .sidebar-title{font-size:12px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-nav-dark);padding:12px 16px;position:sticky;top:0;z-index:10}
     .arb-group-header{background:var(--espn-bg-table-header);padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border)}
     .player-queue-item{padding:12px 16px;border-bottom:1px solid var(--espn-border);font-size:14px}
@@ -694,6 +694,8 @@ function App() {
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
             <span>{userTeamName}</span>
             {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
+            {auction?.players && <span style={{marginLeft:'12px',color:'rgba(255,255,255,0.8)',fontSize:'14px'}}>Player {(auction.currentPlayerIndex || 0) + 1} of {auction.players.length}</span>}
+            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
           </div>
         </header>
         <nav className="nav">
@@ -899,12 +901,9 @@ function App() {
                 let cn = 'player-queue-item'; if (cur) cn += ' current'; else if (own && !done) cn += ' own-player'; if (won) cn += ' won-player'; if (done && !cur) cn += ' completed';
                 return (
                   <div key={p.idx} className={cn}>
-                    <div className="player-queue-header">
-                      <span className="player-queue-name">{p.name}</span>
-                      {!done && !own && <div style={{display:'flex',alignItems:'center',gap:'4px',fontSize:'11px'}}><label style={{color:'var(--espn-text-muted)'}}>$</label><input type="number" value={preBids[p.idx] || ''} onChange={e => updPre(p.idx, e.target.value)} min="0" style={{width:'60px',padding:'4px 6px',fontSize:'12px',border:'1px solid var(--espn-border)',borderRadius:'3px',textAlign:'right'}} /></div>}
-                      <span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span>
-                    </div>
-                    <div className="player-queue-details"><span>{p.owner}</span><span>{preBids[p.idx] ? '$'+fmt(preBids[p.idx]) : ''}</span><span>{fmt(p.fantasyPoints)} pts</span></div>
+                    <div className="player-queue-header"><span className="player-queue-name">{p.name}</span><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></div>
+                    <div className="player-queue-details"><span>{p.owner}</span><span>{fmt(p.fantasyPoints)} pts</span></div>
+                    {!done && !own && <div className="prebid-input"><label>Pre-bid: $</label><input type="number" value={preBids[p.idx] || ''} onChange={e => updPre(p.idx, e.target.value)} min="0" /></div>}
                     {p.result && <><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</>}
                   </div>
                 );
