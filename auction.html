@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.8</title>
+  <title>Arbitration Auction v2.0.9</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -37,21 +37,25 @@
     .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px);position:sticky;top:0}
     .sidebar-title{font-size:13px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-nav-dark);padding:12px 16px;position:sticky;top:0;z-index:10;letter-spacing:0.5px}
     .arb-group-header{background:var(--espn-bg-table-header);padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border)}
-    .player-queue-item{padding:12px 16px;border-bottom:1px solid var(--espn-border);font-size:14px}
+    .player-queue-item{padding:12px 16px;border-bottom:1px solid var(--espn-border);font-size:14px;display:flex;align-items:stretch;gap:12px}
     .player-queue-item.current{background:#e3f2fd;border-left:4px solid var(--espn-blue)}
     .player-queue-item.own-player{background:#fff3cd}
     .player-queue-item.won-player{background:#d4edda}
     .player-queue-item.completed{opacity:.5}
-    .player-queue-header{display:flex;justify-content:space-between;margin-bottom:4px}
-    .player-queue-name{font-weight:700;font-size:16px;color:var(--espn-blue)}
+    .player-queue-header{display:flex;flex-direction:column;justify-content:center;flex:1;gap:4px}
+    .player-queue-name{font-weight:700;font-size:16px;color:var(--espn-blue);line-height:1.2}
     .arb-badge{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#fff}
+    .arb-badge-queue{width:60px;height:60px;border-radius:6px;font-size:24px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
     .arb-badge.arb-3{background:var(--espn-red)}
+    .arb-badge-queue.arb-3{background:var(--espn-red)}
     .arb-badge.arb-2{background:var(--espn-orange)}
+    .arb-badge-queue.arb-2{background:var(--espn-orange)}
     .arb-badge.arb-1{background:var(--espn-success)}
-    .player-queue-details{font-size:12px;color:var(--espn-text-secondary);display:flex;justify-content:space-between}
-    .prebid-input{display:flex;align-items:center;gap:6px;margin-top:6px;justify-content:space-between}
-    .prebid-input input{width:60px;padding:6px 8px;font-size:13px;border:1px solid var(--espn-border);border-radius:4px;text-align:right}
-    .prebid-input label{font-size:12px;color:var(--espn-text-muted)}
+    .arb-badge-queue.arb-1{background:var(--espn-success)}
+    .player-queue-details{font-size:13px;color:var(--espn-text-secondary);line-height:1.3}
+    .prebid-input{display:flex;flex-direction:column;justify-content:center;gap:4px}
+    .prebid-input input{width:60px;height:60px;padding:8px;font-size:18px;font-weight:700;border:2px solid var(--espn-border);border-radius:6px;text-align:center}
+    .prebid-input label{font-size:10px;color:var(--espn-text-muted);text-transform:uppercase;font-weight:600;text-align:center}
     .result-badge{font-size:11px;padding:3px 8px;border-radius:4px;margin-top:6px;display:inline-block}
     .result-badge.keep{background:#d4edda;color:#155724}
     .result-badge.stick{background:#cce5ff;color:#004085}
@@ -129,13 +133,13 @@
     .btn-self-stick{background:#6f42c1;color:#fff}
     .btn-years{font-size:11px;opacity:.8}
     .sidebar-right{background:var(--espn-bg-card);border-left:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px);position:sticky;top:0}
-    .budget-item{padding:12px 14px;border-bottom:1px solid var(--espn-border);font-size:13px}
+    .budget-item{padding:9px 12px;border-bottom:1px solid var(--espn-border);font-size:12px}
     .budget-item.current-user{background:#e3f2fd}
     .budget-item.is-commish{border-left:3px solid var(--espn-orange)}
-    .budget-team-name{font-weight:700;display:flex;justify-content:space-between;margin-bottom:4px;font-size:14px}
+    .budget-team-name{font-weight:700;display:flex;justify-content:space-between;margin-bottom:3px;font-size:13px}
     .budget-available{color:var(--espn-success)}
-    .budget-details{display:flex;justify-content:space-between;font-size:11px;color:var(--espn-text-muted);margin-bottom:4px}
-    .budget-bar{height:6px;background:var(--espn-bg-page);border-radius:3px}
+    .budget-details{display:flex;justify-content:space-between;font-size:10px;color:var(--espn-text-muted);margin-bottom:3px}
+    .budget-bar{height:5px;background:var(--espn-bg-page);border-radius:3px}
     .budget-bar-fill{height:100%;background:var(--espn-blue);border-radius:3px}
     .budget-bar-fill.low{background:var(--espn-orange)}
     .budget-bar-fill.critical{background:var(--espn-error)}
@@ -621,7 +625,7 @@ function App() {
       if (auction.teams) {
         Object.entries(auction.teams).forEach(([tid, t]) => {
           const startSalary = t.startingSalary ?? 0;
-          const startSpots = t.startingSpots ?? (t.rosterSpots || 40);
+          const startSpots = t.startingSpots ?? 28;
           updates[`teams/${tid}/currentSalary`] = startSalary;
           updates[`teams/${tid}/sal`] = startSalary;
           updates[`teams/${tid}/spotsAvailable`] = startSpots;
@@ -753,7 +757,7 @@ function App() {
     const allBids = {}; if (auction.revealedBids) Object.entries(auction.revealedBids).forEach(([tid, b]) => { allBids[auction.teams[tid]?.name || tid] = b.amount; });
     const hist = { player: p.name, team: p.team, pos: p.position, owner: p.owner, arb: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids, ts: Date.now() };
     upd['players/' + auction.currentPlayerIndex] = { ...p, status: 'completed', result: { decision: d, winner, winnerId: wid, price, contractYears: years, topBid: hb?.amount || 0, topBidder: hb?.teamName || 'None' } };
-    const wt = auction.teams[wid]; const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots ?? wt?.spotsAvailable ?? (wt?.rosterSpots || 40);
+    const wt = auction.teams[wid]; const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots ?? wt?.spotsAvailable ?? 28;
     const newSal = parseFloat((oldSal + price).toFixed(2));
     upd['teams/' + wid + '/currentSalary'] = newSal; upd['teams/' + wid + '/sal'] = newSal;
     upd['teams/' + wid + '/spotsAvailable'] = Math.max(0, oldSpots - 1); upd['teams/' + wid + '/spots'] = Math.max(0, oldSpots - 1);
@@ -781,7 +785,7 @@ function App() {
     if (!isComm) return; const p = auction.players[idx]; if (!p?.result) return;
     const r = p.result; const wt = auction.teams[r.winnerId]; const upd = {};
     upd['players/' + idx] = { ...p, status: 'pending', result: null };
-    const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots ?? wt?.spotsAvailable ?? (wt?.rosterSpots || 40);
+    const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots ?? wt?.spotsAvailable ?? 28;
     const newSal = parseFloat(Math.max(0, oldSal - r.price).toFixed(2));
     upd['teams/' + r.winnerId + '/currentSalary'] = newSal; upd['teams/' + r.winnerId + '/sal'] = newSal;
     upd['teams/' + r.winnerId + '/spotsAvailable'] = oldSpots + 1; upd['teams/' + r.winnerId + '/spots'] = oldSpots + 1;
@@ -1230,7 +1234,13 @@ function App() {
                 <table className="history-table">
                   <thead><tr><th style={{textAlign:'center'}}>Team</th><th style={{textAlign:'center'}}>Username</th><th style={{textAlign:'center'}}>Commissioner</th><th style={{textAlign:'center'}}>Pre-Bids</th><th style={{textAlign:'center'}}>Status</th></tr></thead>
                   <tbody>
-                    {teams.map(([id, t]) => {
+                    {teams.sort((a,b) => {
+            const [idA] = a;
+            const [idB] = b;
+            if (idA === userTeamId) return -1;
+            if (idB === userTeamId) return 1;
+            return 0;
+          }).map(([id, t]) => {
                       const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
                       const prebidCount = hasPrebids ? Object.keys(auction.preBids[id]).length : 0;
                       const claimed = t.claimedBy;
@@ -1338,10 +1348,13 @@ function App() {
                 let cn = 'player-queue-item'; if (cur) cn += ' current'; else if (own && !done) cn += ' own-player'; if (won) cn += ' won-player'; if (done && !cur) cn += ' completed';
                 return (
                   <div key={p.idx} className={cn}>
-                    <div className="player-queue-header"><span className="player-queue-name">{p.name}</span><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></div>
-                    <div className="player-queue-details"><span>{p.owner}</span><span>{fmt(p.fantasyPoints)} pts</span></div>
-                    {!done && !own && <div className="prebid-input"><label>Pre-bid:</label><div style={{display:'flex',alignItems:'center',gap:'4px'}}><span>$</span><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} onClick={viewMode === 'mobile' ? () => {setPrebidModalPlayer(p);setPrebidModalValue(preBids[p.idx] || '');setPrebidModalOpen(true)} : undefined} readOnly={viewMode === 'mobile'} min="0" step="1" /></div></div>}
-                    {p.result && <><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</>}
+                    <div className={'arb-badge-queue arb-' + p.arbYear}>{p.arbYear}</div>
+                    <div className="player-queue-header">
+                      <div className="player-queue-name">{p.name}</div>
+                      <div className="player-queue-details">{p.owner}</div>
+                    </div>
+                    {!done && !own && <div className="prebid-input"><label>Pre-bid</label><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} onClick={viewMode === 'mobile' ? () => {setPrebidModalPlayer(p);setPrebidModalValue(preBids[p.idx] || '');setPrebidModalOpen(true)} : undefined} readOnly={viewMode === 'mobile'} min="0" step="1" /></div>}
+                    {p.result && <div style={{display:'flex',flexDirection:'column',justifyContent:'center',gap:'4px'}}><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</div>}
                   </div>
                 );
               })}
@@ -1413,7 +1426,13 @@ function App() {
                 <div className="bid-status">
                   <div className="bid-status-header">Bid Submission Status</div>
                   <div className="bid-status-grid">
-                    {teams.map(([id, t]) => {
+                    {teams.sort((a,b) => {
+            const [idA] = a;
+            const [idB] = b;
+            if (idA === userTeamId) return -1;
+            if (idB === userTeamId) return 1;
+            return 0;
+          }).map(([id, t]) => {
                       const own = t.name === cp?.owner;
                       const inTie = auction.tiebreakerTeams?.includes(id);
                       const tied = auction.tiedTeams?.some(x => x.id === id);
@@ -1473,7 +1492,13 @@ function App() {
             <div className="sidebar-title">Team Budgets</div>
           )}
           <div className={'collapsible-content' + (viewMode === 'mobile' && budgetCollapsed ? '' : ' open')} style={{maxHeight: viewMode !== 'mobile' || !budgetCollapsed ? '2000px' : '0'}}>
-          {teams.map(([id, t]) => {
+          {teams.sort((a,b) => {
+            const [idA] = a;
+            const [idB] = b;
+            if (idA === userTeamId) return -1;
+            if (idB === userTeamId) return 1;
+            return 0;
+          }).map(([id, t]) => {
             const cap = t.cap || t.salaryCap || 100;
             const sal = t.sal || t.currentSalary || 0;
             const av = cap - sal;
@@ -1591,7 +1616,7 @@ function App() {
       )}
 
       {/* Expanded Table Modal */}
-      {expandedTable && (
+      {expandedTable && viewMode === 'mobile' && (
         <div className="expanded-table-overlay">
           <div className="expanded-table-header">
             <h3>{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
