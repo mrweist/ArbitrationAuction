@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v1.6</title>
+  <title>Arbitration Auction v1.7</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -43,7 +43,7 @@
     .arb-badge.arb-2{background:var(--espn-orange)}
     .arb-badge.arb-1{background:var(--espn-success)}
     .player-queue-details{font-size:12px;color:var(--espn-text-secondary);display:flex;justify-content:space-between}
-    .prebid-input{display:flex;align-items:center;gap:6px;margin-top:6px}
+    .prebid-input{display:flex;align-items:center;gap:6px;margin-top:6px;justify-content:flex-end}
     .prebid-input input{width:60px;padding:6px 8px;font-size:13px;border:1px solid var(--espn-border);border-radius:4px;text-align:right}
     .prebid-input label{font-size:12px;color:var(--espn-text-muted)}
     .result-badge{font-size:11px;padding:3px 8px;border-radius:4px;margin-top:6px;display:inline-block}
@@ -434,7 +434,22 @@ function App() {
     }
   };
 
-  const startBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'bidding', timerEndTime: Date.now() + auction.timerDuration * 1000, bids: {}, bidStatuses: {} }); };
+  const startBid = async () => { 
+    if (!db) return;
+    const bids = {};
+    const statuses = {};
+    const teams = auction?.teams ? Object.entries(auction.teams) : [];
+    const curIdx = auction.currentPlayerIndex || 0;
+    teams.forEach(([tid, t]) => {
+      const preBid = preBids[curIdx];
+      if (preBid && preBid > 0) {
+        const bid = { teamId: tid, teamName: t.name, amount: preBid, ts: Date.now(), status: 'prebid' };
+        bids[tid] = enc(bid, sKey);
+        statuses[tid] = 'prebid';
+      }
+    });
+    await db.ref('auctions/' + auctionId).update({ phase: 'bidding', timerEndTime: Date.now() + auction.timerDuration * 1000, bids, bidStatuses: statuses });
+  };
 
   const submitBid = async () => {
     setBidErr('');
@@ -523,7 +538,23 @@ function App() {
     const oldSal = wt?.sal || wt?.currentSalary || 0; const oldSpots = wt?.spots || wt?.spotsAvailable || 0;
     upd['teams/' + r.winnerId + '/currentSalary'] = Math.max(0, oldSal - r.price); upd['teams/' + r.winnerId + '/sal'] = Math.max(0, oldSal - r.price);
     upd['teams/' + r.winnerId + '/spotsAvailable'] = oldSpots + 1; upd['teams/' + r.winnerId + '/spots'] = oldSpots + 1;
-    upd['currentPlayerIndex'] = idx; upd['phase'] = 'waiting'; upd['bids'] = null; upd['bidStatuses'] = null; upd['revealedBids'] = null; upd['highestBid'] = null; upd['tiedTeams'] = null;
+    upd['currentPlayerIndex'] = idx; upd['phase'] = 'waiting';
+    const histEntry = (auction.bidHistory || []).find(h => h.player === p.name);
+    const restoreBids = {};
+    const restoreStatuses = {};
+    if (histEntry && histEntry.bids) {
+      Object.entries(histEntry.bids).forEach(([tid, amt]) => {
+        if (amt > 0) {
+          const t = auction.teams[tid];
+          const bid = { teamId: tid, teamName: t?.name || tid, amount: amt, ts: Date.now(), status: 'manual' };
+          restoreBids[tid] = enc(bid, sKey);
+          restoreStatuses[tid] = 'submitted';
+        }
+      });
+    }
+    upd['bids'] = restoreBids;
+    upd['bidStatuses'] = restoreStatuses;
+    upd['revealedBids'] = null; upd['highestBid'] = null; upd['tiedTeams'] = null;
     upd['bidHistory'] = (auction.bidHistory || []).filter(h => h.player !== p.name);
     if (db) await db.ref('auctions/' + auctionId).update(upd);
   };
