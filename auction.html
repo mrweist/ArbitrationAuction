@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v1.7.3</title>
+  <title>Arbitration Auction v1.9.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -53,7 +53,8 @@
     .undo-btn{font-size:10px;padding:3px 8px;background:var(--espn-text-muted);color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px}
     .main-stage{padding:24px;background:var(--espn-bg-page);overflow-y:auto}
     .player-card{background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;max-width:780px;margin:0 auto 24px}
-    .player-card-header{background:linear-gradient(135deg,var(--espn-nav-dark),#3a3a3a);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0}
+    .player-card-header{background:linear-gradient(135deg,var(--espn-nav-dark),#3a3a3a);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0;gap:20px}
+    .player-headshot{width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1)}
     .player-card-header .player-name{font-family:'Roboto Condensed',sans-serif;font-size:2rem;font-weight:700;color:#fff}
     .player-card-header .player-meta{color:rgba(255,255,255,.7);font-size:15px;margin-top:4px}
     .player-card-header .arb-badge{font-size:16px;padding:10px 16px}
@@ -188,6 +189,15 @@ const dec = (e, k) => { try { return JSON.parse(CryptoJS.AES.decrypt(e, k).toStr
 const maxBid = t => t ? parseFloat(Math.max(0, (t.cap || t.salaryCap || 100) - (t.sal || t.currentSalary || 0) - (t.spots || t.spotsAvailable || 1) + 1).toFixed(2)) : 0;
 const keepPr = (b, a) => Math.max(1, parseFloat((b * keepPct(a)).toFixed(2)));
 const stickPr = b => Math.max(1, b);
+const getPlayerImage = (player) => {
+  if (!player) return null;
+  // Try MLB API first (MLBAM ID)
+  if (player.mlbamId) return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${player.mlbamId}/headshot/67/current`;
+  // Fallback to ESPN (if ESPN ID available)
+  if (player.espnId) return `https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/${player.espnId}.png&w=350&h=254`;
+  // No image available
+  return null;
+};
 
 const hitPts = (s, sc) => {
   if (!s || !sc) return 0;
@@ -265,6 +275,13 @@ function App() {
         if (d) {
           // Map commissioner phases to auction phases
           if (d.phase === 'created' || d.phase === 'building') d.phase = 'lobby';
+          // Store starting values if not already stored
+          if (d.teams && !d.startingValuesStored) {
+            Object.keys(d.teams).forEach(tid => {
+              if (!d.teams[tid].startingSalary) d.teams[tid].startingSalary = d.teams[tid].sal || d.teams[tid].currentSalary || 0;
+              if (!d.teams[tid].startingSpots) d.teams[tid].startingSpots = d.teams[tid].spots || d.teams[tid].spotsAvailable || 40;
+            });
+          }
           setAuction(d);
           if (saved) { const s = JSON.parse(saved); setScreen(s.ic || urlRole === 'commissioner' ? 'auction' : d.phase === 'lobby' ? 'prebid' : 'auction'); }
         }
@@ -429,13 +446,13 @@ function App() {
           updates[`players/${idx}/status`] = 'pending';
         });
       }
-      // Reset all teams' salary cap and roster spots to starting values
+      // Reset all teams' salary cap and roster spots to starting values from commissioner
       if (auction.teams) {
         Object.entries(auction.teams).forEach(([tid, t]) => {
-          const startCap = t.salaryCap || t.cap || 100;
-          const startSpots = t.rosterSpots || 40;
-          updates[`teams/${tid}/currentSalary`] = 0;
-          updates[`teams/${tid}/sal`] = 0;
+          const startSalary = t.startingSalary ?? 0;
+          const startSpots = t.startingSpots ?? (t.rosterSpots || 40);
+          updates[`teams/${tid}/currentSalary`] = startSalary;
+          updates[`teams/${tid}/sal`] = startSalary;
           updates[`teams/${tid}/spotsAvailable`] = startSpots;
           updates[`teams/${tid}/spots`] = startSpots;
         });
@@ -1012,7 +1029,8 @@ function App() {
             <>
               <div className="player-card">
                 <div className="player-card-header">
-                  <div><div className="player-name">{cp.name}</div><div className="player-meta">{cp.position} • {cp.team}</div></div>
+                  {getPlayerImage(cp) && <img src={getPlayerImage(cp)} alt={cp.name} className="player-headshot" onError={(e) => e.target.style.display = 'none'} />}
+                  <div style={{flex: 1}}><div className="player-name">{cp.name}</div><div className="player-meta">{cp.position} • {cp.team}</div></div>
                   <span className={'arb-badge arb-' + cp.arbYear}>ARB {cp.arbYear}</span>
                 </div>
                 <div className="player-card-body">
