@@ -40,6 +40,7 @@
     .sidebar-close-btn:active{background:rgba(255,255,255,.3)}
     .view-mobile .sidebar-close-btn{display:flex}
     .arb-group-header{background:var(--espn-bg-table-header);padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:37px;z-index:5}
+    .view-mobile .arb-group-header{position:relative;top:0}
     .arb-group-header .prebid-header{font-size:10px;color:var(--espn-text-muted);text-align:center;width:70px}
     .player-queue-item{padding:8px 12px;border-bottom:1px solid var(--espn-border);font-size:14px;display:flex;align-items:center;gap:8px;min-height:56px}
     .player-queue-item.current{background:#e3f2fd;border-left:4px solid var(--espn-blue)}
@@ -185,7 +186,7 @@
     .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
     /* View Mode Classes */
     .view-mobile .app-container{display:flex;flex-direction:column;padding:var(--space-4)}
-    .view-mobile .sidebar,.view-mobile .sidebar-right{position:fixed;top:92px;bottom:60px;width:95vw;max-width:95vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);overflow-y:auto;z-index:1200;-webkit-overflow-scrolling:touch;border:none;display:none}
+    .view-mobile .sidebar,.view-mobile .sidebar-right{position:fixed;top:10px;bottom:60px;width:95vw;max-width:95vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);overflow-y:auto;z-index:1200;-webkit-overflow-scrolling:touch;border:none;display:none}
     .view-mobile .sidebar{left:0}
     .view-mobile .sidebar-right{right:0}
     .view-mobile .sidebar.open{display:block !important}
@@ -263,7 +264,8 @@
     .prebid-modal-buttons button{flex:1;min-height:48px;font-size:16px;font-weight:600}
     
     /* Expanded Table Modal */
-    .expanded-table-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:2000;display:flex;flex-direction:column;padding:0;opacity:1;visibility:visible;pointer-events:auto;transition:opacity .28s ease,visibility .28s}
+    .expanded-table-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:2000;display:none;flex-direction:column;padding:0}
+    .expanded-table-overlay.open{display:flex !important}
     .expanded-table-header{background:var(--espn-red);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;color:#fff;flex-shrink:0}
     .expanded-table-header h3{font-family:'Roboto Condensed',sans-serif;font-size:1.3rem;font-weight:700;margin:0}
     .expanded-table-close{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -590,8 +592,10 @@ function App() {
           if (playerIndex !== -1) {
             newBids[playerIndex] = bidAmount;
             count++;
-          }
-        }
+          )}
+      </div>
+
+      {/* Sidebar Overlay
         if (count === 0) return alert('No matching players found');
         setPreBids(newBids);
         save(userTeamId, userTeamName, newBids, isComm);
@@ -1609,48 +1613,14 @@ function App() {
             <div className="icon">👥</div>
             <div>Users</div>
           </div>
-        )}
-      </div>
-
-      {/* Pre-bid Modal (Mobile) */}
-      {prebidModalOpen && viewMode === 'mobile' && (
-        <div className="prebid-modal-overlay" onClick={() => setPrebidModalOpen(false)}>
-          <div className="prebid-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="prebid-modal-header">
-              Set Pre-Bid: {prebidModalPlayer?.name}
-            </div>
-            <input
-              type="number"
-              className="prebid-modal-input"
-              value={prebidModalValue}
-              onChange={(e) => setPrebidModalValue(e.target.value)}
-              placeholder="Enter amount"
-              autoFocus
-              min="0"
-              step="1"
-            />
-            <div className="prebid-modal-buttons">
-              <button className="btn btn-secondary" onClick={() => setPrebidModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => {
-                const v = parseFloat(prebidModalValue) || 0;
-                if (v === 0 || v >= 1) {
-                  updPre(prebidModalPlayer.idx, prebidModalValue);
-                  setPrebidModalOpen(false);
-                }
-              }}>Save</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Sidebar Overlay (Mobile Off-Canvas) */}
+        )}(Mobile Off-Canvas) */}
       {viewMode === 'mobile' && (leftSidebarOpen || rightSidebarOpen) && (
         <div className="sidebar-overlay open" onClick={() => { setLeftSidebarOpen(false); setRightSidebarOpen(false); }} />
       )}
 
       {/* Expanded Table Modal */}
       {expandedTable && (
-          <div key={expandedTable} className="expanded-table-overlay" style={{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:9999,display:'flex',flexDirection:'column'}}>
+          <div key={expandedTable} className="expanded-table-overlay open">
           <div className="expanded-table-header">
             <h3>{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
             <button className="expanded-table-close" onClick={() => setExpandedTable(null)} onTouchStart={() => setExpandedTable(null)}>×</button>
