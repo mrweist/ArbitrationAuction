@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction</title>
+  <title>Arbitration Auction v1.5</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -27,7 +27,7 @@
     .sync-dot.ok{background:#4ade80}
     .sync-dot.pending{background:var(--espn-orange);animation:pulse 1s infinite}
     .sync-dot.error{background:var(--espn-error)}
-    .app-container{display:grid;grid-template-columns:280px 1fr 240px;min-height:calc(100vh - 110px)}
+    .app-container{display:grid;grid-template-columns:320px 1fr 240px;min-height:calc(100vh - 110px)}
     .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto}
     .sidebar-title{font-size:12px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-nav-dark);padding:12px 16px;position:sticky;top:0;z-index:10}
     .arb-group-header{background:var(--espn-bg-table-header);padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border)}
@@ -262,7 +262,12 @@ function App() {
       setDb(database);
       database.ref('auctions/' + auctionId).on('value', snap => {
         const d = snap.val();
-        if (d) { setAuction(d); if (saved) { const s = JSON.parse(saved); setScreen(s.ic || urlRole === 'commissioner' ? 'auction' : d.phase === 'lobby' ? 'prebid' : 'auction'); } }
+        if (d) {
+          // Map commissioner phases to auction phases
+          if (d.phase === 'created' || d.phase === 'building') d.phase = 'lobby';
+          setAuction(d);
+          if (saved) { const s = JSON.parse(saved); setScreen(s.ic || urlRole === 'commissioner' ? 'auction' : d.phase === 'lobby' ? 'prebid' : 'auction'); }
+        }
         else setError('Auction not found');
         setLoading(false);
       });
@@ -391,7 +396,14 @@ function App() {
   };
 
   const startAuc = async () => {
-    if (db) await db.ref('auctions/' + auctionId).update({ phase: 'waiting' });
+    if (db) {
+      await db.ref('auctions/' + auctionId).update({ phase: 'waiting' });
+      // Update commissioner tracking
+      const createdBy = auction.createdBy;
+      if (createdBy) {
+        await db.ref('admins/' + createdBy + '/leagues/' + auctionId).update({ phase: 'active' });
+      }
+    }
     setTimeout(() => initSheets(), 500);
   };
 
@@ -463,7 +475,16 @@ function App() {
     setTimeout(async () => {
       setCeleb(null); const nx = auction.currentPlayerIndex + 1;
       if (nx < auction.players.length) { if (db) await db.ref('auctions/' + auctionId).update({ currentPlayerIndex: nx, phase: 'waiting', bids: null, bidStatuses: null, revealedBids: null, highestBid: null, tiedTeams: null, tiebreakerTeams: null }); }
-      else { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'complete' }); }
+      else {
+        if (db) {
+          await db.ref('auctions/' + auctionId).update({ phase: 'complete' });
+          // Update commissioner tracking
+          const createdBy = auction.createdBy;
+          if (createdBy) {
+            await db.ref('admins/' + createdBy + '/leagues/' + auctionId).update({ phase: 'completed' });
+          }
+        }
+      }
     }, 5000);
   };
 
@@ -593,7 +614,7 @@ function App() {
     const pls = auction?.players || []; const t = auction?.teams?.[userTeamId]; const mx = maxBid(t);
     return (
       <>
-        <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+leagueId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div></header>
+        <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div></header>
         <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
           {auction?.phase === 'lobby' && <div className="lobby-info" style={{ marginBottom: '24px', background: '#e3f2fd' }}><div className="lobby-status">⏳ Waiting for Commissioner to Start</div></div>}
@@ -647,6 +668,20 @@ function App() {
   const isTie = auction?.phase === 'tiebreaker';
   const canBid = isTie ? canTieBid() : !cpOwn;
   const hasSheets = auction?.sheetsConfig?.scriptUrl;
+
+  // Cap space validation for decisions
+  const getOwnerTeam = () => {
+    if (!cp || !auction?.teams) return null;
+    return Object.values(auction.teams).find(t => t.name === cp.owner);
+  };
+  const getOwnerCapSpace = () => {
+    const team = getOwnerTeam();
+    if (!team) return 0;
+    return (team.salaryCap || team.cap || 100) - (team.currentSalary || team.sal || 0);
+  };
+  const canAffordKeep = () => getOwnerCapSpace() >= (allZero ? 1 : kp);
+  const canAffordStick = () => getOwnerCapSpace() >= sp;
+  const canAffordSelfStick = () => getOwnerCapSpace() >= sp;
 
   // HISTORY TAB
   if (activeTab === 'history') {
@@ -758,7 +793,7 @@ function App() {
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
             <span>{userTeamName}</span>
             {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
-            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+leagueId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
+            <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
           </div>
         </header>
         <nav className="nav">
@@ -835,7 +870,7 @@ function App() {
           {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
           <span>{userTeamName}</span>
           {isComm && <span className="role-badge commish">⭐ Commissioner</span>}
-          <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+leagueId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
+          <button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600,marginLeft:'12px'}}>Logout</button>
         </div>
       </header>
       <nav className="nav">
@@ -864,9 +899,12 @@ function App() {
                 let cn = 'player-queue-item'; if (cur) cn += ' current'; else if (own && !done) cn += ' own-player'; if (won) cn += ' won-player'; if (done && !cur) cn += ' completed';
                 return (
                   <div key={p.idx} className={cn}>
-                    <div className="player-queue-header"><span className="player-queue-name">{p.name}</span><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></div>
-                    <div className="player-queue-details"><span>{p.owner}</span><span>{fmt(p.fantasyPoints)} pts</span></div>
-                    {!done && !own && <div className="prebid-input"><label>Pre-bid: $</label><input type="number" value={preBids[p.idx] || ''} onChange={e => updPre(p.idx, e.target.value)} min="0" /></div>}
+                    <div className="player-queue-header">
+                      <span className="player-queue-name">{p.name}</span>
+                      {!done && !own && <div style={{display:'flex',alignItems:'center',gap:'4px',fontSize:'11px'}}><label style={{color:'var(--espn-text-muted)'}}>$</label><input type="number" value={preBids[p.idx] || ''} onChange={e => updPre(p.idx, e.target.value)} min="0" style={{width:'60px',padding:'4px 6px',fontSize:'12px',border:'1px solid var(--espn-border)',borderRadius:'3px',textAlign:'right'}} /></div>}
+                      <span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span>
+                    </div>
+                    <div className="player-queue-details"><span>{p.owner}</span><span>{preBids[p.idx] ? '$'+fmt(preBids[p.idx]) : ''}</span><span>{fmt(p.fantasyPoints)} pts</span></div>
                     {p.result && <><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</>}
                   </div>
                 );
@@ -955,13 +993,16 @@ function App() {
                       <div className="price-box stick"><div className="price-label">Stick Price</div><div className="price-value">${fmt(sp)}</div></div>
                     </div>
                   </div>
-                  {canDecide() && auction.phase === 'decision' ? (
-                    <div className="decision-buttons">
-                      <button className="btn btn-decision btn-keep" onClick={() => decide('keep')}>🛡️ Keep<span className="btn-years">1yr @ ${fmt(allZero ? 1 : kp)}</span></button>
-                      <button className="btn btn-decision btn-stick" onClick={() => decide('stick')} disabled={allZero} style={allZero ? { opacity: 0.4 } : {}}>🎯 Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(sp)}</span></button>
-                      <button className="btn btn-decision btn-self-stick" onClick={() => decide('self-stick')}>💪 Self-Stick<span className="btn-years">{yrs(cp.arbYear)}yr @ ${fmt(sp)}</span></button>
-                    </div>
-                  ) : <p style={{ textAlign: 'center', color: 'var(--espn-text-muted)', fontSize: '16px' }}>{auction.phase === 'tie-resolution' ? 'Commissioner resolving tie...' : 'Waiting for ' + cp.owner + '...'}</p>}
+                  {auction.phase === 'decision' ? (
+                    <>
+                      <div className="decision-buttons">
+                        <button className="btn btn-decision btn-keep" onClick={() => decide('keep')} disabled={!canDecide() || !canAffordKeep()} style={(!canDecide() || !canAffordKeep()) ? { opacity: 0.4 } : {}}>🛡️ Keep<span className="btn-years">{canAffordKeep() ? `1yr @ $${fmt(allZero ? 1 : kp)}` : 'Insufficient Cap'}</span></button>
+                        <button className="btn btn-decision btn-stick" onClick={() => decide('stick')} disabled={allZero || !canDecide() || !canAffordStick()} style={(allZero || !canDecide() || !canAffordStick()) ? { opacity: 0.4 } : {}}>🎯 Stick<span className="btn-years">{canAffordStick() ? `${yrs(cp.arbYear)}yr @ $${fmt(sp)}` : 'Insufficient Cap'}</span></button>
+                        <button className="btn btn-decision btn-self-stick" onClick={() => decide('self-stick')} disabled={!canDecide() || !canAffordSelfStick()} style={(!canDecide() || !canAffordSelfStick()) ? { opacity: 0.4 } : {}}>💪 Self-Stick<span className="btn-years">{canAffordSelfStick() ? `${yrs(cp.arbYear)}yr @ $${fmt(sp)}` : 'Insufficient Cap'}</span></button>
+                      </div>
+                      {!canDecide() && <p style={{ textAlign: 'center', color: 'var(--espn-text-muted)', fontSize: '14px', marginTop: '12px' }}>Waiting for {cp.owner}'s decision...</p>}
+                    </>
+                  ) : auction.phase === 'tie-resolution' ? <p style={{ textAlign: 'center', color: 'var(--espn-text-muted)', fontSize: '16px' }}>Commissioner resolving tie...</p> : null}
                 </div>
               )}
 
