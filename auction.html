@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v1.7.1</title>
+  <title>Arbitration Auction v1.7.2</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -429,6 +429,17 @@ function App() {
           updates[`players/${idx}/status`] = 'pending';
         });
       }
+      // Reset all teams' salary cap and roster spots to starting values
+      if (auction.teams) {
+        Object.entries(auction.teams).forEach(([tid, t]) => {
+          const startCap = t.salaryCap || t.cap || 100;
+          const startSpots = t.rosterSpots || 40;
+          updates[`teams/${tid}/currentSalary`] = 0;
+          updates[`teams/${tid}/sal`] = 0;
+          updates[`teams/${tid}/spotsAvailable`] = startSpots;
+          updates[`teams/${tid}/spots`] = startSpots;
+        });
+      }
       await db.ref('auctions/' + auctionId).update(updates);
       alert('Auction restarted. Pre-bids preserved.');
     }
@@ -754,8 +765,8 @@ function App() {
         <header className="header">
           <div className="header-title">Arbitration Auction | {auction?.leagueName || 'Loading...'}</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>
-            <div>{auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}</div>
-            {auction?.players && <div style={{marginTop:'2px'}}>Player {(auction.currentPlayerIndex || 0) + 1} of {auction.players.length}{auction.players[auction.currentPlayerIndex] && ` (${auction.players[auction.currentPlayerIndex].name})`}</div>}
+            {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
+            {auction?.players && ` | Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` (${auction.players[auction.currentPlayerIndex].name})` : ''}`}
           </div>
           <div className="user-info">
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
@@ -863,7 +874,8 @@ function App() {
         <header className="header">
           <div className="header-title">Arbitration Auction | {auction?.leagueName || 'Loading...'}</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>
-            <div>User Management</div>
+            {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
+            {auction?.players && ` | Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` (${auction.players[auction.currentPlayerIndex].name})` : ''}`}
           </div>
           <div className="user-info">
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
@@ -887,7 +899,7 @@ function App() {
             <div className="card-body">
               <div style={{overflowX:'auto'}}>
                 <table className="history-table">
-                  <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Status</th></tr></thead>
+                  <thead><tr><th style={{textAlign:'center'}}>Team</th><th style={{textAlign:'center'}}>Username</th><th style={{textAlign:'center'}}>Commissioner</th><th style={{textAlign:'center'}}>Pre-Bids</th><th style={{textAlign:'center'}}>Status</th></tr></thead>
                   <tbody>
                     {teams.map(([id, t]) => {
                       const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
@@ -895,19 +907,19 @@ function App() {
                       const claimed = t.claimedBy;
                       return (
                       <tr key={id}>
-                        <td style={{fontWeight:600}}>{t.name}</td>
-                        <td>{claimed || <span style={{color:'var(--espn-text-muted)'}}>-</span>}</td>
-                        <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
-                        <td>
-                          <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                        <td style={{fontWeight:600,textAlign:'center'}}>{t.name}</td>
+                        <td style={{textAlign:'center'}}>{claimed || <span style={{color:'var(--espn-text-muted)'}}>-</span>}</td>
+                        <td style={{textAlign:'center'}}>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
+                        <td style={{textAlign:'center'}}>
+                          <div style={{display:'flex',alignItems:'center',gap:'8px',justifyContent:'center'}}>
                             {hasPrebids ? <span style={{color:'var(--espn-green)',fontWeight:600}}>✅ {prebidCount}</span> : <span style={{color:'var(--espn-text-muted)'}}>0</span>}
                             <input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} />
                             <button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'4px 8px',fontSize:'12px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>
                             {hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'4px 8px',fontSize:'12px'}}>🗑️ Delete</button>}
                           </div>
                         </td>
-                        <td>
-                          <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                        <td style={{textAlign:'center'}}>
+                          <div style={{display:'flex',alignItems:'center',gap:'8px',justifyContent:'center'}}>
                             {claimed ? <span style={{color:'var(--espn-green)',fontWeight:600}}>Active</span> : <span style={{color:'var(--espn-orange)',fontWeight:600}}>Available</span>}
                             {claimed && <button className="btn btn-secondary" onClick={() => removeUser(id)} style={{padding:'4px 8px',fontSize:'12px'}}>❌ Remove</button>}
                           </div>
@@ -1006,7 +1018,7 @@ function App() {
               </div>
 
               <div className="timer-section">
-                {auction.phase === 'waiting' && <><div className="timer-display">{fmtTime(auction.timerDuration)}</div>{isComm ? <button className="btn btn-primary" onClick={startBid}>Start Bidding</button> : <p style={{ color: 'var(--espn-text-muted)', marginTop: '12px' }}>Waiting for commissioner to start bidding...</p>}</>}
+                {auction.phase === 'waiting' && <><div className="timer-display">{fmtTime(auction.timerDuration)}</div>{isComm ? <><div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'12px',marginTop:'16px',marginBottom:'16px'}}><label style={{fontSize:'14px',fontWeight:600,color:'var(--espn-text-secondary)'}}>Bid Timer:</label><select value={auction.timerDuration} onChange={async (e)=>{if(db)await db.ref('auctions/'+auctionId+'/timerDuration').set(parseInt(e.target.value))}} style={{padding:'8px 12px',fontSize:'14px',borderRadius:'6px',border:'1px solid var(--espn-border)'}}><option value={30}>30 seconds</option><option value={45}>45 seconds</option><option value={60}>60 seconds</option><option value={90}>90 seconds</option><option value={120}>2 minutes</option><option value={180}>3 minutes</option></select></div><button className="btn btn-primary" onClick={startBid}>Start Bidding</button></> : <p style={{ color: 'var(--espn-text-muted)', marginTop: '12px' }}>Waiting for commissioner to start bidding...</p>}</>}
                 {(auction.phase === 'bidding' || isTie) && <><div className={'timer-display ' + timerCls()}>{fmtTime(timeLeft)}</div>{isComm && <button className="btn btn-secondary" onClick={isTie ? endTie : endBid}>{isTie ? 'End Tiebreaker' : 'End Bidding'}</button>}</>}
                 {auction.phase === 'reveal' && isComm && <button className="btn btn-primary" style={{ fontSize: '18px', padding: '18px 36px' }} onClick={reveal}>🎯 Reveal All Bids</button>}
                 {auction.phase === 'tie-resolution' && isComm && <button className="btn btn-primary" onClick={() => setTieModal(true)}>Resolve Tie</button>}
