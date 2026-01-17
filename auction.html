@@ -35,17 +35,18 @@
     .sync-dot.error{background:var(--espn-error)}
     .app-container{display:grid;grid-template-columns:320px 1fr 320px;min-height:calc(100vh - 110px);gap:0;max-width:100%;margin:0;padding:0}
     .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px);position:sticky;top:0}
-    .sidebar-title{font-size:13px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-nav-dark);padding:12px 16px;position:sticky;top:0;z-index:10;letter-spacing:0.5px}
+    .sidebar-title{font-size:13px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-blue);padding:12px 16px;position:sticky;top:0;z-index:10;letter-spacing:0.5px}
     .arb-group-header{background:var(--espn-bg-table-header);padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);display:flex;justify-content:space-between;align-items:center}
-    .player-queue-item{padding:8px 12px;border-bottom:1px solid var(--espn-border);font-size:14px;display:flex;align-items:center;gap:8px;min-height:48px}
+    .arb-group-header .prebid-header{font-size:10px;color:var(--espn-text-muted);text-align:center;width:70px}
+    .player-queue-item{padding:8px 12px;border-bottom:1px solid var(--espn-border);font-size:14px;display:flex;align-items:center;gap:8px;min-height:56px}
     .player-queue-item.current{background:#e3f2fd;border-left:4px solid var(--espn-blue)}
     .player-queue-item.own-player{background:#fff3cd}
     .player-queue-item.won-player{background:#d4edda}
     .player-queue-item.completed{opacity:.5}
-    .player-queue-header{display:flex;flex-direction:column;justify-content:center;flex:1;gap:4px}
+    .player-queue-header{display:flex;flex-direction:column;justify-content:center;flex:1;gap:2px}
     .player-queue-name{font-weight:700;font-size:14px;color:var(--espn-blue);line-height:1.2}
     .arb-badge{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#fff}
-    .arb-badge-queue{width:32px;height:32px;border-radius:4px;font-size:16px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .arb-badge-queue{width:40px;height:40px;border-radius:4px;font-size:18px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
     .arb-badge.arb-3{background:var(--espn-red)}
     .arb-badge-queue.arb-3{background:var(--espn-red)}
     .arb-badge.arb-2{background:var(--espn-orange)}
@@ -54,7 +55,7 @@
     .arb-badge-queue.arb-1{background:var(--espn-success)}
     .player-queue-details{font-size:12px;color:var(--espn-text-secondary);line-height:1.2}
     .prebid-input{display:flex;align-items:center;justify-content:flex-end;margin-left:auto}
-    .prebid-input input{width:70px;height:28px;padding:4px 8px;font-size:13px;font-weight:600;border:1px solid var(--espn-border);border-radius:4px;text-align:right}
+    .prebid-input input{width:70px;height:40px;padding:4px 8px;font-size:13px;font-weight:600;border:1px solid var(--espn-border);border-radius:4px;text-align:right}
     .prebid-input label{display:none}
     .result-badge{font-size:11px;padding:3px 8px;border-radius:4px;margin-top:6px;display:inline-block}
     .result-badge.keep{background:#d4edda;color:#155724}
@@ -133,12 +134,12 @@
     .btn-self-stick{background:#6f42c1;color:#fff}
     .btn-years{font-size:11px;opacity:.8}
     .sidebar-right{background:var(--espn-bg-card);border-left:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px);position:sticky;top:0}
-    .budget-item{padding:12px;border-bottom:1px solid var(--espn-border);font-size:12px}
+    .budget-item{padding:12px;border-bottom:1px solid var(--espn-border);font-size:12px;min-height:56px;display:flex;flex-direction:column;justify-content:center}
     .budget-item.current-user{background:#e3f2fd}
     .budget-item.is-commish{border-left:3px solid var(--espn-orange)}
-    .budget-team-name{font-weight:700;display:flex;justify-content:space-between;margin-bottom:3px;font-size:13px}
-    .budget-available{color:var(--espn-success)}
-    .budget-details{display:flex;justify-content:space-between;font-size:10px;color:var(--espn-text-muted);margin-bottom:3px}
+    .budget-team-name{font-weight:700;display:flex;justify-content:space-between;margin-bottom:4px;font-size:14px;color:var(--espn-blue)}
+    .budget-available{color:var(--espn-success);font-size:12px}
+    .budget-details{display:flex;justify-content:space-between;font-size:12px;color:var(--espn-text-secondary);margin-bottom:3px}
     .budget-bar{height:5px;background:var(--espn-bg-page);border-radius:3px}
     .budget-bar-fill{height:100%;background:var(--espn-blue);border-radius:3px}
     .budget-bar-fill.low{background:var(--espn-orange)}
@@ -185,9 +186,9 @@
     .view-mobile .main-stage{padding:0;padding-bottom:120px !important}
     .view-mobile .player-card,.view-mobile .timer-section,.view-mobile .bid-status,.view-mobile .your-bid-section{max-width:100%;margin-bottom:8px}
     .view-mobile .player-card{margin-bottom:6px}
-    .view-mobile .player-card-header{padding:8px 10px !important}
-    .view-mobile .player-headshot{width:40px;height:40px}
-    .view-mobile .player-card-header .player-name{font-size:0.95rem}
+    .view-mobile .player-card-header{padding:12px !important;min-height:64px;align-items:center}
+    .view-mobile .player-headshot{width:48px;height:48px}
+    .view-mobile .player-card-header .player-name{font-size:1.1rem;line-height:1.2}
     .view-mobile .player-card-body{padding:8px 10px !important}
     .view-mobile .info-row{padding:10px 0}
     .view-mobile .info-value{font-size:16px}
@@ -232,8 +233,8 @@
     .bottom-nav-item .icon{font-size:24px}
     
     /* Collapsible Sections (Mobile) */
-    .collapsible-header{background:var(--espn-nav-dark);color:#fff;padding:12px 16px;font-size:13px;font-weight:700;text-transform:uppercase;cursor:pointer;display:flex;justify-content:space-between;align-items:center;letter-spacing:0.5px;position:sticky;top:0;z-index:10}
-    .collapsible-header:hover{background:#333}
+    .collapsible-header{background:var(--espn-blue);color:#fff;padding:12px 16px;font-size:13px;font-weight:700;text-transform:uppercase;cursor:pointer;display:flex;justify-content:space-between;align-items:center;letter-spacing:0.5px;position:sticky;top:0;z-index:10}
+    .collapsible-header:hover{background:#0956a5}
     .collapsible-arrow{transition:transform .3s;font-size:20px;font-weight:700;color:#fff}
     .collapsible-arrow.open{transform:rotate(180deg)}
     .collapsible-content{max-height:0;overflow:hidden;transition:max-height .3s ease-out;visibility:hidden}
@@ -967,9 +968,9 @@ function App() {
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: viewMode === 'mobile' ? '12px' : '24px', paddingBottom: viewMode === 'mobile' ? '80px' : '24px' }}>
           
           {/* Title & Max Bid Box */}
-          <div style={{ background: 'var(--espn-bg-card)', borderRadius: '8px', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ background: 'var(--espn-bg-card)', borderRadius: '8px', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: viewMode === 'mobile' ? 'nowrap' : 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: viewMode === 'mobile' ? '1.2rem' : '1.6rem', margin: 0 }}>Set Your Pre-Bids</h2>
-            <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
+            <div style={{display:'flex',gap:'8px',alignItems:'center',marginLeft:viewMode === 'mobile' ? 'auto' : '0'}}>
               {viewMode !== 'mobile' && <>
                 <div style={{background:'var(--espn-blue)',color:'#fff',padding:'8px 16px',borderRadius:'6px',fontWeight:700,fontSize:'14px'}}>💰 Max: ${fmt(mx)}</div>
                 <button className="btn btn-blue" onClick={downloadPrebidTemplate} style={{padding:'8px 16px',fontSize:'14px'}}>📅 DOWNLOAD TEMPLATE</button>
@@ -1340,7 +1341,7 @@ function App() {
           <div className={'collapsible-content' + (viewMode === 'mobile' && queueCollapsed ? '' : ' open')}>
           {[3, 2, 1].map(ay => { const pls = grp[ay] || []; if (!pls.length) return null; return (
             <React.Fragment key={ay}>
-              <div className="arb-group-header"><span>Arbitration Year {ay}</span><span style={{fontSize:'10px',color:'var(--espn-text-muted)'}}>PRE-BID</span></div>
+              <div className="arb-group-header"><span>Arbitration Year {ay}</span><span className="prebid-header">PRE-BID</span></div>
               {pls.map(p => {
                 const cur = p.idx === auction?.currentPlayerIndex;
                 const own = auction?.teams?.[userTeamId]?.name === p.owner;
@@ -1383,10 +1384,10 @@ function App() {
               <div className="player-card">
                 <div className="player-card-header">
                   {getPlayerImage(cp) && <img src={getPlayerImage(cp)} alt={cp.name} className="player-headshot" onError={(e) => e.target.style.display = 'none'} />}
-                  <div style={{flex: 1}}><div className="player-name">{cp.name}</div><div className="player-meta">{cp.position} • {cp.team}</div></div>
-                  <div style={{display:'flex',flexDirection:'column',gap:'8px',alignItems:'flex-end'}}>
-                    <span className={'arb-badge arb-' + cp.arbYear}>ARB {cp.arbYear}</span>
-                    <span style={{background:'var(--espn-success)',color:'#fff',padding:'6px 12px',borderRadius:'4px',fontSize:'13px',fontWeight:700}}>{fmt(cp.fantasyPoints)} pts</span>
+                  <div style={{flex: 1,display:'flex',flexDirection:'column',justifyContent:'center'}}><div className="player-name">{cp.name}</div><div className="player-meta">{cp.position} • {cp.team}</div></div>
+                  <div style={{display:'flex',flexDirection:'column',gap:'4px',alignItems:'flex-end',justifyContent:'center'}}>
+                    <span className={'arb-badge arb-' + cp.arbYear} style={{padding:'8px 12px',fontSize:'14px',minWidth:'60px',textAlign:'center'}}>ARB {cp.arbYear}</span>
+                    <span style={{background:'var(--espn-success)',color:'#fff',padding:'8px 12px',borderRadius:'4px',fontSize:'14px',fontWeight:700,minWidth:'60px',textAlign:'center'}}>{fmt(cp.fantasyPoints)} pts</span>
                   </div>
                 </div>
                 <div className="player-card-body">
@@ -1617,7 +1618,7 @@ function App() {
       )}
 
       {/* Expanded Table Modal */}
-      {expandedTable && viewMode === 'mobile' && (
+      {expandedTable && (
         <div className="expanded-table-overlay">
           <div className="expanded-table-header">
             <h3>{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
@@ -1689,6 +1690,10 @@ function App() {
         </div>
       )}
 
+      {/* Diagnostic: Show expandedTable state */}
+      {viewMode === 'mobile' && expandedTable && (
+        <div style={{position:'fixed',top:'10px',left:'10px',background:'lime',color:'black',padding:'10px',zIndex:10001,fontSize:'14px',fontWeight:'bold'}}>expandedTable: {expandedTable}</div>
+      )}
 
     </>
   );
