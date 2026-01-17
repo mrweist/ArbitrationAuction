@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.14</title>
+  <title>Arbitration Auction v2.0.16</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -34,7 +34,7 @@
     .sync-dot.pending{background:var(--espn-orange);animation:pulse 1s infinite}
     .sync-dot.error{background:var(--espn-error)}
     .app-container{display:grid;grid-template-columns:320px 1fr 320px;min-height:calc(100vh - 110px);gap:0;max-width:100%;margin:0;padding:0}
-    .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px);position:sticky;top:0}
+    .sidebar{background:var(--espn-bg-card);border-right:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px)}
     .sidebar-title{font-size:13px;font-weight:700;text-transform:uppercase;color:#fff;background:var(--espn-blue);padding:12px 16px;position:sticky;top:0;z-index:10;letter-spacing:0.5px}
     .arb-group-header{background:var(--espn-bg-table-header);padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:37px;z-index:5}
     .arb-group-header .prebid-header{font-size:10px;color:var(--espn-text-muted);text-align:center;width:70px}
@@ -182,10 +182,11 @@
     .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
     /* View Mode Classes */
     .view-mobile .app-container{display:flex;flex-direction:column;padding:var(--space-4)}
-    .view-mobile .sidebar,.view-mobile .sidebar-right{position:fixed;top:92px;bottom:60px;width:320px;max-width:85vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);overflow-y:auto;transition:transform .28s ease,visibility .28s;z-index:1200;-webkit-overflow-scrolling:touch;border:none}
-    .view-mobile .sidebar{left:0;transform:translateX(-110%);visibility:hidden}
-    .view-mobile .sidebar-right{right:0;left:auto;transform:translateX(110%);visibility:hidden}
-    .view-mobile .sidebar.open,.view-mobile .sidebar-right.open{transform:translateX(0);visibility:visible}
+    .view-mobile .sidebar,.view-mobile .sidebar-right{position:fixed;top:92px;bottom:60px;width:320px;max-width:85vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);overflow-y:auto;transition:left .28s ease,right .28s ease,visibility .28s;z-index:1200;-webkit-overflow-scrolling:touch;border:none}
+    .view-mobile .sidebar{left:-110%;visibility:hidden}
+    .view-mobile .sidebar-right{right:-110%;visibility:hidden}
+    .view-mobile .sidebar.open{left:0;visibility:visible}
+    .view-mobile .sidebar-right.open{right:0;visibility:visible}
     .view-mobile .main-stage{padding:0;padding-bottom:120px !important}
     .view-mobile .player-card,.view-mobile .timer-section,.view-mobile .bid-status,.view-mobile .your-bid-section{max-width:100%;margin-bottom:8px}
     .view-mobile .player-card{margin-bottom:6px}
@@ -1346,15 +1347,8 @@ function App() {
 
       <div className={viewMode === 'mobile' ? 'app-container view-mobile' : 'app-container'}>
         <div className={`sidebar${viewMode === 'mobile' && leftSidebarOpen ? ' open' : ''}`}>
-          {viewMode === 'mobile' ? (
-            <div className="collapsible-header" onClick={() => {setQueueCollapsed(!queueCollapsed)}} onTouchStart={() => {setQueueCollapsed(!queueCollapsed)}}>
-              <span>Player Queue</span>
-              <span className={'collapsible-arrow' + (queueCollapsed ? '' : ' open')}>▼</span>
-            </div>
-          ) : (
-            <div className="sidebar-title">Player Queue</div>
-          )}
-          <div className={'collapsible-content' + (viewMode === 'mobile' && queueCollapsed ? '' : ' open')}>
+          <div className="sidebar-title">Player Queue</div>
+          <div>
           {[3, 2, 1].map(ay => { const pls = grp[ay] || []; if (!pls.length) return null; return (
             <React.Fragment key={ay}>
               <div className="arb-group-header"><span>Arbitration Year {ay}</span><span className="prebid-header">PRE-BID</span></div>
@@ -1501,15 +1495,8 @@ function App() {
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>
-          {viewMode === 'mobile' ? (
-            <div className="collapsible-header" onClick={() => {setBudgetCollapsed(!budgetCollapsed)}} onTouchStart={() => {setBudgetCollapsed(!budgetCollapsed)}}>
-              <span>Team Budgets</span>
-              <span className={'collapsible-arrow' + (budgetCollapsed ? '' : ' open')}>▼</span>
-            </div>
-          ) : (
-            <div className="sidebar-title">Team Budgets</div>
-          )}
-          <div className={'collapsible-content' + (viewMode === 'mobile' && budgetCollapsed ? '' : ' open')}>
+          <div className="sidebar-title">Team Budgets</div>
+          <div>
           {teams.sort((a,b) => {
             const [idA] = a;
             const [idB] = b;
