@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v2.0.39</title>
+  <title>Arbitration Auction v2.0.41</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;--space-16:64px;--space-20:80px;--space-24:96px;--text-xs:10px;--text-sm:12px;--text-base:16px;--text-lg:20px;--text-xl:26px;--text-2xl:32px;--text-3xl:42px;--text-4xl:52px;--text-5xl:68px;--text-6xl:84px;--touch-min:48px;--touch-comfortable:56px;--touch-large:64px;--click-min:32px;--leading-tight:1.25;--leading-normal:1.5;--leading-relaxed:1.625;--leading-loose:2;--font-normal:400;--font-medium:500;--font-semibold:600;--font-bold:700}
@@ -185,9 +185,9 @@
     .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
     /* View Mode Classes */
     .view-mobile .app-container{display:flex;flex-direction:column;padding:var(--space-4);position:relative}
-    .view-mobile .sidebar,.view-mobile .sidebar-right{position:absolute;top:0;bottom:60px;width:95vw;max-width:95vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);overflow-y:auto;z-index:1200;-webkit-overflow-scrolling:touch;border:none;display:none}
-    .view-mobile .sidebar{left:0}
-    .view-mobile .sidebar-right{right:0}
+    .view-mobile .sidebar,.view-mobile .sidebar-right{position:absolute;top:8px;bottom:68px;width:95vw;max-width:95vw;background:var(--espn-bg-card);box-shadow:0 8px 24px rgba(0,0,0,.3);overflow-y:auto;z-index:1200;-webkit-overflow-scrolling:touch;border:none;display:none}
+    .view-mobile .sidebar{left:0;right:8px}
+    .view-mobile .sidebar-right{right:0;left:8px}
     .view-mobile .sidebar.open{display:block !important}
     .view-mobile .sidebar-right.open{display:block !important}
     .view-mobile .main-stage{padding:0;padding-bottom:120px !important}
@@ -217,6 +217,13 @@
     .view-mobile .bid-option input{padding:var(--space-4);font-size:var(--text-xl)}
     .view-mobile .nav-tabs{display:none}
     .view-mobile .bottom-nav{display:flex}
+    .view-mobile .reveal-card{padding:16px}
+    .view-mobile .reveal-amount{font-size:2.5rem;margin:4px 0}
+    .view-mobile .reveal-label{font-size:11px}
+    .view-mobile .reveal-bidder{font-size:13px}
+    .view-mobile .prices-row{margin-top:12px;padding-top:12px;gap:24px}
+    .view-mobile .price-box .price-label{font-size:11px}
+    .view-mobile .price-box .price-value{font-size:1.4rem}
     
     /* Desktop Optimized (1920x1200) */
     .view-desktop .app-container{max-width:100%;margin:0;grid-template-columns:320px 1fr 320px;gap:0;padding:0}
@@ -421,7 +428,6 @@ function App() {
     const attachListeners = () => {
       const historyBtn = document.getElementById('expand-history-btn');
       const usersBtn = document.getElementById('expand-users-btn');
-      const prebidBtn = document.getElementById('expand-prebid-btn');
       
       if (historyBtn && !historyBtn.dataset.listenerAttached) {
         historyBtn.addEventListener('click', () => {
@@ -435,13 +441,6 @@ function App() {
           if (window.openExpandModal) window.openExpandModal('users', 'landscape');
         });
         usersBtn.dataset.listenerAttached = 'true';
-      }
-      
-      if (prebidBtn && !prebidBtn.dataset.listenerAttached) {
-        prebidBtn.addEventListener('click', () => {
-          if (window.openExpandModal) window.openExpandModal('prebid', 'portrait');
-        });
-        prebidBtn.dataset.listenerAttached = 'true';
       }
     };
     
@@ -1061,7 +1060,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.39 ⚾ {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.41 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>Pending Start</div>
           <div className="user-info">
@@ -1095,8 +1094,7 @@ function App() {
                 <button className="btn btn-secondary" onClick={()=>document.getElementById('bulk-upload').click()} style={{padding:'8px 16px',fontSize:'14px'}}>📤 UPLOAD PRE-BIDS</button>
               </>}
               {viewMode === 'mobile' && <>
-                <div style={{background:'var(--espn-blue)',color:'#fff',padding:'10px 12px',borderRadius:'6px',fontWeight:700,fontSize:'13px',height:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>💰 Max: ${fmt(mx)}</div>
-                <button id="expand-prebid-btn" className="btn btn-secondary" style={{padding:'10px 12px',fontSize:'18px',height:'48px',minWidth:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>⛶</button>
+                <div style={{background:'var(--espn-blue)',color:'#fff',padding:'10px 12px',borderRadius:'6px',fontWeight:700,fontSize:'13px',height:'48px',display:'flex',alignItems:'center',justifyContent:'center',marginLeft:'auto'}}>💰 Max: ${fmt(mx)}</div>
               </>}
             </div>
           </div>
@@ -1106,20 +1104,20 @@ function App() {
             <table className="history-table">
               <thead><tr>
                 <th>Player</th>
-                {viewMode !== 'mobile' && <th>Team</th>}
-                <th>Owner</th>
-                <th>Arb</th>
-                {viewMode !== 'mobile' && <th>Points</th>}
+                {viewMode !== 'mobile' && <th style={{textAlign:'center'}}>Team</th>}
+                <th style={{textAlign:'center'}}>Owner</th>
+                <th style={{textAlign:'center'}}>Arb</th>
+                {viewMode !== 'mobile' && <th style={{textAlign:'center'}}>Points</th>}
                 <th style={{ width: '100px' }}>Your Bid</th>
               </tr></thead>
               <tbody>
                 {pls.map((p, i) => { const own = isOwner(p); const done = p.status === 'completed'; return (
                   <tr key={i} style={done ? { opacity: 0.4 } : {}}>
                     <td style={{ fontWeight: 600 }}>{p.name}</td>
-                    {viewMode !== 'mobile' && <td>{p.team}</td>}
-                    <td>{p.owner}</td>
-                    <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
-                    {viewMode !== 'mobile' && <td>{fmt(p.fantasyPoints)}</td>}
+                    {viewMode !== 'mobile' && <td style={{textAlign:'center'}}>{p.team}</td>}
+                    <td style={{textAlign:'center'}}>{p.owner}</td>
+                    <td style={{textAlign:'center'}}><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
+                    {viewMode !== 'mobile' && <td style={{textAlign:'center'}}>{fmt(p.fantasyPoints)}</td>}
                     <td>{!own && !done ? <input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'right' }} /> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                   </tr>
                 ); })}
@@ -1214,7 +1212,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.39 ⚾ {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.41 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
@@ -1252,18 +1250,18 @@ function App() {
           {hist.length === 0 ? <p style={{ color: 'var(--espn-text-muted)', fontSize: '16px' }}>No completed players yet.</p> :
             <div className={viewMode === 'mobile' ? 'history-table-landscape' : ''} style={{ overflowX: 'auto' }}>
               <table className="history-table">
-                <thead><tr><th>Player</th><th>Owner</th><th>Winner</th><th>Decision</th><th>Price</th><th>Years</th><th>High Bid</th>{teamNames.map((n, i) => <th key={i} className="team-bid">{n}</th>)}</tr></thead>
+                <thead><tr><th>Player</th><th style={{textAlign:'center'}}>Owner</th><th style={{textAlign:'center'}}>Winner</th><th style={{textAlign:'center'}}>Decision</th><th style={{textAlign:'center'}}>Price</th><th style={{textAlign:'center'}}>Years</th><th style={{textAlign:'center'}}>High Bid</th>{teamNames.map((n, i) => <th key={i} className="team-bid" style={{textAlign:'center'}}>{n}</th>)}</tr></thead>
                 <tbody>
                   {hist.map((h, i) => (
                     <tr key={i}>
                       <td style={{ fontWeight: 600 }}>{h.player}</td>
-                      <td>{h.owner}</td>
-                      <td style={{ color: 'var(--espn-blue)', fontWeight: 600 }}>{h.winner}</td>
-                      <td><span className={'result-badge ' + h.decision}>{h.decision}</span></td>
-                      <td style={{ fontWeight: 600 }}>${fmt(h.price)}</td>
-                      <td>{h.years}</td>
-                      <td>${fmt(h.highBid)}</td>
-                      {teamNames.map((n, j) => <td key={j} className="team-bid" style={{ color: h.bids?.[n] === h.highBid && h.highBid > 0 ? 'var(--espn-blue)' : 'inherit', fontWeight: h.bids?.[n] === h.highBid && h.highBid > 0 ? 700 : 'normal' }}>{h.bids?.[n] !== undefined ? '$' + fmt(h.bids[n]) : '-'}</td>)}
+                      <td style={{textAlign:'center'}}>{h.owner}</td>
+                      <td style={{ color: 'var(--espn-blue)', fontWeight: 600, textAlign:'center' }}>{h.winner}</td>
+                      <td style={{textAlign:'center'}}><span className={'result-badge ' + h.decision}>{h.decision}</span></td>
+                      <td style={{ fontWeight: 600, textAlign:'center' }}>${fmt(h.price)}</td>
+                      <td style={{textAlign:'center'}}>{h.years}</td>
+                      <td style={{textAlign:'center'}}>${fmt(h.highBid)}</td>
+                      {teamNames.map((n, j) => <td key={j} className="team-bid" style={{ color: h.bids?.[n] === h.highBid && h.highBid > 0 ? 'var(--espn-blue)' : 'inherit', fontWeight: h.bids?.[n] === h.highBid && h.highBid > 0 ? 700 : 'normal', textAlign:'center' }}>{h.bids?.[n] !== undefined ? '$' + fmt(h.bids[n]) : '-'}</td>)}
                     </tr>
                   ))}
                 </tbody>
@@ -1303,18 +1301,17 @@ function App() {
           <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
             <div id="modal-table-history" style={{display: 'block'}}>
               <table className="history-table">
-                <thead><tr><th>Player</th><th>Arb</th><th>Winner</th><th>Result</th><th>Keep</th><th>Stick</th><th>Winning Bid</th><th>Final Price</th></tr></thead>
+                <thead><tr><th>Player</th><th>Owner</th><th>Winner</th><th>Decision</th><th>Price</th><th>Years</th><th>High Bid</th></tr></thead>
                 <tbody>
                   {hist.map((h, i) => (
                     <tr key={i}>
-                      <td style={{ fontWeight: 600 }}>{h.playerName}</td>
-                      <td>{h.arbYear}</td>
-                      <td>{h.winnerName}</td>
-                      <td><span className={`result-badge ${h.result.toLowerCase()}`}>{h.result}</span></td>
-                      <td>${h.keepPrice}</td>
-                      <td>${h.stickPrice}</td>
-                      <td>${h.winningBid}</td>
-                      <td style={{ fontWeight: 700, color: 'var(--espn-blue)' }}>${h.finalPrice}</td>
+                      <td style={{ fontWeight: 600 }}>{h.player}</td>
+                      <td>{h.owner}</td>
+                      <td style={{ color: 'var(--espn-blue)', fontWeight: 600 }}>{h.winner}</td>
+                      <td><span className={'result-badge ' + h.decision}>{h.decision}</span></td>
+                      <td style={{ fontWeight: 600 }}>${fmt(h.price)}</td>
+                      <td>{h.years}</td>
+                      <td>${fmt(h.highBid)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1377,7 +1374,7 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.39 ⚾ {auction?.leagueName || 'Loading...'}</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.41 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
@@ -1511,7 +1508,7 @@ function App() {
   return (
     <>
       <header className="header">
-        <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.39 ⚾ {auction?.leagueName || 'Loading...'}</div>
+        <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction v2.0.41 ⚾ {auction?.leagueName || 'Loading...'}</div>
           <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
         <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
           {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
@@ -1814,7 +1811,7 @@ function App() {
           <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
             <div id="modal-table-history" style={{display: expandedTable === 'history' ? 'block' : 'none'}}>
               <table className="history-table">
-                <thead><tr><th>Player</th><th>Owner</th><th>Winner</th><th>Decision</th><th>Price</th><th>Years</th><th>High Bid</th>{teamNames.map((n, i) => <th key={i} className="team-bid">{n}</th>)}</tr></thead>
+                <thead><tr><th>Player</th><th style={{textAlign:'center'}}>Owner</th><th style={{textAlign:'center'}}>Winner</th><th style={{textAlign:'center'}}>Decision</th><th style={{textAlign:'center'}}>Price</th><th style={{textAlign:'center'}}>Years</th><th style={{textAlign:'center'}}>High Bid</th>{teamNames.map((n, i) => <th key={i} className="team-bid" style={{textAlign:'center'}}>{n}</th>)}</tr></thead>
                 <tbody>
                   {(auction?.bidHistory || []).map((h, i) => (
                     <tr key={i}>
@@ -1852,27 +1849,7 @@ function App() {
                 </tbody>
               </table>
             </div>
-            <div id="modal-table-prebid" style={{display: expandedTable === 'prebid' ? 'block' : 'none'}}>
-              <table className="history-table">
-                <thead><tr><th>Player</th><th>Team</th><th>Owner</th><th>Arb</th><th>Points</th><th>Your Bid</th></tr></thead>
-                <tbody>
-                  {(auction?.players || []).map((p, i) => {
-                    const own = p.owner === userTeamName;
-                    const done = p.status === 'completed';
-                    return (
-                      <tr key={i} style={done ? { opacity: 0.4 } : {}}>
-                        <td style={{ fontWeight: 600 }}>{p.name}</td>
-                        <td>{p.team}</td>
-                        <td>{p.owner}</td>
-                        <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
-                        <td>{fmt(p.fantasyPoints)}</td>
-                        <td>{!own && !done ? <input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'right' }} /> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+
           </div>
         </div>
 
