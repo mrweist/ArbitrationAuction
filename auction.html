@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction v1.9.0</title>
+  <title>Arbitration Auction v1.9.2</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -83,6 +83,9 @@
     .bid-status-item.submitted{background:#d4edda}
     .bid-status-item.owner{background:#e0e0e0}
     .bid-status-item.tied{background:#fff3cd}
+    .bid-status-item.forced{background:#fff9c4}
+    .bid-status-item.clickable{cursor:pointer}
+    .bid-status-item.clickable:hover{background:#f0f0f0;transition:background .2s}
     .bid-status-item .checkmark{color:var(--espn-success);font-weight:700}
     .your-bid-section{max-width:780px;margin:0 auto 24px;background:var(--espn-bg-card);border:3px solid var(--espn-blue);border-radius:8px;padding:20px}
     .your-bid-section.submitted{border-color:var(--espn-success)}
@@ -143,6 +146,7 @@
     .history-container{padding:24px;max-width:1400px;margin:0 auto}
     .history-table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:8px;overflow:hidden}
     .history-table th{background:var(--espn-nav-dark);color:#fff;padding:14px 12px;text-align:left;font-size:12px;text-transform:uppercase;position:sticky;top:0}
+    .history-table tbody tr:nth-child(even){background:#f9f9f9}
     .history-table td{padding:12px;border-bottom:1px solid var(--espn-border)}
     .history-table .team-bid{text-align:right;font-family:'Roboto Condensed',sans-serif;font-size:13px}
     .celebration-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;overflow:hidden}
@@ -240,6 +244,11 @@ function App() {
   const [tieModal, setTieModal] = useState(false);
   const [tieMethod, setTieMethod] = useState('random');
   const [tieWinner, setTieWinner] = useState('');
+  const [forceBidModal, setForceBidModal] = useState(false);
+  const [forceBidTeamId, setForceBidTeamId] = useState('');
+  const [forceBidTeamName, setForceBidTeamName] = useState('');
+  const [forceBidAmount, setForceBidAmount] = useState('');
+  const [forceBidErr, setForceBidErr] = useState('');
   const [syncStatus, setSyncStatus] = useState('ok');
   const sKey = auctionId || 'x';
 
@@ -486,13 +495,42 @@ function App() {
   const submitBid = async () => {
     setBidErr('');
     const amt = usePre ? (preBids[auction.currentPlayerIndex] || 0) : parseFloat(curBid) || 0;
-    if (amt > 0 && amt < 1) return setBidErr('Minimum bid is $1 (or $0 to pass)');
+    const isTiebreaker = auction?.phase === 'tiebreaker';
+    const minBid = isTiebreaker ? (auction?.highestBid?.amount || 0) : 0;
+    if (isTiebreaker && amt < minBid) return setBidErr(`Tiebreaker minimum bid is $${fmt(minBid)} (pass not allowed)`);
+    if (!isTiebreaker && amt > 0 && amt < 1) return setBidErr('Minimum bid is $1 (or $0 to pass)');
     const t = auction.teams[userTeamId];
     const mx = maxBid(t);
     if (amt > mx) return setBidErr('Max $' + fmt(mx));
     const bid = { teamId: userTeamId, teamName: userTeamName, amount: amt, ts: Date.now(), status: usePre ? 'prebid' : 'manual' };
     if (db) { await db.ref('auctions/' + auctionId + '/bids/' + userTeamId).set(enc(bid, sKey)); await db.ref('auctions/' + auctionId + '/bidStatuses/' + userTeamId).set(usePre ? 'prebid' : 'submitted'); }
     setBidOk(true);
+  };
+
+  const openForceBid = (tid, tname) => {
+    setForceBidTeamId(tid);
+    setForceBidTeamName(tname);
+    setForceBidAmount('');
+    setForceBidErr('');
+    setForceBidModal(true);
+  };
+
+  const submitForceBid = async () => {
+    setForceBidErr('');
+    const amt = parseFloat(forceBidAmount) || 0;
+    const isTiebreaker = auction?.phase === 'tiebreaker';
+    const minBid = isTiebreaker ? (auction?.highestBid?.amount || 0) : 0;
+    if (isTiebreaker && amt < minBid) return setForceBidErr(`Tiebreaker minimum bid is $${fmt(minBid)} (pass not allowed)`);
+    if (!isTiebreaker && amt > 0 && amt < 1) return setForceBidErr('Minimum bid is $1 (or $0 to pass)');
+    const t = auction.teams[forceBidTeamId];
+    const mx = maxBid(t);
+    if (amt > mx) return setForceBidErr('Max $' + fmt(mx));
+    const bid = { teamId: forceBidTeamId, teamName: forceBidTeamName, amount: amt, ts: Date.now(), status: 'forced' };
+    if (db) {
+      await db.ref('auctions/' + auctionId + '/bids/' + forceBidTeamId).set(enc(bid, sKey));
+      await db.ref('auctions/' + auctionId + '/bidStatuses/' + forceBidTeamId).set('forced');
+    }
+    setForceBidModal(false);
   };
 
   const endBid = async () => { if (db) await db.ref('auctions/' + auctionId).update({ phase: 'reveal', timerEndTime: null }); };
@@ -1051,7 +1089,7 @@ function App() {
               {(auction.phase === 'bidding' || isTie) && canBid && (
                 <div className={'your-bid-section' + (bidOk ? ' submitted' : '')}>
                   <h3>{bidOk ? '✓ Bid Submitted' : 'Enter Your Bid'}{isTie ? ' (Tiebreaker Round)' : ''}</h3>
-                  <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong> • Enter $0.00 to pass</div>
+                  <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong>{isTie ? ` • Minimum Bid: $${fmt(hi)}` : ' • Enter $0.00 to pass'}</div>
                   <div className="bid-options" style={{ marginTop: '14px' }}>
                     {pb > 0 && !isTie && <div className="bid-option"><label>Use Pre-Bid</label><div className={'prebid-value' + (usePre ? ' selected' : '')} onClick={() => setUsePre(true)}>${fmt(pb)}</div></div>}
                     <div className="bid-option"><label>Enter Amount</label><input type="number" value={curBid} onChange={e => { setCurBid(e.target.value); setUsePre(false); }} min={isTie ? hi : 0} step="0.01" onFocus={() => setUsePre(false)} placeholder={isTie ? hi.toFixed(2) : "0.00"} /></div>
@@ -1076,8 +1114,11 @@ function App() {
                       const inTie = auction.tiebreakerTeams?.includes(id);
                       const tied = auction.tiedTeams?.some(x => x.id === id);
                       const status = auction.bidStatuses?.[id];
-                      const icon = status === 'prebid' ? ' 🎯' : status === 'submitted' ? ' ✅' : '';
-                      return <div key={id} className={'bid-status-item ' + (status ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied' : '')} style={isTie && !inTie ? { opacity: 0.3 } : {}}>{t.name}{own ? ' 👤' : icon}</div>;
+                      const isForced = status === 'forced';
+                      const icon = status === 'prebid' ? ' 🎯' : status === 'submitted' ? ' ✅' : isForced ? ' ⚡' : '';
+                      const clickable = isComm && !own && (auction.phase === 'bidding' || auction.phase === 'reveal' || isTie);
+                      const cls = 'bid-status-item ' + (isForced ? 'forced ' : status && !isForced ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied ' : '') + (clickable ? 'clickable' : '');
+                      return <div key={id} className={cls} style={isTie && !inTie ? { opacity: 0.3 } : {}} onClick={clickable ? () => openForceBid(id, t.name) : undefined}>{t.name}{own ? ' 👤' : icon}</div>;
                     })}
                   </div>
                 </div>
@@ -1148,9 +1189,34 @@ function App() {
             <div className="modal-body">
               <p style={{ marginBottom: '16px', fontSize: '16px' }}>Teams tied at <strong>${fmt(auction.tiedTeams?.[0]?.amount || 0)}</strong>:</p>
               <ul style={{ marginBottom: '20px', marginLeft: '24px', fontSize: '15px' }}>{auction.tiedTeams?.map(t => <li key={t.id} style={{ marginBottom: '6px' }}><strong>{t.name}</strong></li>)}</ul>
-              <div className="form-group"><label>Method</label><select value={tieMethod} onChange={e => setTieMethod(e.target.value)}><option value="random">Random</option><option value="choose">Commissioner Choice</option></select></div>
-              {tieMethod === 'choose' && <div className="form-group"><label>Winner</label><select value={tieWinner} onChange={e => setTieWinner(e.target.value)}><option value="">Select...</option>{auction.tiedTeams?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>}
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }} onClick={resolveTie} disabled={tieMethod === 'choose' && !tieWinner}>Confirm</button>
+              <div style={{display:'flex',flexDirection:'column',gap:'12px',marginTop:'16px'}}>
+                {auction.tiedTeams?.map(t => <button key={t.id} className="btn btn-blue" style={{width:'100%',fontSize:'16px',padding:'14px'}} onClick={()=>{setTieWinner(t.id);setTieMethod('choose');resolveTie();}}>{t.name}</button>)}
+                <button className="btn btn-secondary" style={{width:'100%',fontSize:'16px',padding:'14px'}} onClick={()=>{setTieMethod('random');resolveTie();}}>🎲 Choose at Random</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {forceBidModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">⚡ Force Bid for {forceBidTeamName}</div>
+            <div className="modal-body">
+              <p style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--espn-text-secondary)' }}>Override this team's bid with a commissioner-set amount.</p>
+              <div className="form-group">
+                <label>Max Bid for {forceBidTeamName}</label>
+                <div style={{background:'#e3f2fd',padding:'12px',borderRadius:'6px',fontSize:'18px',fontWeight:700,color:'var(--espn-blue)',marginBottom:'12px'}}>${fmt(maxBid(auction.teams[forceBidTeamId]))}</div>
+              </div>
+              <div className="form-group">
+                <label>Force Bid Amount</label>
+                <input type="number" value={forceBidAmount} onChange={e => setForceBidAmount(e.target.value)} min="0" step="0.01" placeholder="0.00" autoFocus />
+              </div>
+              {forceBidErr && <div className="form-error">{forceBidErr}</div>}
+              <div style={{display:'flex',gap:'12px',marginTop:'20px'}}>
+                <button className="btn btn-secondary" style={{flex:1}} onClick={()=>setForceBidModal(false)}>Cancel</button>
+                <button className="btn btn-primary" style={{flex:1}} onClick={submitForceBid}>⚡ Submit Force Bid</button>
+              </div>
             </div>
           </div>
         </div>
