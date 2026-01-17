@@ -250,7 +250,7 @@
     .prebid-modal-buttons button{flex:1;min-height:48px;font-size:16px;font-weight:600}
     
     /* Expanded Table Modal */
-    .expanded-table-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.95);z-index:2000;display:flex;flex-direction:column;padding:0}
+    .expanded-table-overlay{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;bottom:0 !important;background:rgba(0,0,0,.95) !important;z-index:2000 !important;display:flex !important;flex-direction:column !important;padding:0 !important;visibility:visible !important;opacity:1 !important}
     .expanded-table-header{background:var(--espn-red);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;color:#fff;flex-shrink:0}
     .expanded-table-header h3{font-family:'Roboto Condensed',sans-serif;font-size:1.3rem;font-weight:700;margin:0}
     .expanded-table-close{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -969,7 +969,14 @@ function App() {
           
           {/* Title & Max Bid Box */}
           <div style={{ background: 'var(--espn-bg-card)', borderRadius: '8px', padding: '16px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: viewMode === 'mobile' ? 'nowrap' : 'wrap', gap: '12px' }}>
-            <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: viewMode === 'mobile' ? '1.2rem' : '1.6rem', margin: 0 }}>Set Your Pre-Bids</h2>
+            {viewMode === 'mobile' ? (
+              <div style={{display:'flex',flexDirection:'column',lineHeight:'1.2'}}>
+                <span style={{fontFamily:'Roboto Condensed',fontSize:'1rem',fontWeight:600}}>Set Your</span>
+                <span style={{fontFamily:'Roboto Condensed',fontSize:'1rem',fontWeight:600}}>Pre-Bids</span>
+              </div>
+            ) : (
+              <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem', margin: 0 }}>Set Your Pre-Bids</h2>
+            )}
             <div style={{display:'flex',gap:'8px',alignItems:'center',marginLeft:viewMode === 'mobile' ? 'auto' : '0'}}>
               {viewMode !== 'mobile' && <>
                 <div style={{background:'var(--espn-blue)',color:'#fff',padding:'8px 16px',borderRadius:'6px',fontWeight:700,fontSize:'14px'}}>💰 Max: ${fmt(mx)}</div>
@@ -978,8 +985,8 @@ function App() {
                 <button className="btn btn-secondary" onClick={()=>document.getElementById('bulk-upload').click()} style={{padding:'8px 16px',fontSize:'14px'}}>📤 UPLOAD PRE-BIDS</button>
               </>}
               {viewMode === 'mobile' && <>
-                <div style={{background:'var(--espn-blue)',color:'#fff',padding:'8px 16px',borderRadius:'6px',fontWeight:700,fontSize:'14px'}}>💰 Max: ${fmt(mx)}</div>
-                <button className="btn btn-secondary" onClick={()=>{setExpandedTable('prebid');setExpandOrientation('portrait')}} style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>
+                <div style={{background:'var(--espn-blue)',color:'#fff',padding:'10px 12px',borderRadius:'6px',fontWeight:700,fontSize:'13px',height:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>💰 Max: ${fmt(mx)}</div>
+                <button className="btn btn-secondary" onClick={()=>{setExpandedTable('prebid');setExpandOrientation('portrait')}} style={{padding:'10px 12px',fontSize:'18px',height:'48px',minWidth:'48px',display:'flex',alignItems:'center',justifyContent:'center'}}>⛶</button>
               </>}
             </div>
           </div>
@@ -1619,7 +1626,7 @@ function App() {
 
       {/* Expanded Table Modal */}
       {expandedTable && (
-        <div className="expanded-table-overlay">
+        <div key={expandedTable} className="expanded-table-overlay" style={{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:9999,display:'flex',flexDirection:'column'}}>
           <div className="expanded-table-header">
             <h3>{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
             <button className="expanded-table-close" onClick={() => setExpandedTable(null)}>×</button>
