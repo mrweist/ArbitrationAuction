@@ -57,8 +57,8 @@
     .arb-badge.arb-1{background:var(--espn-success)}
     .arb-badge-queue.arb-1{background:var(--espn-success)}
     .player-queue-details{font-size:12px;color:var(--espn-text-secondary);line-height:1.2}
-    .prebid-input{display:flex;align-items:center;justify-content:flex-end;margin-left:auto}
-    .prebid-input input{width:70px;height:40px;padding:4px 8px;font-size:13px;font-weight:600;border:1px solid var(--espn-border);border-radius:4px;text-align:right}
+    .prebid-input{display:flex;align-items:center;justify-content:center;margin-left:auto}
+    .prebid-input input{width:70px;height:40px;padding:4px 8px;font-size:13px;font-weight:600;border:1px solid var(--espn-border);border-radius:4px;text-align:center}
     .prebid-input label{display:none}
     .result-badge{font-size:11px;padding:3px 8px;border-radius:4px;margin-top:6px;display:inline-block}
     .result-badge.keep{background:#d4edda;color:#155724}
@@ -1060,8 +1060,8 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
-          <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}><span style={{fontSize:'1.5rem',fontWeight:700}}>Arbitration Auction</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>⚾</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</span></div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}><span style={{fontSize:'1.5rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>⚾</span></div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>Pending Start</div>
           <div className="user-info">
             {hasSheets && viewMode !== 'mobile' && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet} title={syncStatus === 'error' ? 'Click to retry sync' : 'Click to open sheet'}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'ok' ? 'Synced' : syncStatus === 'pending' ? 'Syncing...' : 'Error'}</span></div>}
@@ -1169,7 +1169,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.45</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.47</div>
       </>
     );
   }
@@ -1214,8 +1214,8 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
-          <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}><span style={{fontSize:'1.5rem',fontWeight:700}}>Arbitration Auction</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>⚾</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</span></div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}><span style={{fontSize:'1.5rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>⚾</span></div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
             {auction?.players && ` | Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` (${auction.players[auction.currentPlayerIndex].name})` : ''}`}
@@ -1276,7 +1276,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.45</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.47</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1378,8 +1378,8 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
-          <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}><span style={{fontSize:'1.5rem',fontWeight:700}}>Arbitration Auction</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>⚾</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</span></div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}><span style={{fontSize:'1.5rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>⚾</span></div>
           <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
             {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
             {auction?.players && ` | Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` (${auction.players[auction.currentPlayerIndex].name})` : ''}`}
@@ -1455,7 +1455,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.45</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.47</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1514,8 +1514,8 @@ function App() {
   return (
     <>
       <header className="header">
-        <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}>Arbitration Auction ⚾ {auction?.leagueName || 'Loading...'}</div>
-          <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}>{auction?.leagueName || 'Loading...'} ⚾</div>
+        <div className="header-title" style={{display:viewMode==='mobile'?'none':'block'}}><span style={{fontSize:'1.5rem',fontWeight:700}}>Arbitration Auction</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>⚾</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</span></div>
+          <div className="header-title" style={{display:viewMode==='mobile'?'block':'none'}}><span style={{fontSize:'1.5rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</span> <span style={{fontSize:'1.5rem',fontWeight:700}}>⚾</span></div>
         <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px',display:viewMode==='mobile'?'none':'block'}}>
           {auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}
           {auction?.players && ` | Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}${auction.players[auction.currentPlayerIndex] ? ` (${auction.players[auction.currentPlayerIndex].name})` : ''}`}
@@ -1692,7 +1692,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.45</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.47</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
