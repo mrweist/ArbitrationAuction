@@ -43,7 +43,7 @@
     .arb-badge.arb-2{background:var(--espn-orange)}
     .arb-badge.arb-1{background:var(--espn-success)}
     .player-queue-details{font-size:12px;color:var(--espn-text-secondary);display:flex;justify-content:space-between}
-    .prebid-input{display:flex;align-items:center;gap:6px;margin-top:6px;justify-content:flex-end}
+    .prebid-input{display:flex;align-items:center;gap:6px;margin-top:6px;justify-content:space-between}
     .prebid-input input{width:60px;padding:6px 8px;font-size:13px;border:1px solid var(--espn-border);border-radius:4px;text-align:right}
     .prebid-input label{font-size:12px;color:var(--espn-text-muted)}
     .result-badge{font-size:11px;padding:3px 8px;border-radius:4px;margin-top:6px;display:inline-block}
@@ -673,8 +673,12 @@ function App() {
     const pls = auction?.players || []; const t = auction?.teams?.[userTeamId]; const mx = maxBid(t);
     return (
       <>
-        <header className="header"><div className="header-title">Arbitration Auction</div><div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div></header>
-        <nav className="nav"><div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div></nav>
+        <header className="header">
+          <div className="header-title">Arbitration Auction | {auction?.leagueName}</div>
+          <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>Pending Start</div>
+          <div className="user-info" style={{display:'flex',alignItems:'center',gap:'16px'}}><span>{userTeamName}</span><button onClick={()=>{if(confirm('Log out?')){localStorage.removeItem('auction_'+auctionId);window.location.reload()}}} style={{background:'rgba(255,255,255,0.2)',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'4px',cursor:'pointer',fontSize:'14px',fontWeight:600}}>Logout</button></div>
+        </header>
+        <nav className="nav"><div className="nav-left"></div></nav>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
           {auction?.phase === 'lobby' && <div className="lobby-info" style={{ marginBottom: '24px', background: '#e3f2fd', textAlign: 'center' }}><div className="lobby-status">⏳ Waiting for Commissioner to Start</div></div>}
           <div className="modal" style={{ position: 'relative', maxWidth: 'none', margin: '0 auto' }}>
@@ -748,13 +752,10 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title">ARBITRATION AUCTION</div>
-          <div style={{flex:1,textAlign:'center',color:'#fff'}}>
-            <div style={{fontSize:'1.2rem',fontWeight:700}}>{auction?.leagueName || 'Loading...'}</div>
-            <div style={{fontSize:'14px',opacity:0.9,marginTop:'2px'}}>
-              {auction?.players && `Player ${(auction.currentPlayerIndex || 0) + 1} of ${auction.players.length}`}
-              {auction?.players && (auction.currentPlayerIndex || 0) >= 4 && auction.players[auction.currentPlayerIndex] && `: ${auction.players[auction.currentPlayerIndex].name}`}
-            </div>
+          <div className="header-title">Arbitration Auction | {auction?.leagueName || 'Loading...'}</div>
+          <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>
+            <div>{auction?.phase === 'complete' ? 'Complete' : auction?.phase === 'decision' || auction?.phase === 'tie-resolution' ? 'Awaiting Decision' : auction?.phase === 'bidding' || auction?.phase === 'tiebreaker' ? 'In Progress' : auction?.phase === 'lobby' || auction?.phase === 'waiting' ? 'Pending Start' : 'In Progress'}</div>
+            {auction?.players && <div style={{marginTop:'2px'}}>Player {(auction.currentPlayerIndex || 0) + 1} of {auction.players.length}{auction.players[auction.currentPlayerIndex] && ` (${auction.players[auction.currentPlayerIndex].name})`}</div>}
           </div>
           <div className="user-info">
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
@@ -860,7 +861,10 @@ function App() {
     return (
       <>
         <header className="header">
-          <div className="header-title">Arbitration Auction</div>
+          <div className="header-title">Arbitration Auction | {auction?.leagueName || 'Loading...'}</div>
+          <div style={{flex:1,textAlign:'center',color:'#fff',fontSize:'14px'}}>
+            <div>User Management</div>
+          </div>
           <div className="user-info">
             {hasSheets && <div className="sync-status" onClick={syncStatus === 'error' ? retrySync : openSheet}><div className={'sync-dot ' + syncStatus}></div><span>{syncStatus === 'error' ? 'Retry' : 'Sheets'}</span></div>}
             <span>{userTeamName}</span>
@@ -869,7 +873,6 @@ function App() {
           </div>
         </header>
         <nav className="nav">
-          <div className="nav-left"><span className="league-name">{auction?.leagueName}</span></div>
           <div className="nav-tabs">
             <div className={'nav-tab ' + (activeTab === 'auction' ? 'active' : '')} onClick={() => setActiveTab('auction')}>Auction</div>
             <div className={'nav-tab ' + (activeTab === 'history' ? 'active' : '')} onClick={() => setActiveTab('history')}>Bid History ({auction?.bidHistory?.length || 0})</div>
@@ -879,53 +882,41 @@ function App() {
         <div className="history-container">
           <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem', marginBottom: '24px' }}>User Management</h2>
           
-          <div className="card" style={{marginBottom:'24px'}}>
-            <div className="card-header">Claimed Teams ({claimedTeams.length})</div>
-            <div className="card-body">
-              {claimedTeams.length === 0 ? <p style={{color:'var(--espn-text-muted)'}}>No teams claimed yet.</p> :
-                <div style={{overflowX:'auto'}}>
-                  <table className="history-table">
-                    <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Actions</th></tr></thead>
-                    <tbody>
-                      {claimedTeams.map(([id, t]) => {
-                        const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
-                        const prebidCount = hasPrebids ? Object.keys(auction.preBids[id]).length : 0;
-                        return (
-                        <tr key={id}>
-                          <td style={{fontWeight:600}}>{t.name}</td>
-                          <td>{t.claimedBy}</td>
-                          <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
-                          <td>{hasPrebids ? <span style={{color:'var(--espn-green)',fontWeight:600}}>✅ {prebidCount} bids</span> : <span style={{color:'var(--espn-text-muted)'}}>None</span>}</td>
-                          <td><div style={{display:'flex',gap:'8px'}}><input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>{hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'6px 12px',fontSize:'13px'}}>🗑️ Delete</button>}<button className="btn btn-secondary" onClick={() => removeUser(id)} style={{padding:'6px 12px',fontSize:'13px'}}>❌ Remove</button></div></td>
-                        </tr>
-                      )})}
-                    </tbody>
-                  </table>
-                </div>
-              }
-            </div>
-          </div>
-
           <div className="card">
-            <div className="card-header">Unclaimed Teams ({unclaimedTeams.length})</div>
+            <div className="card-header">All Teams ({teams.length})</div>
             <div className="card-body">
-              {unclaimedTeams.length === 0 ? <p style={{color:'var(--espn-text-muted)'}}>All teams have been claimed!</p> :
-                <div style={{overflowX:'auto'}}>
-                  <table className="history-table">
-                    <thead><tr><th>Team</th><th>Commissioner</th><th>Pre-Bids</th><th>Status</th></tr></thead>
-                    <tbody>
-                      {unclaimedTeams.map(([id, t]) => (
-                        <tr key={id}>
-                          <td style={{fontWeight:600}}>{t.name}</td>
-                          <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
-                          <td><input type="file" accept=".csv" id={`upload-unclaimed-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} /><button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-unclaimed-${id}`).click()} style={{padding:'6px 12px',fontSize:'13px'}}>📁 Upload</button></td>
-                          <td style={{color:'var(--espn-orange)',fontWeight:600}}>Available</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              }
+              <div style={{overflowX:'auto'}}>
+                <table className="history-table">
+                  <thead><tr><th>Team</th><th>Username</th><th>Commissioner</th><th>Pre-Bids</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {teams.map(([id, t]) => {
+                      const hasPrebids = auction?.preBids?.[id] && Object.keys(auction.preBids[id]).length > 0;
+                      const prebidCount = hasPrebids ? Object.keys(auction.preBids[id]).length : 0;
+                      const claimed = t.claimedBy;
+                      return (
+                      <tr key={id}>
+                        <td style={{fontWeight:600}}>{t.name}</td>
+                        <td>{claimed || <span style={{color:'var(--espn-text-muted)'}}>-</span>}</td>
+                        <td>{t.isCommissioner || t.isComm ? '⭐ Yes' : 'No'}</td>
+                        <td>
+                          <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                            {hasPrebids ? <span style={{color:'var(--espn-green)',fontWeight:600}}>✅ {prebidCount}</span> : <span style={{color:'var(--espn-text-muted)'}}>0</span>}
+                            <input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} />
+                            <button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'4px 8px',fontSize:'12px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>
+                            {hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'4px 8px',fontSize:'12px'}}>🗑️ Delete</button>}
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                            {claimed ? <span style={{color:'var(--espn-green)',fontWeight:600}}>Active</span> : <span style={{color:'var(--espn-orange)',fontWeight:600}}>Available</span>}
+                            {claimed && <button className="btn btn-secondary" onClick={() => removeUser(id)} style={{padding:'4px 8px',fontSize:'12px'}}>❌ Remove</button>}
+                          </div>
+                        </td>
+                      </tr>
+                    )})}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -976,7 +967,7 @@ function App() {
                   <div key={p.idx} className={cn}>
                     <div className="player-queue-header"><span className="player-queue-name">{p.name}</span><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></div>
                     <div className="player-queue-details"><span>{p.owner}</span><span>{fmt(p.fantasyPoints)} pts</span></div>
-                    {!done && !own && <div className="prebid-input"><label>Pre-bid: $</label><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} min="0" step="1" /></div>}
+                    {!done && !own && <div className="prebid-input"><label>Pre-bid:</label><div style={{display:'flex',alignItems:'center',gap:'4px'}}><span>$</span><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} min="0" step="1" /></div></div>}
                     {p.result && <><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</>}
                   </div>
                 );
