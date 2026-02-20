@@ -333,6 +333,30 @@ const dec = (e, k) => { try { return JSON.parse(CryptoJS.AES.decrypt(e, k).toStr
 const maxBid = t => t ? parseFloat(Math.max(0, (t.cap || t.salaryCap || 100) - (t.sal || t.currentSalary || 0) - (t.spots || t.spotsAvailable || 1) + 1).toFixed(2)) : 0;
 const keepPr = (b, a) => Math.max(1, parseFloat((b * keepPct(a)).toFixed(2)));
 const stickPr = b => Math.max(1, b);
+const get2ndHighestBid = (bids) => {
+  if (!bids) return 0;
+  const amounts = Object.values(bids).map(b => b.amount || 0).sort((a, b) => b - a);
+  return amounts.length > 1 ? amounts[1] : (amounts.length > 0 ? amounts[0] : 0);
+};
+
+const getKeepPrice = (highBid, secondBid, arbYear, auctionType) => {
+  const pct = keepPct(arbYear);
+  if (auctionType === 'standard') return Math.max(1, parseFloat((highBid * pct).toFixed(2)));
+  return Math.max(1, parseFloat((secondBid * pct).toFixed(2)));
+};
+
+const getStickPrice = (highBid, secondBid, auctionType) => {
+  if (auctionType === 'standard') return Math.max(1, highBid);
+  if (auctionType === 'vickrey') return Math.max(1, secondBid);
+  return Math.max(1, highBid); // vickrey-modified
+};
+
+const getSelfStickPrice = (highBid, secondBid, auctionType) => {
+  if (auctionType === 'standard') return Math.max(1, highBid);
+  return Math.max(1, secondBid); // vickrey or vickrey-modified
+};
+
+
 const getPlayerImage = (player) => {
   if (!player) return null;
   // Try MLB API first (MLBAM ID)
@@ -392,7 +416,18 @@ function App() {
   const [timerMinutes, setTimerMinutes] = useState('2');
   const [timerSeconds, setTimerSeconds] = useState('0');
   const [syncStatus, setSyncStatus] = useState('ok');
-  const [viewMode, setViewMode] = useState('auto'); // 'auto', 'mobile', 'desktop'
+  const getInitialViewMode = () => {
+    const auctionId = getParams().auctionId;
+    const saved = localStorage.getItem('auction_session_' + auctionId);
+    if (saved) {
+      try {
+        const session = JSON.parse(saved);
+        if (session.viewMode) return session.viewMode;
+      } catch {}
+    }
+    return window.innerWidth <= 768 ? 'mobile' : 'desktop';
+  };
+  const [viewMode, setViewMode] = useState(getInitialViewMode()); // 'auto', 'mobile', 'desktop'
   const [queueCollapsed, setQueueCollapsed] = useState(true); // Player Queue collapsed by default on mobile
   const [budgetCollapsed, setBudgetCollapsed] = useState(true); // Team Budgets collapsed by default on mobile
   // Prebid modal removed - users type directly into inputs
@@ -596,7 +631,20 @@ function App() {
   };
 
   const savePrebids = async () => { save(userTeamId, userTeamName, preBids, isComm); await savePre(preBids); setScreen(isComm ? 'auction' : 'auction'); };
-  const updPre = (i, v) => { const nb = { ...preBids, [i]: parseFloat(v) || 0 }; setPreBids(nb); save(userTeamId, userTeamName, nb, isComm); savePre(nb); };
+  const updPre = (i, v) => { 
+    const player = auction?.players?.[i];
+    if (player && player.owner === userTeamName) {
+      const nb = { ...preBids, [i]: 0 };
+      setPreBids(nb);
+      save(userTeamId, userTeamName, nb, isComm);
+      savePre(nb);
+      return;
+    }
+    const nb = { ...preBids, [i]: parseFloat(v) || 0 };
+    setPreBids(nb);
+    save(userTeamId, userTeamName, nb, isComm);
+    savePre(nb);
+  };
 
   const bulkUploadPreBids = (e) => {
     const file = e.target.files[0];
@@ -801,6 +849,28 @@ function App() {
     else await finalize('self-stick', p.owner, oid, stickPr(hi), yrs(p.arbYear), hb);
   };
 
+
+  const validateAndReducePreBids = async (winnerId) => {
+    if (!db || !auction?.teams) return;
+    const updates = {};
+    let hasChanges = false;
+    
+    Object.entries(auction.teams).forEach(([tid, team]) => {
+      const teamPreBids = auction.preBids?.[tid] || {};
+      const maxBid = team ? parseFloat(Math.max(0, (team.cap || team.salaryCap || 100) - (team.sal || team.currentSalary || 0) - (team.spots || team.spotsAvailable || 1) + 1).toFixed(2)) : 0;
+      
+      Object.entries(teamPreBids).forEach(([playerId, bidAmount]) => {
+        if (bidAmount > maxBid) {
+          updates[`preBids/${tid}/${playerId}`] = maxBid;
+          hasChanges = true;
+        }
+      });
+    });
+    
+    if (hasChanges) {
+      await db.ref('auctions/' + auctionId).update(updates);
+    }
+  };
   const finalize = async (d, winner, wid, price, years, hb) => {
     const p = auction.players[auction.currentPlayerIndex]; const upd = {};
     const allBids = {}; if (auction.revealedBids) Object.entries(auction.revealedBids).forEach(([tid, b]) => { allBids[auction.teams[tid]?.name || tid] = b.amount; });
@@ -813,6 +883,7 @@ function App() {
     upd['phase'] = 'celebration'; upd['bidHistory'] = [...(auction.bidHistory || []), hist];
     if (db) await db.ref('auctions/' + auctionId).update(upd);
     syncToSheets('sync', { player: { name: p.name, team: p.team, position: p.position, owner: p.owner, arbYear: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids } });
+    await validateAndReducePreBids(wid);
     setCeleb({ d, player: p.name, winner, price, years, hiBidder: hb?.teamName || 'None' });
     setTimeout(async () => {
       setCeleb(null); const nx = auction.currentPlayerIndex + 1;
@@ -1169,7 +1240,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.47</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.0</div>
       </>
     );
   }
@@ -1185,8 +1256,11 @@ function App() {
   const uTeam = auction?.teams?.[userTeamId];
   const mx = maxBid(uTeam);
   const hi = auction?.highestBid?.amount || 0;
-  const kp = cp ? keepPr(hi, cp.arbYear) : 1;
-  const sp = stickPr(hi);
+  const secondHi = get2ndHighestBid(auction?.revealedBids);
+  const auctionType = auction?.auctionType || 'standard';
+  const kp = cp ? getKeepPrice(hi, secondHi, cp.arbYear, auctionType) : 1;
+  const sp = getStickPrice(hi, secondHi, auctionType);
+  const ssp = getSelfStickPrice(hi, secondHi, auctionType);
   const allZero = hi === 0;
   const isTie = auction?.phase === 'tiebreaker';
   const canBid = isTie ? canTieBid() : !cpOwn;
@@ -1204,7 +1278,7 @@ function App() {
   };
   const canAffordKeep = () => getOwnerCapSpace() >= (allZero ? 1 : kp);
   const canAffordStick = () => getOwnerCapSpace() >= sp;
-  const canAffordSelfStick = () => getOwnerCapSpace() >= sp;
+  const canAffordSelfStick = () => getOwnerCapSpace() >= ssp;
 
   // HISTORY TAB
   if (activeTab === 'history') {
@@ -1276,7 +1350,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.47</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.0</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1455,7 +1529,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.47</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.0</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1564,7 +1638,7 @@ function App() {
                       <div className="player-queue-name">{p.name}</div>
                       <div className="player-queue-details">{p.owner}</div>
                     </div>
-                    {!done && !own && <div className="prebid-input"><span style={{fontSize:'12px',marginRight:'4px'}}>$</span><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} min="0" step="0.01" placeholder="0.00" /></div>}
+                    {!done && !own && <div className="prebid-input">{preBids[p.idx] > 0 && preBids[p.idx] >= maxBid(auction?.teams?.[userTeamId]) && <span style={{color:'var(--espn-orange)',marginRight:'4px'}}>⚠️</span>}<span style={{fontSize:'12px',marginRight:'4px'}}>$</span><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} min="0" step="0.01" placeholder="0.00" style={own ? {opacity:0.5,cursor:'not-allowed'} : {}} disabled={own} /></div>}
                     {p.result && <div style={{display:'flex',flexDirection:'column',justifyContent:'center',gap:'4px'}}><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</div>}
                   </div>
                 );
@@ -1674,7 +1748,7 @@ function App() {
                       <div className="decision-buttons">
                         <button className="btn btn-decision btn-keep" onClick={() => decide('keep')} disabled={!canDecide() || !canAffordKeep()} style={(!canDecide() || !canAffordKeep()) ? { opacity: 0.4 } : {}}>🛡️ Keep<span className="btn-years">{canAffordKeep() ? `1yr @ $${fmt(allZero ? 1 : kp)}` : 'Insufficient Cap'}</span></button>
                         <button className="btn btn-decision btn-stick" onClick={() => decide('stick')} disabled={allZero || !canDecide() || !canAffordStick()} style={(allZero || !canDecide() || !canAffordStick()) ? { opacity: 0.4 } : {}}>🎯 Stick<span className="btn-years">{canAffordStick() ? `${yrs(cp.arbYear)}yr @ $${fmt(sp)}` : 'Insufficient Cap'}</span></button>
-                        <button className="btn btn-decision btn-self-stick" onClick={() => decide('self-stick')} disabled={!canDecide() || !canAffordSelfStick()} style={(!canDecide() || !canAffordSelfStick()) ? { opacity: 0.4 } : {}}>💪 Self-Stick<span className="btn-years">{canAffordSelfStick() ? `${yrs(cp.arbYear)}yr @ $${fmt(sp)}` : 'Insufficient Cap'}</span></button>
+                        <button className="btn btn-decision btn-self-stick" onClick={() => decide('self-stick')} disabled={cp.arbYear === 3 || !canDecide() || !canAffordSelfStick()} style={(cp.arbYear === 3 || !canDecide() || !canAffordSelfStick()) ? { opacity: 0.4 } : {}}>💪 Self-Stick<span className="btn-years">{cp.arbYear === 3 ? 'N/A (Arb 3)' : canAffordSelfStick() ? `${yrs(cp.arbYear)}yr @ $${fmt(ssp)}` : 'Insufficient Cap'}</span></button>
                       </div>
                       {!canDecide() && <p style={{ textAlign: 'center', color: 'var(--espn-text-muted)', fontSize: '14px', marginTop: '12px' }}>Waiting for {cp.owner}'s decision...</p>}
                     </>
@@ -1692,7 +1766,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.0.47</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.0</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
@@ -1711,11 +1785,12 @@ function App() {
             const sal = t.sal || t.currentSalary || 0;
             const av = cap - sal;
             const mb = maxBid(t);
-            const pct = (av / cap) * 100;
-            const fc = pct < 20 ? 'critical' : pct < 40 ? 'low' : '';
+            const consumed = sal;
+            const pct = (consumed / cap) * 100;
+            const fc = pct > 80 ? 'critical' : pct > 60 ? 'low' : '';
             return (
               <div key={id} className={'budget-item ' + (id === userTeamId ? 'current-user ' : '') + ((t.isCommissioner || t.isComm) ? 'is-commish' : '')}>
-                <div className="budget-team-name"><span>{t.name}{(t.isCommissioner || t.isComm) && <span className="commish-star">⭐</span>}</span><span className="budget-available">${fmt(av)}</span></div>
+                <div className="budget-team-name"><span>{t.name}{(t.isCommissioner || t.isComm) && <span className="commish-star">⭐</span>}</span><span className="budget-available">${fmt(sal)}</span></div>
                 <div className="budget-details"><span>Spots Available: {t.spots || t.spotsAvailable || 0}</span><span>Max: ${fmt(mb)}</span></div>
                 <div className="budget-bar"><div className={'budget-bar-fill ' + fc} style={{ width: pct + '%' }}></div></div>
               </div>
