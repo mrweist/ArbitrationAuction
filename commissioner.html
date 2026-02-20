@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v1.9.10</title>
+  <title>Arbitration Auction - Commissioner Setup v2.0.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
     *{margin:0;padding:0;box-sizing:border-box}body{font-family:'Roboto',sans-serif;background:var(--espn-bg-page);color:var(--espn-text-primary);font-size:15px;line-height:1.6}
     .header{background:var(--espn-red);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px}.header-title{font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.5rem;color:#fff;text-transform:uppercase}
-    .header-user{color:white;font-size:14px}.logout-btn{background:rgba(255,255,255,.2);color:white;border:none;padding:0 24px;height:40px;border-radius:4px;cursor:pointer;font-size:14px;font-weight:700;margin-left:12px;display:inline-flex;align-items:center;justify-content:center}.logout-btn:hover{background:rgba(255,255,255,.3)}
+    .header-user{color:white;font-size:14px}.header-actions{display:flex;gap:12px;align-items:center}.logout-btn{background:rgba(255,255,255,.2);color:white;border:none;padding:0 24px;height:40px;border-radius:4px;cursor:pointer;font-size:14px;font-weight:700;margin-left:12px;display:inline-flex;align-items:center;justify-content:center}.logout-btn:hover{background:rgba(255,255,255,.3)}
     .nav{background:var(--espn-nav-dark);padding:0 28px;height:50px;display:flex;align-items:center}.nav-item{color:white;font-size:15px;padding:14px 20px;cursor:pointer}.nav-item.active{border-bottom:3px solid var(--espn-red)}
     .main-content{max-width:1200px;margin:32px auto;padding:0 28px}
     .page-header{margin-bottom:32px}.page-title{font-family:'Roboto Condensed',sans-serif;font-size:2.2rem;font-weight:700}.page-subtitle{color:var(--espn-text-secondary);margin-top:8px;font-size:16px}
@@ -18,7 +18,7 @@
     .form-hint{font-size:13px;color:var(--espn-text-muted);margin-top:6px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
     .btn{display:inline-flex;align-items:center;justify-content:center;padding:16px 32px;font-size:15px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif}.btn:disabled{opacity:.5;cursor:not-allowed}.btn-primary{background:var(--espn-red);color:white}.btn-primary:hover:not(:disabled){background:var(--espn-red-dark)}.btn-secondary{background:var(--espn-bg-table-header);color:var(--espn-text-primary);border:1px solid var(--espn-border)}.btn-blue{background:var(--espn-blue);color:white}.btn-success{background:var(--espn-success);color:white}
     .data-table{width:100%;border-collapse:collapse;font-size:15px}.data-table th{background:var(--espn-bg-table-header);padding:14px 16px;text-align:left;font-weight:600;text-transform:uppercase;font-size:12px;border-bottom:2px solid var(--espn-border)}.data-table td{padding:14px 16px;border-bottom:1px solid var(--espn-border)}.data-table input{padding:10px 12px;font-size:15px}.data-table input[type="number"]{width:90px;text-align:right}
-    .steps{display:flex;justify-content:center;margin-bottom:40px;gap:12px;flex-wrap:wrap}.step{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--espn-bg-card);border:2px solid var(--espn-border);border-radius:8px;cursor:pointer;font-size:15px}.step:hover{border-color:var(--espn-blue)}.step.active{background:var(--espn-blue);border-color:var(--espn-blue);color:white}.step.completed{border-color:var(--espn-success)}.step.completed .step-number{background:var(--espn-success);color:white}.step.disabled{opacity:.5;cursor:not-allowed}.step-number{width:32px;height:32px;border-radius:50%;background:var(--espn-bg-table-header);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}.step.active .step-number{background:rgba(255,255,255,.2)}.step-label{font-weight:600}
+    .steps{display:flex;justify-content:space-between;margin-bottom:40px;gap:12px;flex-wrap:wrap}.step{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 24px;flex:1;min-width:150px;background:var(--espn-bg-card);border:2px solid var(--espn-border);border-radius:8px;cursor:pointer;font-size:15px}.step:hover{border-color:var(--espn-blue)}.step.active{background:var(--espn-blue);border-color:var(--espn-blue);color:white}.step.completed{border-color:var(--espn-success)}.step.completed .step-number{background:var(--espn-success);color:white}.step.disabled{opacity:.5;cursor:not-allowed}.step-number{width:32px;height:32px;border-radius:50%;background:var(--espn-bg-table-header);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}.step.active .step-number{background:rgba(255,255,255,.2)}.step-label{font-weight:600}
     .info-box{background:#e3f2fd;border:1px solid var(--espn-blue);border-radius:8px;padding:20px;margin-bottom:20px}.info-box h4{color:var(--espn-blue);margin-bottom:12px;font-size:16px}.info-box ol,.info-box ul{margin-left:24px}.info-box li{margin:10px 0;font-size:15px}.info-box code{background:rgba(0,0,0,.1);padding:2px 8px;border-radius:4px;font-size:13px}
     .success-box{background:#d4edda;border:1px solid var(--espn-success);border-radius:8px;padding:20px;margin-bottom:20px}.success-box h4{color:var(--espn-success);margin-bottom:8px}
     .error-box{background:#f8d7da;border:1px solid var(--espn-error);border-radius:8px;padding:20px;color:var(--espn-error)}
@@ -53,8 +53,17 @@ const DEFAULT_HIT={'1B':1,'2B':2,'3B':3,'HR':4,'R':1,'RBI':1,'BB':1,'HBP':1,'SB'
 const DEFAULT_PIT={'IP':2,'ER':-1,'K':1,'H':-0.5,'BB':-0.5,'HBP':-0.5,'W':10,'SV':8,'HD':7,'CG':5};
 const genId=()=>{const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:8},()=>c[Math.floor(Math.random()*c.length)]).join('')};
 const hashPassword=pw=>CryptoJS.SHA256(pw).toString();
+// Convert innings pitched decimal (X.1 = X + 1/3, X.2 = X + 2/3)
+const convertIP=(ip)=>{
+  const whole=Math.floor(ip);
+  const decimal=ip-whole;
+  if(decimal>=0.15&&decimal<0.25)return whole+(1/3);
+  if(decimal>=0.25)return whole+(2/3);
+  return whole;
+};
+
 const extractSheetId=url=>{const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);return m?m[1]:null};
-const calcPts=(s,hs,ps,isH,isP)=>{let pts=0;if(isH&&s){const h=s.H||0,d=s['2B']||0,t=s['3B']||0,hr=s.HR||0,sg=Math.max(0,h-d-t-hr);pts+=sg*(hs['1B']||0)+d*(hs['2B']||0)+t*(hs['3B']||0)+hr*(hs['HR']||0)+(s.R||0)*(hs['R']||0)+(s.RBI||0)*(hs['RBI']||0)+(s.BB||0)*(hs['BB']||0)+(s.HBP||0)*(hs['HBP']||0)+(s.SB||0)*(hs['SB']||0)}if(isP&&s){pts+=(s.IP||0)*(ps['IP']||0)+(s.ER||0)*(ps['ER']||0)+(s.SO||0)*(ps['K']||0)+(s.HA||0)*(ps['H']||0)+(s.BBA||0)*(ps['BB']||0)+(s.HBP_A||0)*(ps['HBP']||0)+(s.W||0)*(ps['W']||0)+(s.SV||0)*(ps['SV']||0)+(s.HD||0)*(ps['HD']||0)+(s.CG||0)*(ps['CG']||0)}return Math.round(pts*100)/100};
+const calcPts=(s,hs,ps,isH,isP)=>{let pts=0;if(isH&&s){const h=s.H||0,d=s['2B']||0,t=s['3B']||0,hr=s.HR||0,sg=Math.max(0,h-d-t-hr);pts+=sg*(hs['1B']||0)+d*(hs['2B']||0)+t*(hs['3B']||0)+hr*(hs['HR']||0)+(s.R||0)*(hs['R']||0)+(s.RBI||0)*(hs['RBI']||0)+(s.BB||0)*(hs['BB']||0)+(s.HBP||0)*(hs['HBP']||0)+(s.SB||0)*(hs['SB']||0)}if(isP&&s){const convertedIP=convertIP(s.IP||0);pts+=convertedIP*(ps['IP']||0)+(s.ER||0)*(ps['ER']||0)+(s.SO||0)*(ps['K']||0)+(s.HA||0)*(ps['H']||0)+(s.BBA||0)*(ps['BB']||0)+(s.HBP_A||0)*(ps['HBP']||0)+(s.W||0)*(ps['W']||0)+(s.SV||0)*(ps['SV']||0)+(s.HD||0)*(ps['HD']||0)+(s.CG||0)*(ps['CG']||0)}return Math.round(pts*100)/100};
 const downloadCSV=(c,f)=>{const b=new Blob([c],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=f;a.click();URL.revokeObjectURL(u)};
 const csvTemplate=()=>'Name,Team,Position,Owner,ArbYear,Type,Points\nJuan Soto,NYY,OF,Team 1,3,Hitter,906.50\nShohei Ohtani,LAD,DH/SP,Team 2,2,Both,1640.50\nCorbin Burnes,BAL,SP,Team 3,1,Pitcher,\n';
 
@@ -241,7 +250,7 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
     <main className="main-content">
       <div className="page-header"><div className="page-title">Your Leagues</div><div className="page-subtitle">Select a league to manage or create a new one</div></div>
       <div className="card"><div className="card-body"><button className="btn btn-primary" onClick={onCreateNew}>+ Create New League</button></div></div>
-      {leagues.length>0?<ul className="league-list">{leagues.map(league=>{const status=league.phase==='completed'?'Completed':league.phase==='active'?'In Progress':league.phase==='created'?'Created':'Building';const statusColor=league.phase==='completed'?'var(--espn-success)':league.phase==='active'?'var(--espn-blue)':league.phase==='created'?'var(--espn-orange)':'var(--espn-text-muted)';const showEnter=league.phase==='created'||league.phase==='active'||league.phase==='completed';const showResults=league.phase==='active'||league.phase==='completed';const showTemplate=league.phase==='created'||league.phase==='active'||league.phase==='completed';return<li key={league.id} className="league-item"><div className="league-item-content" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta"><span style={{color:statusColor,fontWeight:600}}>{status}</span> • Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><div style={{display:'flex',gap:'8px',alignItems:'center'}}>{showEnter&&<button className="btn btn-primary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open('auction.html?league='+league.id,'_blank')}}>Enter Auction</button>}{showTemplate&&<button className="btn btn-secondary league-delete-btn" onClick={(e)=>{e.stopPropagation();downloadCSV(csvTemplate(),'player_template.csv')}}>📄 Pre-bid .csv</button>}{showResults&&(league.sheetsUrl?<button className="btn btn-secondary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open(league.sheetsUrl,'_blank')}}>📊 gDrive Results</button>:<button className="btn btn-secondary league-delete-btn" onClick={async(e)=>{e.stopPropagation();try{const snap=await db.ref('auctions/'+league.id).once('value');const auc=snap.val();if(auc&&auc.players){const csv='Player,Team,Position,Owner,Arb Year,Winner,Decision,Price,Years,High Bid,High Bidder\n'+auc.players.filter(p=>p.result).map(p=>`${p.name},${p.team||''},${p.position||''},${p.owner||''},${p.arbYear||''},${p.result.winnerId||''},${p.result.decision||''},${p.result.price||0},${p.result.years||1},${p.result.highBid||0},${p.result.highBidder||''}`).join('\n');downloadCSV(csv,'results.csv')}else{alert('No results data available')}}catch(err){alert('Error loading results: '+err.message)}}}>📄 Results .csv</button>)}<button className="btn btn-blue league-delete-btn" onClick={(e)=>handleDuplicate(league.id,league.name,e)} disabled={duplicating===league.id}>{duplicating===league.id?'Duplicating...':'Duplicate'}</button><button className="btn btn-secondary league-delete-btn" onClick={(e)=>handleDelete(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'Delete'}</button></div></li>})}</ul>
+      {leagues.length>0?<ul className="league-list">{leagues.map(league=>{const status=league.phase==='completed'?'Completed':league.phase==='active'?'In Progress':league.phase==='created'?'Created':'Building';const statusColor=league.phase==='completed'?'var(--espn-success)':league.phase==='active'?'var(--espn-blue)':league.phase==='created'?'var(--espn-orange)':'var(--espn-text-muted)';const showEnter=league.phase==='created'||league.phase==='active'||league.phase==='completed';const showResults=league.phase==='active'||league.phase==='completed';const showTemplate=league.phase==='created'||league.phase==='active'||league.phase==='completed';return<li key={league.id} className="league-item"><div className="league-item-content" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta"><span style={{color:statusColor,fontWeight:600}}>{status}</span> • Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><div style={{display:'flex',gap:'8px',alignItems:'center'}}>{showEnter&&<button className="btn btn-primary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open('auction.html?league='+league.id,'_blank')}}>Enter Auction</button>}{showTemplate&&<button className="btn btn-secondary league-delete-btn" onClick={async(e)=>{e.stopPropagation();try{const snap=await db.ref('auctions/'+league.id).once('value');const auc=snap.val();if(auc&&auc.players){let csv='Player,Team,Owner,Arb,Points,Bid\n';auc.players.forEach(p=>{csv+='"'+p.name+'","'+(p.team||'')+'","'+(p.owner||'')+'",'+(p.arbYear||'')+','+(p.fantasyPoints||0)+',0\n'});downloadCSV(csv,auc.leagueName+'_prebid_template.csv')}else{downloadCSV(csvTemplate(),'player_template.csv')}}catch(err){downloadCSV(csvTemplate(),'player_template.csv')}}}>📄 Pre-bid .csv</button>}{showResults&&(league.sheetsUrl?<button className="btn btn-secondary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open(league.sheetsUrl,'_blank')}}>📊 gDrive Results</button>:<button className="btn btn-secondary league-delete-btn" onClick={async(e)=>{e.stopPropagation();try{const snap=await db.ref('auctions/'+league.id).once('value');const auc=snap.val();if(auc&&auc.players){const csv='Player,Team,Position,Owner,Arb Year,Winner,Decision,Price,Years,High Bid,High Bidder\n'+auc.players.filter(p=>p.result).map(p=>`${p.name},${p.team||''},${p.position||''},${p.owner||''},${p.arbYear||''},${p.result.winnerId||''},${p.result.decision||''},${p.result.price||0},${p.result.years||1},${p.result.highBid||0},${p.result.highBidder||''}`).join('\n');downloadCSV(csv,'results.csv')}else{alert('No results data available')}}catch(err){alert('Error loading results: '+err.message)}}}>📄 Results .csv</button>)}<button className="btn btn-blue league-delete-btn" onClick={(e)=>handleDuplicate(league.id,league.name,e)} disabled={duplicating===league.id}>{duplicating===league.id?'Duplicating...':'Duplicate'}</button><button className="btn btn-secondary league-delete-btn" onClick={(e)=>handleDelete(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'Delete'}</button></div></li>})}</ul>
       :<div className="info-box"><h4>No leagues yet</h4><p>Create your first league to get started!</p></div>}
     </main>
   </>;
@@ -265,6 +274,27 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
   const[hitScore,setHitScore]=useState(DEFAULT_HIT);
   const[pitScore,setPitScore]=useState(DEFAULT_PIT);
   const[teams,setTeams]=useState(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})));
+  const[teamCount,setTeamCount]=useState(12);
+  const[auctionType,setAuctionType]=useState('standard');
+  
+  // Initial states for reset functionality
+  const INITIAL_STATES={
+    sheetUrl:'',
+    sheetId:'',
+    scriptUrl:'',
+    league:'',
+    leagueCode:'',
+    commCode:'',
+    commName:'',
+    timer:120,
+    hitScore:DEFAULT_HIT,
+    pitScore:DEFAULT_PIT,
+    teams:Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})),
+    players:[],
+    playerTxt:'',
+    auctionType:'standard',
+    teamCount:12
+  };
   const[players,setPlayers]=useState([]);
   const[playerTxt,setPlayerTxt]=useState('');
   const[fetching,setFetching]=useState(false);
@@ -291,6 +321,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
           setCommCode(d.commissionerAccessCode||'');
           setCommName(d.commissionerName||'');
           setTimer(d.timerDuration||120);
+          setAuctionType(d.auctionType||'standard');
           setHitScore(d.hittingScoring||DEFAULT_HIT);
           setPitScore(d.pitchingScoring||DEFAULT_PIT);
           if(d.teams){const tArr=Object.values(d.teams).map((t,i)=>({id:i+1,name:t.name,cap:t.cap||t.salaryCap||100,sal:t.sal||t.currentSalary||0,spots:t.spots||t.spotsAvailable||5,isComm:t.isCommissioner||t.isComm||false}));setTeams(tArr)}
