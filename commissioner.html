@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v2.0.1</title>
+  <title>Arbitration Auction - Commissioner Setup v2.0.2</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -416,7 +416,26 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
 
   const resetAll=()=>{
     if(confirm('Reset all settings? This cannot be undone.')){
-      setStep(1);setDone([]);setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('');setLeague('');setLeagueCode('');setCommCode('');setCommName('');setCommPw('');setTimer(120);setHitScore(DEFAULT_HIT);setPitScore(DEFAULT_PIT);setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})));setPlayers([]);setPlayerTxt('');setAucId(null);setCreated(false)
+      setStep(1);setDone([]);setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('');setLeague('');setLeagueCode('');setCommCode('');setCommName('');setCommPw('');setTimer(120);setHitScore(DEFAULT_HIT);setPitScore(DEFAULT_PIT);setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})));setPlayers([]);setPlayerTxt('');setAucId(null);setCreated(false);setAuctionType('standard');setTeamCount(12)
+    }
+  };
+
+  const clearTeamInfo=()=>{
+    if(confirm('Clear all team information? This will reset teams to defaults.')){
+      setTeams(Array.from({length:teamCount},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})))
+    }
+  };
+
+  const updateTeamCount=(val)=>{
+    const count=parseInt(val)||12;
+    if(count<2||count>20)return;
+    setTeamCount(count);
+    const currentTeams=[...teams];
+    if(count>currentTeams.length){
+      const newTeams=Array.from({length:count-currentTeams.length},(_,i)=>({id:currentTeams.length+i+1,name:`Team ${currentTeams.length+i+1}`,cap:100,sal:0,spots:5,isComm:false}));
+      setTeams([...currentTeams,...newTeams])
+    }else if(count<currentTeams.length){
+      setTeams(currentTeams.slice(0,count))
     }
   };
 
