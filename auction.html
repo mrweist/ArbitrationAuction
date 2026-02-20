@@ -436,6 +436,7 @@ function App() {
   const [renderTrigger, setRenderTrigger] = useState(0); // Force re-render trigger
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // Mobile off-canvas left sidebar
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false); // Mobile off-canvas right sidebar
+  const [modifiedPreBids, setModifiedPreBids] = useState({}); // Track auto-modified pre-bids
   const abbreviateName = (name) => { if (!name) return ''; const parts = name.split(' '); if (parts.length === 1) return name; return parts[0].charAt(0) + '. ' + parts.slice(1).join(' '); };
   const sKey = auctionId || 'x';
 
@@ -544,7 +545,7 @@ function App() {
       const width = window.innerWidth;
       return isMobileUA || (width <= 768 && !isTabletUA) ? 'mobile' : 'desktop';
     };
-    const stored = localStorage.getItem('viewMode_' + auctionId);
+    const stored = localStorage.getItem('viewMode_' + auctionId + '_' + (userTeamId || 'guest'));
     if (stored && (stored === 'mobile' || stored === 'desktop')) {
       setViewMode(stored);
       document.body.className = 'view-' + stored;
@@ -559,7 +560,7 @@ function App() {
     const newMode = viewMode === 'mobile' ? 'desktop' : 'mobile';
     setViewMode(newMode);
     document.body.className = 'view-' + newMode;
-    localStorage.setItem('viewMode_' + auctionId, newMode);
+    localStorage.setItem('viewMode_' + auctionId + '_' + (userTeamId || 'guest'), newMode);
   };
 
   const save = (tid, tn, pb = {}, ic = false) => { localStorage.setItem('auction_' + auctionId, JSON.stringify({ tid, tn, pb, ic })); };
@@ -863,6 +864,8 @@ function App() {
         if (bidAmount > maxBid) {
           updates[`preBids/${tid}/${playerId}`] = maxBid;
           hasChanges = true;
+          // Track this modification
+          setModifiedPreBids(prev => ({...prev, [playerId]: true}));
         }
       });
     });
@@ -1189,7 +1192,7 @@ function App() {
                     <td style={{textAlign:'center'}}>{p.owner}</td>
                     <td style={{textAlign:'center'}}><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                     {viewMode !== 'mobile' && <td style={{textAlign:'center'}}>{fmt(p.fantasyPoints)}</td>}
-                    <td style={{textAlign:'center'}}>{!own && !done ? <input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center' }} /> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                    <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}>{modifiedPreBids[i] && <span style={{color:'var(--espn-blue)'}} title="Auto-reduced">📉</span>}<input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                   </tr>
                 ); })}
               </tbody>
@@ -1230,7 +1233,7 @@ function App() {
                         <td>{p.owner}</td>
                         <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                         <td>{fmt(p.fantasyPoints)}</td>
-                        <td style={{textAlign:'center'}}>{!own && !done ? <input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center' }} /> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                        <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}>{modifiedPreBids[i] && <span style={{color:'var(--espn-blue)'}} title="Auto-reduced">📉</span>}<input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                       </tr>
                     );
                   })}
@@ -1240,7 +1243,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.1</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.2.0</div>
       </>
     );
   }
@@ -1350,7 +1353,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.1</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.2.0</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1529,7 +1532,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.1</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.2.0</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1638,7 +1641,7 @@ function App() {
                       <div className="player-queue-name">{p.name}</div>
                       <div className="player-queue-details">{p.owner}</div>
                     </div>
-                    {!done && !own && <div className="prebid-input">{preBids[p.idx] > 0 && preBids[p.idx] >= maxBid(auction?.teams?.[userTeamId]) && <span style={{color:'var(--espn-orange)',marginRight:'4px'}}>⚠️</span>}<span style={{fontSize:'12px',marginRight:'4px'}}>$</span><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} min="0" step="0.01" placeholder="0.00" style={own ? {opacity:0.5,cursor:'not-allowed'} : {}} disabled={own} /></div>}
+                    {!done && !own && <div className="prebid-input">{modifiedPreBids[p.idx] && <span style={{color:'var(--espn-blue)',marginRight:'4px'}} title="Pre-bid was auto-reduced">📉</span>}{preBids[p.idx] > 0 && preBids[p.idx] >= maxBid(auction?.teams?.[userTeamId]) && <span style={{color:'var(--espn-orange)',marginRight:'4px'}}>⚠️</span>}<span style={{fontSize:'12px',marginRight:'4px'}}>$</span><input type="number" value={preBids[p.idx] || ''} onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} min="0" step="0.01" placeholder="0.00" style={own ? {opacity:0.5,cursor:'not-allowed'} : {}} disabled={own} /></div>}
                     {p.result && <div style={{display:'flex',flexDirection:'column',justifyContent:'center',gap:'4px'}}><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</div>}
                   </div>
                 );
@@ -1762,7 +1765,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.1</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.2.0</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
