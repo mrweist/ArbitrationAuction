@@ -1240,7 +1240,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.0</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.1</div>
       </>
     );
   }
@@ -1350,7 +1350,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.0</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.1</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1529,7 +1529,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.0</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.1</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1735,13 +1735,9 @@ function App() {
               {(auction.phase === 'decision' || auction.phase === 'tie-resolution') && auction.highestBid && (
                 <div className="reveal-section">
                   <div className="reveal-card">
-                    <div className="reveal-label">Highest Bid</div>
-                    <div className="reveal-amount">${fmt(hi)}</div>
+                    <div className="reveal-label">Highest Bid{(auctionType === 'vickrey' || auctionType === 'vickrey-modified') && secondHi > 0 ? ' | 2nd Highest Bid' : ''}</div>
+                    <div className="reveal-amount">${fmt(hi)}{(auctionType === 'vickrey' || auctionType === 'vickrey-modified') && secondHi > 0 ? ` | $${fmt(secondHi)}` : ''}</div>
                     <div className="reveal-bidder">{allZero ? 'All teams passed' : 'High bidder revealed after decision'}</div>
-                    <div className="prices-row">
-                      <div className="price-box keep"><div className="price-label">Keep Price</div><div className="price-value">${fmt(allZero ? 1 : kp)}</div></div>
-                      <div className="price-box stick"><div className="price-label">Stick Price</div><div className="price-value">${fmt(sp)}</div></div>
-                    </div>
                   </div>
                   {auction.phase === 'decision' ? (
                     <>
@@ -1766,7 +1762,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.0</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.1.1</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
