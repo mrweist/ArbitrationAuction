@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v3.5.0</title>
+  <title>Arbitration Auction - Commissioner Setup v3.6.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -262,7 +262,7 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
 }
 
 // Commissioner Setup Component (existing functionality)
-function CommissionerSetup({admin,onComplete,onBack,onLogout}){
+function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogout}){
   const[step,setStep]=useState(1);
   const[done,setDone]=useState([]);
   const[db,setDb]=useState(null);
@@ -304,8 +304,8 @@ function CommissionerSetup({admin,onComplete,onBack,onLogout}){
   const[playerTxt,setPlayerTxt]=useState('');
   const[fetching,setFetching]=useState(false);
   const[fetchProg,setFetchProg]=useState({c:0,t:0});
-  const[aucId,setAucId]=useState(null);
-  const[leagueId,setLeagueId]=useState(null);
+  const[aucId,setAucId]=useState(propLeagueId||null);
+  const[leagueId,setLeagueId]=useState(propLeagueId||null);
   const[created,setCreated]=useState(false);
   const[copied,setCopied]=useState(false);
   const[phase,setPhase]=useState('building');
