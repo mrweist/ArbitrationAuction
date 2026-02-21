@@ -1251,7 +1251,7 @@ function App() {
                     <td style={{textAlign:'center'}}>{p.owner}</td>
                     <td style={{textAlign:'center'}}><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                     {viewMode !== 'mobile' && <td style={{textAlign:'center'}}>{fmt(p.fantasyPoints)}</td>}
-                    <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] ? parseFloat(preBids[i]).toFixed(2) : ''} onChange={e => updPre(i, e.target.value)} min="0" step="0.01" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                    <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] > 0 ? parseFloat(preBids[i]).toFixed(2) : ''} onChange={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;updPre(i,v.toString())}} min="0" step="1" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                   </tr>
                 ); })}
               </tbody>
@@ -1292,7 +1292,7 @@ function App() {
                         <td>{p.owner}</td>
                         <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                         <td>{fmt(p.fantasyPoints)}</td>
-                        <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] ? parseFloat(preBids[i]).toFixed(2) : ''} onChange={e => updPre(i, e.target.value)} min="0" step="0.01" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                        <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] > 0 ? parseFloat(preBids[i]).toFixed(2) : ''} onChange={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;updPre(i,v.toString())}} min="0" step="1" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                       </tr>
                     );
                   })}
@@ -1302,7 +1302,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.0</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.1</div>
       </>
     );
   }
@@ -1412,7 +1412,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.0</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.1</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1591,7 +1591,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.0</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.1</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1704,17 +1704,17 @@ function App() {
                       const mx = maxBid(auction?.teams?.[userTeamId]);
                       const currentBid = preBids[p.idx] || 0;
                       const originalBid = originalPreBids[p.idx];
-                      const isCapped = originalBid && originalBid > currentBid;
+                      const isCapped = originalBid && originalBid > preBids[p.idx];
                       return (
                         <>
                           {isCapped && <span style={{color:'var(--espn-orange)',marginRight:'4px'}} title={`Capped to max $${fmt(mx)}`}>⚠️</span>}
                           <span style={{fontSize:'12px',marginRight:'4px'}}>$</span>
                           <input 
                             type="number" 
-                            value={preBids[p.idx] ? parseFloat(preBids[p.idx]).toFixed(2) : ''} 
-                            onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} 
+                            value={preBids[p.idx] > 0 ? parseFloat(preBids[p.idx]).toFixed(2) : ''} 
+                            onChange={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;updPre(p.idx,v.toString())}} 
                             min="0" 
-                            step="0.01" 
+                            step="1" 
                             placeholder="0.00" 
                             style={isCapped ? {color:'var(--espn-error)',fontWeight:'bold'} : {}} 
                             disabled={own} 
@@ -1777,7 +1777,7 @@ function App() {
                   <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong>{isTie ? ` • Minimum Bid: $${fmt(hi)}` : ' • Enter $0.00 to pass'}</div>
                   <div className="bid-options" style={{ marginTop: '14px' }}>
                     {pb > 0 && !isTie && <div className="bid-option"><label>Use Pre-Bid</label><div className={'prebid-value' + (usePre ? ' selected' : '')} onClick={() => setUsePre(true)}>${fmt(pb)}</div></div>}
-                    <div className="bid-option"><label>Enter Amount</label><input type="number" value={curBid ? parseFloat(curBid).toFixed(2) : ''} onChange={e => { setCurBid(e.target.value); setUsePre(false); }} min={isTie ? hi : 0} step="0.01" onFocus={() => setUsePre(false)} placeholder={isTie ? hi.toFixed(2) : "0.00"} /></div>
+                    <div className="bid-option"><label>Enter Amount</label><input type="number" value={curBid > 0 ? parseFloat(curBid).toFixed(2) : ''} onChange={e => { let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;setCurBid(v.toString()); setUsePre(false); }} min={isTie ? hi : 0} step="1" onFocus={() => setUsePre(false)} placeholder={isTie ? hi.toFixed(2) : "0.00"} /></div>
                     <button className="btn btn-blue" style={{ padding: '14px 28px', fontSize: '16px' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
                   </div>
                   {bidErr && <div className="bid-error">{bidErr}</div>}
@@ -1845,7 +1845,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.0</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.1</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
