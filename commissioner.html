@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v4.1.0</title>
+  <title>Arbitration Auction - Commissioner Setup v4.2.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -406,7 +406,7 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
   };
   const isStep4Valid=()=>players.length>0;
   const isStep5Valid=()=>scriptUrl?'green':'orange'; // Orange if not configured, green if configured
-  const isStep6Valid=()=>phase==='created';
+  const isStep6Valid=()=>phase==='created'?'valid':'incomplete';
   
   const getStepStatus=(s)=>{
     // Returns: 'valid' (green), 'invalid' (gray), 'warning' (orange), or 'incomplete' (not done yet)
@@ -609,8 +609,8 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
       {step===2&&<><div className="page-header"><h1 className="page-title">Teams</h1><p className="page-subtitle">Configure team settings</p></div>
         <div className="card"><div className="card-header">Teams</div><div className="card-body">
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}><p style={{color:'var(--espn-text-secondary)',margin:0}}>Max Bid = Cap - Salary - Spots + 1. Min salary $1.00.</p><div style={{display:'flex',gap:'12px',alignItems:'center'}}><div style={{display:'flex',gap:'8px',alignItems:'center'}}><label style={{fontSize:'13px',fontWeight:600,color:'var(--espn-text-secondary)',textTransform:'uppercase'}}>Team Count:</label><input type="number" value={teamCount} onChange={e=>updateTeamCount(e.target.value)} min="2" max="20" style={{width:'80px',padding:'8px',fontSize:'14px',border:'1px solid var(--espn-border)',borderRadius:'4px'}}/></div><input type="file" accept=".csv" onChange={handleTeamsFile} style={{display:'none'}} id="teamsUp"/><label htmlFor="teamsUp" className="btn btn-secondary" style={{cursor:'pointer',padding:'8px 16px',fontSize:'14px'}}>📁 Upload</label><button className="btn btn-secondary" onClick={downloadTeamsCSV} style={{padding:'8px 16px',fontSize:'14px'}}>📥 Download</button><button className="btn btn-secondary" onClick={clearTeamInfo} style={{padding:'8px 16px',fontSize:'14px'}}>❌ Clear Team Info</button></div></div>
-          <div style={{overflowX:'auto'}}><table className="data-table"><thead><tr><th>#</th><th>Name</th><th>Comm</th><th>Cap</th><th>Salary</th><th>Spots</th><th>Avail</th><th>Max</th></tr></thead><tbody>
-            {teams.map((t,i)=>{const av=t.cap-t.sal;const mx=Math.max(0,t.cap-t.sal-t.spots+1);const locked=phase!=='building';return<tr key={t.id}><td>{i+1}</td><td><input type="text" value={t.name} onChange={e=>updTeam(t.id,'name',e.target.value)}/></td><td style={{textAlign:'center'}}><input type="checkbox" checked={t.isComm||false} onChange={e=>updTeam(t.id,'isComm',e.target.checked)} style={{width:'20px',height:'20px'}}/></td><td><input type="number" value={t.cap} onChange={e=>updTeam(t.id,'cap',e.target.value)} disabled={locked} style={{background:locked?'#f5f5f5':'white',cursor:locked?'not-allowed':'text'}}/></td><td><input type="number" value={t.sal} onChange={e=>updTeam(t.id,'sal',e.target.value)} disabled={locked} style={{background:locked?'#f5f5f5':'white',cursor:locked?'not-allowed':'text'}}/></td><td><input type="number" value={t.spots} onChange={e=>updTeam(t.id,'spots',e.target.value)} min="1" disabled={locked} style={{background:locked?'#f5f5f5':'white',cursor:locked?'not-allowed':'text'}}/></td><td style={{color:'var(--espn-success)',fontWeight:600}}>${fmt(av)}</td><td style={{color:'var(--espn-blue)',fontWeight:600}}>${fmt(mx)}</td></tr>})}
+          <div style={{overflowX:'auto'}}><table className="data-table"><thead><tr><th style={{textAlign:'left'}}>Name</th><th style={{textAlign:'center'}}>Comm</th><th style={{textAlign:'center'}}>Cap</th><th style={{textAlign:'center'}}>Salary</th><th style={{textAlign:'center'}}>Spots</th><th style={{textAlign:'center'}}>Avail</th><th style={{textAlign:'center'}}>Max</th></tr></thead><tbody>
+            {teams.map((t,i)=>{const av=t.cap-t.sal;const mx=Math.max(0,t.cap-t.sal-t.spots+1);return<tr key={t.id}><td><input type="text" value={t.name} onChange={e=>updTeam(t.id,'name',e.target.value)} style={{textAlign:'left'}}/></td><td style={{textAlign:'center'}}><input type="checkbox" checked={t.isComm||false} onChange={e=>updTeam(t.id,'isComm',e.target.checked)} style={{width:'20px',height:'20px'}}/></td><td><input type="number" value={t.cap} onChange={e=>updTeam(t.id,'cap',e.target.value)} style={{textAlign:'center'}}/></td><td><input type="number" value={t.sal} onChange={e=>updTeam(t.id,'sal',e.target.value)} style={{textAlign:'center'}}/></td><td><input type="number" value={t.spots} onChange={e=>updTeam(t.id,'spots',e.target.value)} min="1" style={{textAlign:'center'}}/></td><td style={{color:'var(--espn-success)',fontWeight:600,textAlign:'center'}}>${fmt(av)}</td><td style={{color:'var(--espn-blue)',fontWeight:600,textAlign:'center'}}>${fmt(mx)}</td></tr>})}
           </tbody></table></div>
         </div></div>
         <div style={{display:'flex',gap:'16px',marginTop:'24px'}}><button className="btn btn-secondary" onClick={()=>setStep(1)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(2)}>Continue →</button></div>
@@ -684,20 +684,22 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
           <button className="btn btn-primary" onClick={enter} style={{marginTop:'20px',width:'100%',fontSize:'16px'}}>ENTER AUCTION →</button>
         </div></div>
         <div className="card"><div className="card-header">Access Codes & League Summary</div><div className="card-body">
-          <div style={{display:'flex',gap:'48px'}}>
-            <div style={{flex:'0 0 auto',minWidth:'200px'}}>
-              <div style={{marginBottom:'32px'}}><p style={{fontSize:'12px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>League Access Code</p>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'32px'}}>
+            <div style={{textAlign:'center'}}>
+              <div style={{marginBottom:'32px'}}><p style={{fontSize:'11px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>League Access Code</p>
               <p style={{fontSize:'1.5rem',fontWeight:'700',color:'var(--espn-blue)',marginBottom:'4px'}}>{leagueCode}</p>
-              <p style={{fontSize:'13px',color:'var(--espn-text-muted)'}}>Share with all league members</p></div>
-              <div><p style={{fontSize:'12px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Commissioner Access Code</p>
+              <p style={{fontSize:'12px',color:'var(--espn-text-muted)'}}>Share with all league members</p></div>
+              <div><p style={{fontSize:'11px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Commissioner Access Code</p>
               <p style={{fontSize:'1.5rem',fontWeight:'700',color:'var(--espn-orange)',marginBottom:'4px'}}>{commCode}</p>
-              <p style={{fontSize:'13px',color:'var(--espn-text-muted)'}}>Only for commissioners</p></div>
+              <p style={{fontSize:'12px',color:'var(--espn-text-muted)'}}>Only for commissioners</p></div>
             </div>
-            <div style={{flex:'1',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'24px',alignContent:'center'}}>
-              <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Teams:</p><p style={{fontSize:'1.5rem',fontWeight:'700'}}>{teams.length}</p></div>
-              <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Players:</p><p style={{fontSize:'1.5rem',fontWeight:'700'}}>{players.length}</p></div>
-              <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Auction Type:</p><p style={{fontSize:'1.2rem',fontWeight:'700',textTransform:'capitalize'}}>{auctionType.replace('-',' ')}</p></div>
-              <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Google Sheets:</p><p style={{fontSize:'1.2rem',fontWeight:'700'}}>{scriptUrl?'✓ Configured':'Not configured'}</p></div>
+            <div style={{textAlign:'center',display:'flex',flexDirection:'column',justifyContent:'space-around'}}>
+              <div><p style={{fontSize:'11px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Teams:</p><p style={{fontSize:'1.5rem',fontWeight:'700'}}>{teams.length}</p></div>
+              <div><p style={{fontSize:'11px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Auction Type:</p><p style={{fontSize:'1.5rem',fontWeight:'700',textTransform:'capitalize'}}>{auctionType.replace('-',' ')}</p></div>
+            </div>
+            <div style={{textAlign:'center',display:'flex',flexDirection:'column',justifyContent:'space-around'}}>
+              <div><p style={{fontSize:'11px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Players:</p><p style={{fontSize:'1.5rem',fontWeight:'700'}}>{players.length}</p></div>
+              <div><p style={{fontSize:'11px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Google Sheets:</p><p style={{fontSize:'1.5rem',fontWeight:'700'}}>{scriptUrl?'✓ Configured':'Not configured'}</p></div>
             </div>
           </div>
         </div></div>
