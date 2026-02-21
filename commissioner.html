@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v3.3.0</title>
+  <title>Arbitration Auction - Commissioner Setup v3.5.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -18,7 +18,7 @@
     .form-hint{font-size:13px;color:var(--espn-text-muted);margin-top:6px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
     .btn{display:inline-flex;align-items:center;justify-content:center;padding:16px 32px;font-size:15px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif}.btn:disabled{opacity:.5;cursor:not-allowed}.btn-primary{background:var(--espn-red);color:white}.btn-primary:hover:not(:disabled){background:var(--espn-red-dark)}.btn-secondary{background:var(--espn-bg-table-header);color:var(--espn-text-primary);border:1px solid var(--espn-border)}.btn-blue{background:var(--espn-blue);color:white}.btn-success{background:var(--espn-success);color:white}
     .data-table{width:100%;border-collapse:collapse;font-size:15px}.data-table th{background:var(--espn-bg-table-header);padding:14px 16px;text-align:left;font-weight:600;text-transform:uppercase;font-size:12px;border-bottom:2px solid var(--espn-border)}.data-table td{padding:14px 16px;border-bottom:1px solid var(--espn-border)}.data-table input{padding:10px 12px;font-size:15px}.data-table input[type="number"]{width:90px;text-align:right}
-    .steps{display:flex;justify-content:space-between;margin-bottom:40px;gap:12px;flex-wrap:wrap}.step{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 24px;flex:1;min-width:150px;background:var(--espn-bg-card);border:2px solid var(--espn-border);border-radius:8px;cursor:pointer;font-size:15px}.step:hover{border-color:var(--espn-blue)}.step.active{background:var(--espn-blue);border-color:var(--espn-blue);color:white}.step.completed{border-color:var(--espn-success)}.step.completed .step-number{background:var(--espn-success);color:white}.step.disabled{opacity:.5;cursor:not-allowed}.step-number{width:32px;height:32px;border-radius:50%;background:var(--espn-bg-table-header);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}.step.active .step-number{background:rgba(255,255,255,.2)}.step-label{font-weight:600}
+    .steps{display:flex;justify-content:space-between;margin-bottom:40px;gap:12px;flex-wrap:wrap}.step{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 24px;flex:1;min-width:150px;background:var(--espn-bg-card);border:2px solid var(--espn-border);border-radius:8px;cursor:pointer;font-size:15px}.step:hover{border-color:var(--espn-blue)}.step.active{background:var(--espn-blue);border-color:var(--espn-blue);color:white}.step.completed{border-color:var(--espn-success)}.step.completed .step-number{background:var(--espn-success);color:white}.step.warning{border-color:var(--espn-orange)}.step.warning .step-number{background:var(--espn-orange);color:white}.step.disabled{opacity:.5;cursor:not-allowed}.step-number{width:32px;height:32px;border-radius:50%;background:var(--espn-bg-table-header);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}.step.active .step-number{background:rgba(255,255,255,.2)}.step-label{font-weight:600}
     .info-box{background:#e3f2fd;border:1px solid var(--espn-blue);border-radius:8px;padding:20px;margin-bottom:20px}.info-box h4{color:var(--espn-blue);margin-bottom:12px;font-size:16px}.info-box ol,.info-box ul{margin-left:24px}.info-box li{margin:10px 0;font-size:15px}.info-box code{background:rgba(0,0,0,.1);padding:2px 8px;border-radius:4px;font-size:13px}
     .success-box{background:#d4edda;border:1px solid var(--espn-success);border-radius:8px;padding:20px;margin-bottom:20px}.success-box h4{color:var(--espn-success);margin-bottom:8px}
     .error-box{background:#f8d7da;border:1px solid var(--espn-error);border-radius:8px;padding:20px;color:var(--espn-error)}
@@ -88,6 +88,11 @@ function doPost(e) {
 }
 
 function doGet(e) {
+  // Support getSheetUrl action to return the Google Sheets URL
+  if (e && e.parameter && e.parameter.action === 'getSheetUrl') {
+    const sheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+    return jsonResponse({ success: true, sheetUrl: sheetUrl });
+  }
   return jsonResponse({ success: true, message: 'Auction Sync Ready!' });
 }
 
@@ -330,7 +335,7 @@ function CommissionerSetup({admin,onComplete,onBack,onLogout}){
           if(d.sheetsConfig){setScriptUrl(d.sheetsConfig.scriptUrl||'');setSheetUrl(d.sheetsConfig.sheetUrl||'');setSheetId(d.sheetsConfig.sheetId||'')}
           const ph=d.phase||'created';
           setPhase(ph);
-          if(ph!=='building'){setAucId(leagueId);setCreated(true);setDone([1,2,3,4,5]);setStep(5)}else{setDone([1,2,3,4])}
+          if(ph!=='building'){setAucId(leagueId);setCreated(true);setStep(6)}
         }
       });
     }
@@ -379,6 +384,22 @@ function CommissionerSetup({admin,onComplete,onBack,onLogout}){
     if(id)setSheetId(id);
   };
   const goStep=s=>{if(s<=step||done.includes(s-1))setStep(s)};
+  
+  // Validation functions for step completion
+  const isStep1Valid=()=>league&&leagueCode&&commCode&&commName;
+  const isStep2Valid=()=>teams.length>=2;
+  const isStep3Valid=()=>true; // Scoring always valid (has defaults)
+  const isStep4Valid=()=>players.length>0;
+  const isStep5Valid=()=>true; // Sheets optional
+  
+  const isStepValid=(s)=>{
+    if(s===1)return isStep1Valid();
+    if(s===2)return isStep2Valid();
+    if(s===3)return isStep3Valid();
+    if(s===4)return isStep4Valid();
+    if(s===5)return isStep5Valid();
+    return true;
+  };
   const finish=async(s)=>{
     if(!done.includes(s))setDone([...done,s]);
     if(s===1){await createLeague()}else if(s>=2&&s<=5){await autoSave()}
@@ -503,7 +524,7 @@ function CommissionerSetup({admin,onComplete,onBack,onLogout}){
     }
   };
 
-  const unlaunchAuc=async()=>{if(!confirm('WARNING: All auction data will be lost if the auction has been started.\n\nThis will return the league to Building state. All settings will be preserved.\n\nContinue?'))return;if(db&&(aucId||leagueId)){await db.ref(`auctions/${aucId||leagueId}`).update({phase:'building',currentPlayerIndex:0,bidHistory:[]});await db.ref(`admins/${admin.username}/leagues/${aucId||leagueId}`).update({phase:'building'});setPhase('building');setCreated(false);setAucId(null);setDone(done.filter(s=>s!==5))}};  
+  const unlaunchAuc=async()=>{if(!confirm('Return to Building mode?\n\nThis will allow you to edit league settings.\nAuction ID and all settings will be preserved.\n\nContinue?'))return;if(db&&(aucId||leagueId)){await db.ref(`auctions/${aucId||leagueId}`).update({phase:'building'});await db.ref(`admins/${admin.username}/leagues/${aucId||leagueId}`).update({phase:'building'});setPhase('building');setCreated(false);setStep(1)}};  
 
   const getUrl=()=>{const u=window.location.href;const i=u.lastIndexOf('/');return`${u.substring(0,i+1)}auction.html?league=${aucId||leagueId}`};
   const enter=()=>{window.open(getUrl(),'_blank')};
@@ -542,7 +563,7 @@ function CommissionerSetup({admin,onComplete,onBack,onLogout}){
 
   return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user" style={{display:'flex',gap:'12px'}}><button className="logout-btn" onClick={onBack}>← Dashboard</button><button className="logout-btn" onClick={resetTab}>Reset Tab</button><button className="logout-btn" onClick={resetAll}>Reset All</button><button className="logout-btn" onClick={onLogout}>Logout</button></div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
     <main className="main-content">
-      <div className="steps">{[1,2,3,4,5,6].map(s=><div key={s} className={`step ${step===s?'active':''} ${done.includes(s)?'completed':''} ${s>step&&!done.includes(s-1)?'disabled':''}`} onClick={()=>goStep(s)}><span className="step-number">{done.includes(s)?'✓':s}</span><span className="step-label">{s===1&&'League'}{s===2&&'Teams'}{s===3&&'Scoring'}{s===4&&'Players'}{s===5&&'Sheets'}{s===6&&'Launch'}</span></div>)}</div>
+      <div className="steps">{[1,2,3,4,5,6].map(s=>{const isComplete=done.includes(s);const isInvalid=isComplete&&!isStepValid(s);return<div key={s} className={`step ${step===s?'active':''} ${isComplete&&!isInvalid?'completed':''} ${isInvalid?'warning':''} ${s>step&&!done.includes(s-1)?'disabled':''}`} onClick={()=>goStep(s)}><span className="step-number">{isInvalid?'⚠':isComplete?'✓':s}</span><span className="step-label">{s===1&&'League'}{s===2&&'Teams'}{s===3&&'Scoring'}{s===4&&'Players'}{s===5&&'Sheets'}{s===6&&'Launch'}</span></div>})}</div>
 
       {step===1&&<><div className="page-header"><h1 className="page-title">League Settings</h1><p className="page-subtitle">Configure your league</p></div>
         <div className="card"><div className="card-header">General</div><div className="card-body">
@@ -639,22 +660,22 @@ function CommissionerSetup({admin,onComplete,onBack,onLogout}){
           <div className="auction-link"><input value={getUrl()} readOnly/><button className="btn btn-secondary" onClick={()=>navigator.clipboard.writeText(getUrl())}>Copy Link</button></div>
           <button className="btn btn-primary" onClick={enter} style={{marginTop:'20px',width:'100%',fontSize:'16px'}}>ENTER AUCTION →</button>
         </div></div>
-        <div className="card"><div className="card-header">Access Codes</div><div className="card-body">
+        <div className="card"><div className="card-header">Access Codes & League Summary</div><div className="card-body">
           <div style={{marginBottom:'24px'}}><p style={{fontSize:'12px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>League Access Code</p>
           <p style={{fontSize:'1.5rem',fontWeight:'700',color:'var(--espn-blue)',marginBottom:'4px'}}>{leagueCode}</p>
           <p style={{fontSize:'13px',color:'var(--espn-text-muted)'}}>Share with all league members</p></div>
-          <div><p style={{fontSize:'12px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Commissioner Access Code</p>
+          <div style={{marginBottom:'24px'}}><p style={{fontSize:'12px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Commissioner Access Code</p>
           <p style={{fontSize:'1.5rem',fontWeight:'700',color:'var(--espn-orange)',marginBottom:'4px'}}>{commCode}</p>
           <p style={{fontSize:'13px',color:'var(--espn-text-muted)'}}>Only for commissioners</p></div>
-        </div></div>
-        <div className="card"><div className="card-header">League Summary</div><div className="card-body">
+          <div style={{borderTop:'1px solid var(--espn-border)',paddingTop:'24px'}}>
           <div className="form-row"><div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Teams:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{teams.length}</p></div>
           <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Players:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{players.length}</p></div></div>
           <div className="form-row" style={{marginTop:'16px'}}><div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Timer:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{timer}s</p></div>
           <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Auction Type:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center',textTransform:'capitalize'}}>{auctionType.replace('-',' ')}</p></div></div>
           <div className="form-row" style={{marginTop:'16px'}}><div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Google Sheets:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{scriptUrl?'✓ Configured':'Not configured'}</p></div>
-          <div></div></div>
+          <div></div></div></div>
         </div></div>
+        <button className="btn btn-secondary" onClick={unlaunchAuc} style={{width:'100%',padding:'16px',fontSize:'15px',marginTop:'20px'}}>← Return to Building Mode</button>
         {(phase==='active'||phase==='completed')&&<div className="card"><div className="card-header">Results</div><div className="card-body">
           <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>View auction results:</p>
           <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>{sheetUrl&&<button className="btn btn-secondary" onClick={()=>window.open(sheetUrl,'_blank')} style={{flex:'1'}}>📊 Google Sheet</button>}<button className="btn btn-secondary" onClick={()=>downloadCSV(players.map(p=>`${p.name},${p.team||''},${p.position||''},${p.owner||''},${p.arbYear||''},${p.winner||''},${p.decision||''},${p.price||''},${p.years||''},${p.highBid||''},${p.highBidder||''}`).join('\n'),'results.csv')} style={{flex:'1'}}>📅 Download CSV</button></div>
