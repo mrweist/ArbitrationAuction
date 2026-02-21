@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v3.0.0</title>
+  <title>Arbitration Auction - Commissioner Setup v2.0.2</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -88,12 +88,7 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
-  return jsonResponse({ 
-    success: true, 
-    message: 'Auction Sync Ready!',
-    spreadsheetUrl: spreadsheetUrl 
-  });
+  return jsonResponse({ success: true, message: 'Auction Sync Ready!' });
 }
 
 function initializeSheet(data) {
@@ -255,7 +250,7 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
     <main className="main-content">
       <div className="page-header"><div className="page-title">Your Leagues</div><div className="page-subtitle">Select a league to manage or create a new one</div></div>
       <div className="card"><div className="card-body"><button className="btn btn-primary" onClick={onCreateNew}>+ Create New League</button></div></div>
-      {leagues.length>0?<ul className="league-list">{leagues.map(league=>{const status=league.phase==='completed'?'Completed':league.phase==='active'?'In Progress':league.phase==='created'?'Created':league.phase==='building'?'Building':'Unknown';const statusColor=league.phase==='completed'?'var(--espn-success)':league.phase==='active'?'var(--espn-blue)':league.phase==='created'?'var(--espn-orange)':league.phase==='building'?'var(--espn-text-secondary)':'var(--espn-text-muted)';const showEnter=league.phase==='created'||league.phase==='active'||league.phase==='completed';const showEdit=league.phase==='building'||league.phase==='created';const showResults=league.phase==='active'||league.phase==='completed';const showTemplate=league.phase==='created'||league.phase==='active'||league.phase==='completed';return<li key={league.id} className="league-item"><div className="league-item-content" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta"><span style={{color:statusColor,fontWeight:600}}>{status}</span> • Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><div style={{display:'flex',gap:'8px',alignItems:'center'}}>{showEnter&&<button className="btn btn-primary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open('auction.html?league='+league.id,'_blank')}}>Enter Auction</button>}{showTemplate&&<button className="btn btn-secondary league-delete-btn" onClick={async(e)=>{e.stopPropagation();try{const snap=await db.ref('auctions/'+league.id).once('value');const auc=snap.val();if(auc&&auc.players){let csv='Player,Team,Owner,Arb,Points,Bid\n';auc.players.forEach(p=>{csv+='"'+p.name+'","'+(p.team||'')+'","'+(p.owner||'')+'",'+(p.arbYear||'')+','+(p.fantasyPoints||0)+',0\n'});downloadCSV(csv,auc.leagueName+'_prebid_template.csv')}else{downloadCSV(csvTemplate(),'player_template.csv')}}catch(err){downloadCSV(csvTemplate(),'player_template.csv')}}}>📄 Pre-bid .csv</button>}{showResults&&(league.sheetsUrl?<button className="btn btn-secondary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open(league.sheetsUrl,'_blank')}}>📊 gDrive Results</button>:<button className="btn btn-secondary league-delete-btn" onClick={async(e)=>{e.stopPropagation();try{const snap=await db.ref('auctions/'+league.id).once('value');const auc=snap.val();if(auc&&auc.players){const csv='Player,Team,Position,Owner,Arb Year,Winner,Decision,Price,Years,High Bid,High Bidder\n'+auc.players.filter(p=>p.result).map(p=>`${p.name},${p.team||''},${p.position||''},${p.owner||''},${p.arbYear||''},${p.result.winnerId||''},${p.result.decision||''},${p.result.price||0},${p.result.years||1},${p.result.highBid||0},${p.result.highBidder||''}`).join('\n');downloadCSV(csv,'results.csv')}else{alert('No results data available')}}catch(err){alert('Error loading results: '+err.message)}}}>📄 Results .csv</button>)}<button className="btn btn-blue league-delete-btn" onClick={(e)=>handleDuplicate(league.id,league.name,e)} disabled={duplicating===league.id}>{duplicating===league.id?'Duplicating...':'Duplicate'}</button><button className="btn btn-secondary league-delete-btn" onClick={(e)=>handleDelete(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'Delete'}</button></div></li>})}</ul>
+      {leagues.length>0?<ul className="league-list">{leagues.map(league=>{const status=league.phase==='completed'?'Completed':league.phase==='active'?'In Progress':league.phase==='created'?'Created':'Building';const statusColor=league.phase==='completed'?'var(--espn-success)':league.phase==='active'?'var(--espn-blue)':league.phase==='created'?'var(--espn-orange)':'var(--espn-text-muted)';const showEnter=league.phase==='created'||league.phase==='active'||league.phase==='completed';const showResults=league.phase==='active'||league.phase==='completed';const showTemplate=league.phase==='created'||league.phase==='active'||league.phase==='completed';return<li key={league.id} className="league-item"><div className="league-item-content" onClick={()=>onSelectLeague(league.id)}><div className="league-item-name">{league.name}</div><div className="league-item-meta"><span style={{color:statusColor,fontWeight:600}}>{status}</span> • Created: {new Date(league.createdAt).toLocaleDateString()}</div></div><div style={{display:'flex',gap:'8px',alignItems:'center'}}>{showEnter&&<button className="btn btn-primary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open('auction.html?league='+league.id,'_blank')}}>Enter Auction</button>}{showTemplate&&<button className="btn btn-secondary league-delete-btn" onClick={async(e)=>{e.stopPropagation();try{const snap=await db.ref('auctions/'+league.id).once('value');const auc=snap.val();if(auc&&auc.players){let csv='Player,Team,Owner,Arb,Points,Bid\n';auc.players.forEach(p=>{csv+='"'+p.name+'","'+(p.team||'')+'","'+(p.owner||'')+'",'+(p.arbYear||'')+','+(p.fantasyPoints||0)+',0\n'});downloadCSV(csv,auc.leagueName+'_prebid_template.csv')}else{downloadCSV(csvTemplate(),'player_template.csv')}}catch(err){downloadCSV(csvTemplate(),'player_template.csv')}}}>📄 Pre-bid .csv</button>}{showResults&&(league.sheetsUrl?<button className="btn btn-secondary league-delete-btn" onClick={(e)=>{e.stopPropagation();window.open(league.sheetsUrl,'_blank')}}>📊 gDrive Results</button>:<button className="btn btn-secondary league-delete-btn" onClick={async(e)=>{e.stopPropagation();try{const snap=await db.ref('auctions/'+league.id).once('value');const auc=snap.val();if(auc&&auc.players){const csv='Player,Team,Position,Owner,Arb Year,Winner,Decision,Price,Years,High Bid,High Bidder\n'+auc.players.filter(p=>p.result).map(p=>`${p.name},${p.team||''},${p.position||''},${p.owner||''},${p.arbYear||''},${p.result.winnerId||''},${p.result.decision||''},${p.result.price||0},${p.result.years||1},${p.result.highBid||0},${p.result.highBidder||''}`).join('\n');downloadCSV(csv,'results.csv')}else{alert('No results data available')}}catch(err){alert('Error loading results: '+err.message)}}}>📄 Results .csv</button>)}<button className="btn btn-blue league-delete-btn" onClick={(e)=>handleDuplicate(league.id,league.name,e)} disabled={duplicating===league.id}>{duplicating===league.id?'Duplicating...':'Duplicate'}</button><button className="btn btn-secondary league-delete-btn" onClick={(e)=>handleDelete(league.id,league.name,e)} disabled={deleting===league.id}>{deleting===league.id?'Deleting...':'Delete'}</button></div></li>})}</ul>
       :<div className="info-box"><h4>No leagues yet</h4><p>Create your first league to get started!</p></div>}
     </main>
   </>;
@@ -281,7 +276,6 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
   const[teams,setTeams]=useState(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})));
   const[teamCount,setTeamCount]=useState(12);
   const[auctionType,setAuctionType]=useState('standard');
-  const[sheetUrl,setSheetUrl]=useState('');
   
   // Initial states for reset functionality
   const INITIAL_STATES={
@@ -299,8 +293,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
     players:[],
     playerTxt:'',
     auctionType:'standard',
-    teamCount:12,
-    sheetUrl:''
+    teamCount:12
   };
   const[players,setPlayers]=useState([]);
   const[playerTxt,setPlayerTxt]=useState('');
@@ -336,7 +329,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
           if(d.sheetsConfig){setScriptUrl(d.sheetsConfig.scriptUrl||'');setSheetUrl(d.sheetsConfig.sheetUrl||'');setSheetId(d.sheetsConfig.sheetId||'')}
           const ph=d.phase||'created';
           setPhase(ph);
-          if(ph!=='building'){setAucId(leagueId);setCreated(true);setDone([1,2,3,4,5,6]);setStep(5)}else{setDone([1,2,3,4])}
+          if(ph!=='building'){setAucId(leagueId);setCreated(true);setDone([1,2,3,4,5]);setStep(5)}else{setDone([1,2,3,4])}
         }
       });
     }
@@ -347,98 +340,14 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
     if(!scriptUrl){setSheetErr('Enter the Apps Script URL');setSheetStatus('error');return}
     if(!scriptUrl.includes('script.google.com')){setSheetErr('Invalid Apps Script URL');setSheetStatus('error');return}
     try{
-      const response=await fetch(scriptUrl,{method:'GET'});
-      const data=await response.json();
-      if(data.success&&data.spreadsheetUrl){
-        setSheetUrl(data.spreadsheetUrl);
-        setSheetId(extractSheetId(data.spreadsheetUrl));
-        setSheetStatus('connected');
-        if(leagueId||aucId){autoSave({sheetsConfig:{scriptUrl,sheetUrl:data.spreadsheetUrl,sheetId:extractSheetId(data.spreadsheetUrl)}})}
-      }else{
-        setSheetErr('Could not retrieve spreadsheet URL');
-        setSheetStatus('error');
-      }
-    }catch(e){
-      setSheetErr('Could not reach script or parse response: '+e.message);
-      setSheetStatus('error');
-    }
-  };
-
-
-  const autoSave=async(updates)=>{
-    const id=leagueId||aucId;
-    if(!id||!db)return;
-    try{
-      await db.ref(`auctions/${id}`).update(updates);
-      await db.ref(`admins/${admin.username}/leagues/${id}`).update({phase:'building',updatedAt:Date.now()});
-    }catch(err){
-      console.error('Auto-save error:',err);
-    }
-  };
-
-  const saveLeagueSettings=async()=>{
-    if(!league||!leagueCode||!commCode){
-      alert('Please fill in all required fields');
-      return false;
-    }
-    const id=leagueId||aucId||genId();
-    const tObj={};
-    teams.forEach((t,i)=>{tObj[`team_${i+1}`]={...t,joined:false,claimedBy:null,passwordHash:''}});
-    const data={
-      leagueId:id,
-      leagueName:league,
-      leagueAccessCode:leagueCode,
-      commissionerAccessCode:commCode,
-      commissionerName:commName,
-      timerDuration:timer,
-      auctionType:auctionType,
-      teams:tObj,
-      players:[],
-      hittingScoring:hitScore,
-      pitchingScoring:pitScore,
-      sheetsConfig:null,
-      currentPlayerIndex:0,
-      phase:'building',
-      createdBy:admin.username,
-      createdAt:Date.now(),
-      bidHistory:[]
-    };
-    try{
-      await db.ref(`auctions/${id}`).set(data);
-      await db.ref(`admins/${admin.username}/leagues/${id}`).set({name:league,createdAt:Date.now(),phase:'building',sheetsUrl:null});
-      if(!leagueId&&!aucId){
-        setLeagueId(id);
-        setAucId(id);
-      }
-      return true;
-    }catch(err){
-      alert('Error saving: '+err.message);
-      return false;
-    }
+      await fetch(scriptUrl,{method:'GET',mode:'no-cors'});
+      setSheetStatus('connected');
+    }catch(e){setSheetErr('Could not reach script. Make sure it\'s deployed.');setSheetStatus('error')}
   };
 
   const copyScript=()=>{navigator.clipboard.writeText(APPS_SCRIPT_CODE);setCopied(true);setTimeout(()=>setCopied(false),2000)};
   const goStep=s=>{if(s<=step||done.includes(s-1))setStep(s)};
-  const finish=async(s)=>{
-    if(s===1){
-      const saved=await saveLeagueSettings();
-      if(!saved)return;
-    }
-    if(s===2&&(leagueId||aucId)){
-      const tObj={};
-      teams.forEach((t,i)=>{tObj[`team_${i+1}`]={...t,joined:false,claimedBy:null,passwordHash:''}});
-      await autoSave({teams:tObj});
-    }
-    if(s===3&&(leagueId||aucId)){
-      await autoSave({hittingScoring:hitScore,pitchingScoring:pitScore});
-    }
-    if(s===4&&(leagueId||aucId)){
-      const sorted=[...players].sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);
-      await autoSave({players:sorted.map((p,i)=>({...p,status:'pending',order:i}))});
-    }
-    if(!done.includes(s))setDone([...done,s]);
-    setStep(s+1);
-  };
+  const finish=s=>{if(!done.includes(s))setDone([...done,s]);setStep(s+1)};
   const updTeam=(id,f,v)=>{setTeams(t=>t.map(x=>x.id===id?{...x,[f]:f==='name'?v:f==='isComm'?v:parseFloat(v)||0}:x))};
   const updHit=(k,v)=>{setHitScore(s=>({...s,[k]:parseFloat(v)||0}))};
   const updPit=(k,v)=>{setPitScore(s=>({...s,[k]:parseFloat(v)||0}))};
@@ -461,20 +370,6 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
   const fetchAll=async()=>{setFetching(true);setFetchProg({c:0,t:players.length});const upd=[...players];for(let i=0;i<upd.length;i++){setFetchProg({c:i+1,t:upd.length});const st=await fetchMLB(upd[i]);let pts=0;if(st){if(st.mlbamId){upd[i].mlbamId=st.mlbamId}if(st.team&&st.team!=='TBD'){upd[i].team=st.team}if(st.position&&st.position!=='TBD'){upd[i].position=st.position}}else{const espn=await fetchESPN(upd[i]);if(espn?.espnId){upd[i].espnId=espn.espnId}}if(st){const hadHit=st.hit&&Object.values(st.hit).some(v=>v>0);const hadPit=st.pit&&(st.pit.IP>0||st.pit.SO>0);const typeIsTBD=upd[i].type==='TBD'||!upd[i].type;if(hadHit){pts+=calcPts(st.hit,hitScore,pitScore,true,false);upd[i].hittingStats=st.hit}if(hadPit){pts+=calcPts(st.pit,hitScore,pitScore,false,true);upd[i].pitchingStats=st.pit}if(typeIsTBD){if(hadHit&&hadPit){upd[i].type='both';upd[i].isHitter=true;upd[i].isPitcher=true}else if(hadPit){upd[i].type='pitcher';upd[i].isHitter=false;upd[i].isPitcher=true}else if(hadHit){upd[i].type='hitter';upd[i].isHitter=true;upd[i].isPitcher=false}else if(upd[i].position){const pos=upd[i].position.toUpperCase();if(pos==='P'||pos==='SP'||pos==='RP'){upd[i].type='pitcher';upd[i].isPitcher=true;upd[i].isHitter=false}else{upd[i].type='hitter';upd[i].isHitter=true;upd[i].isPitcher=false}}}upd[i].needsDetection=false}upd[i].fantasyPoints=pts;await new Promise(r=>setTimeout(r,150))}upd.sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);setPlayers(upd);setFetching(false)};
 
   const createAuc=async()=>{
-    const id=leagueId||aucId;
-    if(!id){alert('No league ID found');return}
-    try{
-      await db.ref(`auctions/${id}`).update({phase:'created'});
-      await db.ref(`admins/${admin.username}/leagues/${id}`).update({phase:'created'});
-      setPhase('created');
-      setCreated(true);
-      setDone([...done,6]);
-    }catch(err){
-      alert('Error launching: '+err.message);
-    }
-  };
-  
-  const createAucOLD=async()=>{
     const id=leagueId||genId();
     // No commissioner password needed - using access codes only
     const sorted=[...players].sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);
@@ -513,11 +408,10 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
   const enter=()=>{window.open(getUrl(),'_blank')};
 
   const resetTab=()=>{
-    if(step===1){setLeague('');setLeagueCode('');setCommCode('');setCommName('');setTimer(120);setAuctionType('standard')}
-    if(step===2){setTeams(Array.from({length:teamCount},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})))}
-    if(step===3){setHitScore(DEFAULT_HIT);setPitScore(DEFAULT_PIT)}
+    if(step===1){setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('')}
+    if(step===2){setHitScore(DEFAULT_HIT);setPitScore(DEFAULT_PIT)}
+    if(step===3){setLeague('');setLeagueCode('');setCommCode('');setCommName('');setCommPw('');setTimer(120);setTeams(Array.from({length:12},(_,i)=>({id:i+1,name:`Team ${i+1}`,cap:100,sal:0,spots:5,isComm:i===0})))}
     if(step===4){setPlayers([]);setPlayerTxt('')}
-    if(step===5){setScriptUrl('');setSheetUrl('');setSheetId('');setSheetStatus('pending');setSheetErr('')}
   };
 
   const resetAll=()=>{
@@ -547,52 +441,9 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
 
   return<><header className="header"><div className="header-title">Arbitration Auction</div><div className="header-user" style={{display:'flex',gap:'12px'}}><button className="logout-btn" onClick={onBack}>← Dashboard</button><button className="logout-btn" onClick={resetTab}>Reset Tab</button><button className="logout-btn" onClick={resetAll}>Reset All</button><button className="logout-btn" onClick={onLogout}>Logout</button></div></header><nav className="nav"><div className="nav-item active">Commissioner Setup</div></nav>
     <main className="main-content">
-      <div className="steps">{[1,2,3,4,5,6].map(s=><div key={s} className={`step ${step===s?'active':''} ${done.includes(s)?'completed':''} ${s>step&&!done.includes(s-1)?'disabled':''}`} onClick={()=>goStep(s)}><span className="step-number">{done.includes(s)?'✓':s}</span><span className="step-label">{s===1&&'League'}{s===2&&'Teams'}{s===3&&'Scoring'}{s===4&&'Players'}{s===5&&'Sheets'}{s===6&&'Launch'}</span></div>)}</div>
-      {step===1&&<><div className="page-header"><h1 className="page-title">League Settings</h1><p className="page-subtitle">Configure your league</p></div>
-        <div className="card"><div className="card-header">General</div><div className="card-body">
-          <div className="form-row">
-            <div className="form-group"><label>League Name</label><input value={league} onChange={e=>setLeague(e.target.value)}/></div>
-            <div className="form-group"><label>Commissioner</label><input value={commName} onChange={e=>setCommName(e.target.value)}/></div>
-          </div>
-          <div className="form-row">
-            <div className="form-group"><label>League Access Code</label><input value={leagueCode} onChange={e=>setLeagueCode(e.target.value)} placeholder="All users need this"/><div className="form-hint">Share with all league members</div></div>
-            <div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e=>setCommCode(e.target.value)} placeholder="Only commissioners need this"/><div className="form-hint">Keep this private</div></div>
-          </div>
-          <div className="form-row">
-            <div className="form-group"><label>Timer (sec)</label><input type="number" value={timer} onChange={e=>setTimer(parseInt(e.target.value)||120)} min="10" max="600"/><div className="form-hint">Bidding timer duration</div></div>
-            <div className="form-group"><label>Auction Type</label><select value={auctionType} onChange={e=>setAuctionType(e.target.value)}><option value="standard">Standard</option><option value="vickrey">Vickrey</option><option value="vickrey-modified">Vickrey Modified</option></select><div className="form-hint">{auctionType==='standard'?'Highest bid for all prices':auctionType==='vickrey'?'2nd highest for all prices':'2nd highest for Keep/Self-stick, highest for Stick'}</div></div>
-          </div>
-        </div></div>
-        <div style={{display:'flex',gap:'16px',marginTop:'24px'}}><button className="btn btn-primary" onClick={()=>finish(1)}>Continue →</button></div>
-      </>}
+      <div className="steps">{[1,2,3,4,5].map(s=><div key={s} className={`step ${step===s?'active':''} ${done.includes(s)?'completed':''} ${s>step&&!done.includes(s-1)?'disabled':''}`} onClick={()=>goStep(s)}><span className="step-number">{done.includes(s)?'✓':s}</span><span className="step-label">{s===1&&'Google Sheets'}{s===2&&'Scoring'}{s===3&&'League'}{s===4&&'Players'}{s===5&&'Launch'}</span></div>)}</div>
 
-      {step===2&&<><div className="page-header"><h1 className="page-title">Teams</h1><p className="page-subtitle">Configure team settings</p></div>
-        <div className="card"><div className="card-header">Teams</div><div className="card-body">
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}><p style={{color:'var(--espn-text-secondary)',margin:0}}>Max Bid = Cap - Salary - Spots + 1. Min salary $1.00.</p><div style={{display:'flex',gap:'12px',alignItems:'center'}}><div style={{display:'flex',gap:'8px',alignItems:'center'}}><label style={{fontSize:'13px',fontWeight:600,color:'var(--espn-text-secondary)',textTransform:'uppercase'}}>Team Count:</label><input type="number" value={teamCount} onChange={e=>updateTeamCount(e.target.value)} min="2" max="20" style={{width:'80px',padding:'8px',fontSize:'14px',border:'1px solid var(--espn-border)',borderRadius:'4px'}}/></div><input type="file" accept=".csv" onChange={handleTeamsFile} style={{display:'none'}} id="teamsUp"/><label htmlFor="teamsUp" className="btn btn-secondary" style={{cursor:'pointer',padding:'8px 16px',fontSize:'14px'}}>📁 Upload</label><button className="btn btn-secondary" onClick={downloadTeamsCSV} style={{padding:'8px 16px',fontSize:'14px'}}>📥 Download</button><button className="btn btn-secondary" onClick={clearTeamInfo} style={{padding:'8px 16px',fontSize:'14px'}}>❌ Clear Team Info</button></div></div>
-          <div style={{overflowX:'auto'}}><table className="data-table"><thead><tr><th>#</th><th>Name</th><th>Comm</th><th>Cap</th><th>Salary</th><th>Spots</th><th>Avail</th><th>Max</th></tr></thead><tbody>
-            {teams.map((t,i)=>{const av=t.cap-t.sal;const mx=Math.max(0,t.cap-t.sal-t.spots+1);const locked=phase!=='building';return<tr key={t.id}><td>{i+1}</td><td><input type="text" value={t.name} onChange={e=>updTeam(t.id,'name',e.target.value)}/></td><td style={{textAlign:'center'}}><input type="checkbox" checked={t.isComm||false} onChange={e=>updTeam(t.id,'isComm',e.target.checked)} style={{width:'20px',height:'20px'}}/></td><td><input type="number" value={t.cap} onChange={e=>updTeam(t.id,'cap',e.target.value)} disabled={locked} style={{background:locked?'#f5f5f5':'white',cursor:locked?'not-allowed':'text'}}/></td><td><input type="number" value={t.sal} onChange={e=>updTeam(t.id,'sal',e.target.value)} disabled={locked} style={{background:locked?'#f5f5f5':'white',cursor:locked?'not-allowed':'text'}}/></td><td><input type="number" value={t.spots} onChange={e=>updTeam(t.id,'spots',e.target.value)} min="1" disabled={locked} style={{background:locked?'#f5f5f5':'white',cursor:locked?'not-allowed':'text'}}/></td><td style={{color:'var(--espn-success)',fontWeight:600}}>${fmt(av)}</td><td style={{color:'var(--espn-blue)',fontWeight:600}}>${fmt(mx)}</td></tr>})}
-          </tbody></table></div>
-        </div></div>
-        <div style={{display:'flex',gap:'16px',marginTop:'24px'}}><button className="btn btn-secondary" onClick={()=>setStep(1)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(2)}>Continue →</button></div>
-      </>}
-
-      {step===3&&<><div className="page-header"><h1 className="page-title">Scoring Settings</h1><p className="page-subtitle">Configure fantasy point values</p></div>
-        <div className="card" style={{background:'#f8f9fa'}}><div className="card-header" style={{background:'var(--espn-blue)',color:'white',fontSize:'14px',fontWeight:700,fontFamily:'Roboto Condensed',textAlign:'center',textTransform:'uppercase',padding:'12px'}}>⚾ HITTING ⚾</div><div className="card-body" style={{padding:0}}><div className="scoring-grid">{Object.entries(hitScore).map(([k,v])=><div key={k} className={`scoring-item ${v<0?'negative':''}`}><label>{k}</label><input type="number" step="0.5" value={v} onChange={e=>updHit(k,e.target.value)}/></div>)}</div></div></div>
-        <div className="card" style={{background:'#f8f9fa',marginTop:'16px'}}><div className="card-header" style={{background:'var(--espn-orange)',color:'white',fontSize:'14px',fontWeight:700,fontFamily:'Roboto Condensed',textAlign:'center',textTransform:'uppercase',padding:'12px'}}>⚾ PITCHING ⚾</div><div className="card-body" style={{padding:0}}><div className="scoring-grid">{['IP','ER','K','H','BB','HBP','W','SV','HD','CG'].map(k=><div key={k} className={`scoring-item ${pitScore[k]<0?'negative':''}`}><label>{k}</label><input type="number" step="0.5" value={pitScore[k]} onChange={e=>updPit(k,e.target.value)}/></div>)}</div><div className="scoring-hint">Negative = subtract points</div></div></div>
-        <div style={{display:'flex',gap:'16px',marginTop:'24px'}}><button className="btn btn-secondary" onClick={()=>setStep(2)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(3)}>Continue →</button></div>
-      </>}
-      {step===4&&<><div className="page-header"><h1 className="page-title">Players</h1></div>
-        <div className="card"><div className="card-header">Import</div><div className="card-body">
-          <div style={{display:'flex',gap:'16px',marginBottom:'20px',flexWrap:'wrap'}}><input type="file" accept=".csv" onChange={handleFile} style={{display:'none'}} id="csvUp"/><label htmlFor="csvUp" className="btn btn-secondary" style={{cursor:'pointer'}}>📁 Upload CSV</label><button className="btn btn-secondary" onClick={()=>downloadCSV(csvTemplate(),'template.csv')}>📥 Template</button><button className="btn btn-blue" onClick={fetchAll} disabled={players.length===0||fetching}>{fetching?`Fetching ${fetchProg.c}/${fetchProg.t}...`:'🔄 Fetch MLB Stats'}</button>{players.length>0&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Clear all players?')){setPlayers([]);setPlayerTxt('')}}}>❌ Clear Players</button>}</div>
-          {fetching&&<div className="progress-bar"><div className="progress-bar-fill" style={{width:`${(fetchProg.c/fetchProg.t)*100}%`}}/></div>}
-          <div className="form-group"><label>Or Paste CSV</label><textarea style={{minHeight:'140px',fontFamily:'monospace'}} value={playerTxt} onChange={e=>handleTxt(e.target.value)} placeholder="Name,Owner,ArbYear\n(Team, Position, Type will be auto-detected)"/><div className="form-hint">Minimum required: Name, Owner, ArbYear. Click "Fetch MLB Stats" to auto-detect Team, Position, Type, and Points.</div></div>
-        </div></div>
-        {players.length>0&&<div className="card"><div className="card-header">Players ({players.length})</div><div className="card-body"><div style={{overflowX:'auto',maxHeight:'500px'}}><table className="data-table"><thead><tr><th>Name</th><th>Team</th><th>Pos</th><th>Owner</th><th>Arb</th><th>Type</th><th>Points</th></tr></thead><tbody>
-          {players.map(p=><tr key={p.id}><td style={{fontWeight:500}}>{p.name}</td><td>{p.team}</td><td>{p.position}</td><td>{p.owner}</td><td><span className={`arb-badge arb-${p.arbYear}`}>ARB {p.arbYear}</span></td><td style={{textTransform:'capitalize'}}>{p.type}</td><td><input type="number" step="0.01" value={p.fantasyPoints||0} onChange={e=>updPts(p.id,e.target.value)} style={{width:'100px'}}/></td></tr>)}
-        </tbody></table></div></div></div>}
-        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(3)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(4)} disabled={players.length===0}>Continue →</button></div>
-      </>}
-      {step===5&&<><div className="page-header"><h1 className="page-title">Google Sheets (Optional)</h1><p className="page-subtitle">Live sync auction results to Google Sheets</p></div>
+      {step===1&&<><div className="page-header"><h1 className="page-title">Google Sheets Setup</h1><p className="page-subtitle">Live sync auction results to Google Sheets (optional but recommended)</p></div>
         <div className="card"><div className="card-header">Google Sheets Configuration</div><div className="card-body">
           <div className="info-box"><h4>📋 Setup Instructions</h4><ol>
             <li>Create a new Google Sheet at <a href="https://sheets.google.com" target="_blank">sheets.google.com</a></li>
@@ -628,7 +479,50 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
         </div></div>
         <button className="btn btn-primary" onClick={()=>finish(1)}>{scriptUrl?'Continue →':'Skip for Now →'}</button>
       </>}
-      {step===6&&<><div className="page-header"><h1 className="page-title">{league||'League'}</h1><p className="page-subtitle">League ID: {aucId||leagueId||'Pending'} • {created?<span style={{color:'var(--espn-orange)'}}>Created</span>:<span>Not Created</span>}</p></div>
+
+      {step===2&&<><div className="page-header"><h1 className="page-title">Scoring Settings</h1><p className="page-subtitle">Configure fantasy point values</p></div>
+        <div className="card" style={{background:'#f8f9fa'}}><div className="card-header" style={{background:'var(--espn-blue)',color:'white',fontSize:'14px',fontWeight:700,fontFamily:'Roboto Condensed',textAlign:'center',textTransform:'uppercase',padding:'12px'}}>⚾ HITTING ⚾</div><div className="card-body" style={{padding:0}}><div className="scoring-grid">{Object.entries(hitScore).map(([k,v])=><div key={k} className={`scoring-item ${v<0?'negative':''}`}><label>{k}</label><input type="number" step="0.5" value={v} onChange={e=>updHit(k,e.target.value)}/></div>)}</div></div></div>
+        <div className="card" style={{background:'#f8f9fa',marginTop:'16px'}}><div className="card-header" style={{background:'var(--espn-orange)',color:'white',fontSize:'14px',fontWeight:700,fontFamily:'Roboto Condensed',textAlign:'center',textTransform:'uppercase',padding:'12px'}}>⚾ PITCHING ⚾</div><div className="card-body" style={{padding:0}}><div className="scoring-grid">{['IP','ER','K','H','BB','HBP','W','SV','HD','CG'].map(k=><div key={k} className={`scoring-item ${pitScore[k]<0?'negative':''}`}><label>{k}</label><input type="number" step="0.5" value={pitScore[k]} onChange={e=>updPit(k,e.target.value)}/></div>)}</div><div className="scoring-hint">Negative = subtract points</div></div></div>
+        <div style={{display:'flex',gap:'16px',marginTop:'24px'}}><button className="btn btn-secondary" onClick={()=>setStep(1)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(2)}>Continue →</button></div>
+      </>}
+
+      {step===3&&<><div className="page-header"><h1 className="page-title">League Settings</h1></div>
+        <div className="card"><div className="card-header">General</div><div className="card-body">
+          <div className="form-row">
+            <div className="form-group"><label>League Name</label><input value={league} onChange={e=>setLeague(e.target.value)}/></div>
+            <div className="form-group"><label>Commissioner</label><input value={commName} onChange={e=>setCommName(e.target.value)}/></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>League Access Code</label><input value={leagueCode} onChange={e=>setLeagueCode(e.target.value)} placeholder="All users need this"/><div className="form-hint">Share with all league members</div></div>
+            <div className="form-group"><label>Commissioner Access Code</label><input value={commCode} onChange={e=>setCommCode(e.target.value)} placeholder="Only commissioners need this"/><div className="form-hint">Keep this private</div></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>Timer (sec)</label><input type="number" value={timer} onChange={e=>setTimer(parseInt(e.target.value)||120)} min="10" max="600"/><div className="form-hint">Bidding timer duration</div></div>
+            <div className="form-group"><label>Auction Type</label><select value={auctionType} onChange={e=>setAuctionType(e.target.value)}><option value="standard">Standard</option><option value="vickrey">Vickrey</option><option value="vickrey-modified">Vickrey Modified</option></select><div className="form-hint">{auctionType==='standard'?'Highest bid for all prices':auctionType==='vickrey'?'2nd highest for all prices':'2nd highest for Keep/Self-stick, highest for Stick'}</div></div>
+          </div>
+        </div></div>
+        <div className="card"><div className="card-header">Teams</div><div className="card-body">
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}}><p style={{color:'var(--espn-text-secondary)',margin:0}}>Max Bid = Cap - Salary - Spots + 1. Min salary $1.00.</p><div style={{display:'flex',gap:'12px',alignItems:'center'}}><div style={{display:'flex',gap:'8px',alignItems:'center'}}><label style={{fontSize:'13px',fontWeight:600,color:'var(--espn-text-secondary)',textTransform:'uppercase'}}>Team Count:</label><input type="number" value={teamCount} onChange={e=>updateTeamCount(e.target.value)} min="2" max="20" style={{width:'80px',padding:'8px',fontSize:'14px',border:'1px solid var(--espn-border)',borderRadius:'4px'}}/></div><input type="file" accept=".csv" onChange={handleTeamsFile} style={{display:'none'}} id="teamsUp"/><label htmlFor="teamsUp" className="btn btn-secondary" style={{cursor:'pointer',padding:'8px 16px',fontSize:'14px'}}>📁 Upload</label><button className="btn btn-secondary" onClick={downloadTeamsCSV} style={{padding:'8px 16px',fontSize:'14px'}}>📥 Download</button><button className="btn btn-secondary" onClick={clearTeamInfo} style={{padding:'8px 16px',fontSize:'14px'}}>❌ Clear Team Info</button></div></div>
+          <div style={{overflowX:'auto'}}><table className="data-table"><thead><tr><th>#</th><th>Name</th><th>Comm</th><th>Cap</th><th>Salary</th><th>Spots</th><th>Avail</th><th>Max</th></tr></thead><tbody>
+            {teams.map((t,i)=>{const av=t.cap-t.sal;const mx=Math.max(0,t.cap-t.sal-t.spots+1);const locked=phase!=='building';return<tr key={t.id}><td>{i+1}</td><td><input type="text" value={t.name} onChange={e=>updTeam(t.id,'name',e.target.value)}/></td><td style={{textAlign:'center'}}><input type="checkbox" checked={t.isComm||false} onChange={e=>updTeam(t.id,'isComm',e.target.checked)} style={{width:'20px',height:'20px'}}/></td><td><input type="number" value={t.cap} onChange={e=>updTeam(t.id,'cap',e.target.value)} disabled={locked} style={{background:locked?'#f5f5f5':'white',cursor:locked?'not-allowed':'text'}}/></td><td><input type="number" value={t.sal} onChange={e=>updTeam(t.id,'sal',e.target.value)} disabled={locked} style={{background:locked?'#f5f5f5':'white',cursor:locked?'not-allowed':'text'}}/></td><td><input type="number" value={t.spots} onChange={e=>updTeam(t.id,'spots',e.target.value)} min="1" disabled={locked} style={{background:locked?'#f5f5f5':'white',cursor:locked?'not-allowed':'text'}}/></td><td style={{color:'var(--espn-success)',fontWeight:600}}>${fmt(av)}</td><td style={{color:'var(--espn-blue)',fontWeight:600}}>${fmt(mx)}</td></tr>})}
+          </tbody></table></div>
+        </div></div>
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(2)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(3)} disabled={!league||!leagueCode||!commCode}>Continue →</button></div>
+      </>}
+
+      {step===4&&<><div className="page-header"><h1 className="page-title">Players</h1></div>
+        <div className="card"><div className="card-header">Import</div><div className="card-body">
+          <div style={{display:'flex',gap:'16px',marginBottom:'20px',flexWrap:'wrap'}}><input type="file" accept=".csv" onChange={handleFile} style={{display:'none'}} id="csvUp"/><label htmlFor="csvUp" className="btn btn-secondary" style={{cursor:'pointer'}}>📁 Upload CSV</label><button className="btn btn-secondary" onClick={()=>downloadCSV(csvTemplate(),'template.csv')}>📥 Template</button><button className="btn btn-blue" onClick={fetchAll} disabled={players.length===0||fetching}>{fetching?`Fetching ${fetchProg.c}/${fetchProg.t}...`:'🔄 Fetch MLB Stats'}</button>{players.length>0&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Clear all players?')){setPlayers([]);setPlayerTxt('')}}}>❌ Clear Players</button>}</div>
+          {fetching&&<div className="progress-bar"><div className="progress-bar-fill" style={{width:`${(fetchProg.c/fetchProg.t)*100}%`}}/></div>}
+          <div className="form-group"><label>Or Paste CSV</label><textarea style={{minHeight:'140px',fontFamily:'monospace'}} value={playerTxt} onChange={e=>handleTxt(e.target.value)} placeholder="Name,Owner,ArbYear\n(Team, Position, Type will be auto-detected)"/><div className="form-hint">Minimum required: Name, Owner, ArbYear. Click "Fetch MLB Stats" to auto-detect Team, Position, Type, and Points.</div></div>
+        </div></div>
+        {players.length>0&&<div className="card"><div className="card-header">Players ({players.length})</div><div className="card-body"><div style={{overflowX:'auto',maxHeight:'500px'}}><table className="data-table"><thead><tr><th>Name</th><th>Team</th><th>Pos</th><th>Owner</th><th>Arb</th><th>Type</th><th>Points</th></tr></thead><tbody>
+          {players.map(p=><tr key={p.id}><td style={{fontWeight:500}}>{p.name}</td><td>{p.team}</td><td>{p.position}</td><td>{p.owner}</td><td><span className={`arb-badge arb-${p.arbYear}`}>ARB {p.arbYear}</span></td><td style={{textTransform:'capitalize'}}>{p.type}</td><td><input type="number" step="0.01" value={p.fantasyPoints||0} onChange={e=>updPts(p.id,e.target.value)} style={{width:'100px'}}/></td></tr>)}
+        </tbody></table></div></div></div>}
+        <div style={{display:'flex',gap:'16px'}}><button className="btn btn-secondary" onClick={()=>setStep(3)}>← Back</button><button className="btn btn-primary" onClick={()=>finish(4)} disabled={players.length===0}>Continue →</button></div>
+      </>}
+
+      {step===5&&<><div className="page-header"><h1 className="page-title">{league||'League'}</h1><p className="page-subtitle">League ID: {aucId||leagueId||'Pending'} • {created?<span style={{color:'var(--espn-orange)'}}>Created</span>:<span>Not Created</span>}</p></div>
         {!created?<><div className="card"><div className="card-header">Summary</div><div className="card-body">
           <p style={{marginBottom:'10px'}}><strong>League:</strong> {league}</p>
           <p style={{marginBottom:'10px'}}><strong>Teams:</strong> {teams.length}</p>
