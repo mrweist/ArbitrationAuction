@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v4.0.0</title>
+  <title>Arbitration Auction - Commissioner Setup v4.1.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -684,23 +684,22 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
           <button className="btn btn-primary" onClick={enter} style={{marginTop:'20px',width:'100%',fontSize:'16px'}}>ENTER AUCTION →</button>
         </div></div>
         <div className="card"><div className="card-header">Access Codes & League Summary</div><div className="card-body">
-          <div style={{marginBottom:'24px'}}><p style={{fontSize:'12px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>League Access Code</p>
-          <p style={{fontSize:'1.5rem',fontWeight:'700',color:'var(--espn-blue)',marginBottom:'4px'}}>{leagueCode}</p>
-          <p style={{fontSize:'13px',color:'var(--espn-text-muted)'}}>Share with all league members</p></div>
-          <div style={{marginBottom:'24px'}}><p style={{fontSize:'12px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Commissioner Access Code</p>
-          <p style={{fontSize:'1.5rem',fontWeight:'700',color:'var(--espn-orange)',marginBottom:'4px'}}>{commCode}</p>
-          <p style={{fontSize:'13px',color:'var(--espn-text-muted)'}}>Only for commissioners</p></div>
-          <div style={{borderTop:'1px solid var(--espn-border)',paddingTop:'24px'}}>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'24px'}}>
-            <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Teams:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{teams.length}</p></div>
-            <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Players:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{players.length}</p></div>
-            <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Auction Type:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center',textTransform:'capitalize'}}>{auctionType.replace('-',' ')}</p></div>
+          <div style={{display:'flex',gap:'48px'}}>
+            <div style={{flex:'0 0 auto',minWidth:'200px'}}>
+              <div style={{marginBottom:'32px'}}><p style={{fontSize:'12px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>League Access Code</p>
+              <p style={{fontSize:'1.5rem',fontWeight:'700',color:'var(--espn-blue)',marginBottom:'4px'}}>{leagueCode}</p>
+              <p style={{fontSize:'13px',color:'var(--espn-text-muted)'}}>Share with all league members</p></div>
+              <div><p style={{fontSize:'12px',fontWeight:'600',color:'var(--espn-text-secondary)',textTransform:'uppercase',marginBottom:'8px'}}>Commissioner Access Code</p>
+              <p style={{fontSize:'1.5rem',fontWeight:'700',color:'var(--espn-orange)',marginBottom:'4px'}}>{commCode}</p>
+              <p style={{fontSize:'13px',color:'var(--espn-text-muted)'}}>Only for commissioners</p></div>
+            </div>
+            <div style={{flex:'1',display:'grid',gridTemplateColumns:'1fr 1fr',gap:'24px',alignContent:'center'}}>
+              <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Teams:</p><p style={{fontSize:'1.5rem',fontWeight:'700'}}>{teams.length}</p></div>
+              <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Players:</p><p style={{fontSize:'1.5rem',fontWeight:'700'}}>{players.length}</p></div>
+              <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Auction Type:</p><p style={{fontSize:'1.2rem',fontWeight:'700',textTransform:'capitalize'}}>{auctionType.replace('-',' ')}</p></div>
+              <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Google Sheets:</p><p style={{fontSize:'1.2rem',fontWeight:'700'}}>{scriptUrl?'✓ Configured':'Not configured'}</p></div>
+            </div>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'24px',marginTop:'16px'}}>
-            <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>League Code:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{leagueCode}</p></div>
-            <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Comm Code:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{commCode}</p></div>
-            <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Google Sheets:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{scriptUrl?'✓ Configured':'Not configured'}</p></div>
-          </div></div>
         </div></div>
         <button className="btn btn-secondary" onClick={unlaunchAuc} style={{width:'100%',padding:'16px',fontSize:'15px',marginTop:'20px'}}>UNLAUNCH AUCTION</button>
         {(phase==='active'||phase==='completed')&&<div className="card"><div className="card-header">Results</div><div className="card-body">
