@@ -670,7 +670,10 @@ function App() {
         const bidIdx = headers.findIndex(h => h.includes('bid') || h.includes('amount'));
         if (playerIdx === -1 || bidIdx === -1) return alert('CSV must have PlayerName and Bid columns');
         const players = auction?.players || [];
+        const t = auction?.teams?.[userTeamId];
+        const mx = t ? Math.max(0, (t.currentSalary !== undefined ? t.cap - t.currentSalary : t.cap - (t.sal || 0)) - (t.spotsAvailable !== undefined ? t.spotsAvailable : t.spots || 28) + 1) : 999;
         const newBids = { ...preBids };
+        const newOriginals = { ...originalPreBids };
         let count = 0;
         for (let i = 1; i < lines.length; i++) {
           const vals = lines[i].split(',').map(v => v.trim());
@@ -678,11 +681,13 @@ function App() {
           const bidAmount = parseFloat(vals[bidIdx]) || 0;
           const playerIndex = players.findIndex(p => p.name.toLowerCase() === playerName.toLowerCase());
           if (playerIndex !== -1) {
-            newBids[playerIndex] = bidAmount;
+            newOriginals[playerIndex] = bidAmount; // Store original from CSV
+            newBids[playerIndex] = Math.min(bidAmount, mx); // Cap to max
             count++;
           }
         }
         if (count === 0) return alert('No matching players found');
+        setOriginalPreBids(newOriginals);
         setPreBids(newBids);
         save(userTeamId, userTeamName, newBids, isComm);
         await savePre(newBids);
@@ -880,18 +885,19 @@ function App() {
     const updates = {};
     let hasChanges = false;
     
-    Object.entries(auction.teams).forEach(([tid, team]) => {
-      const teamPreBids = auction.preBids?.[tid] || {};
-      const maxBid = team ? parseFloat(Math.max(0, (team.cap || team.salaryCap || 100) - (team.sal || team.currentSalary || 0) - (team.spots || team.spotsAvailable || 1) + 1).toFixed(2)) : 0;
-      
-      Object.entries(teamPreBids).forEach(([playerId, bidAmount]) => {
-        if (bidAmount > maxBid) {
-          updates[`preBids/${tid}/${playerId}`] = maxBid;
-          hasChanges = true;
-          // Track this modification
-          setModifiedPreBids(prev => ({...prev, [playerId]: true}));
-        }
-      });
+    // Only validate winning team's pre-bids
+    const winningTeam = auction.teams[winnerId];
+    if (!winningTeam) return;
+    
+    const teamPreBids = auction.preBids?.[winnerId] || {};
+    const maxBid = parseFloat(Math.max(0, (winningTeam.currentSalary !== undefined ? winningTeam.cap - winningTeam.currentSalary : winningTeam.cap - (winningTeam.sal || 0)) - (winningTeam.spotsAvailable !== undefined ? winningTeam.spotsAvailable : winningTeam.spots || 28) + 1).toFixed(2));
+    
+    Object.entries(teamPreBids).forEach(([playerId, bidAmount]) => {
+      if (bidAmount > maxBid) {
+        updates[`preBids/${winnerId}/${playerId}`] = maxBid;
+        hasChanges = true;
+        // originalPreBids NOT modified - stays as user entered
+      }
     });
     
     if (hasChanges) {
@@ -1245,7 +1251,7 @@ function App() {
                     <td style={{textAlign:'center'}}>{p.owner}</td>
                     <td style={{textAlign:'center'}}><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                     {viewMode !== 'mobile' && <td style={{textAlign:'center'}}>{fmt(p.fantasyPoints)}</td>}
-                    <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                    <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] ? parseFloat(preBids[i]).toFixed(2) : ''} onChange={e => updPre(i, e.target.value)} min="0" step="0.01" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                   </tr>
                 ); })}
               </tbody>
@@ -1286,7 +1292,7 @@ function App() {
                         <td>{p.owner}</td>
                         <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                         <td>{fmt(p.fantasyPoints)}</td>
-                        <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                        <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] ? parseFloat(preBids[i]).toFixed(2) : ''} onChange={e => updPre(i, e.target.value)} min="0" step="0.01" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                       </tr>
                     );
                   })}
@@ -1296,7 +1302,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.3.0</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.0</div>
       </>
     );
   }
@@ -1406,7 +1412,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.3.0</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.0</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1585,7 +1591,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.3.0</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.0</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1705,7 +1711,7 @@ function App() {
                           <span style={{fontSize:'12px',marginRight:'4px'}}>$</span>
                           <input 
                             type="number" 
-                            value={preBids[p.idx] || ''} 
+                            value={preBids[p.idx] ? parseFloat(preBids[p.idx]).toFixed(2) : ''} 
                             onChange={e => {const v=parseFloat(e.target.value)||0;if(v===0||v>=1)updPre(p.idx,e.target.value)}} 
                             min="0" 
                             step="0.01" 
@@ -1771,7 +1777,7 @@ function App() {
                   <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong>{isTie ? ` • Minimum Bid: $${fmt(hi)}` : ' • Enter $0.00 to pass'}</div>
                   <div className="bid-options" style={{ marginTop: '14px' }}>
                     {pb > 0 && !isTie && <div className="bid-option"><label>Use Pre-Bid</label><div className={'prebid-value' + (usePre ? ' selected' : '')} onClick={() => setUsePre(true)}>${fmt(pb)}</div></div>}
-                    <div className="bid-option"><label>Enter Amount</label><input type="number" value={curBid} onChange={e => { setCurBid(e.target.value); setUsePre(false); }} min={isTie ? hi : 0} step="0.01" onFocus={() => setUsePre(false)} placeholder={isTie ? hi.toFixed(2) : "0.00"} /></div>
+                    <div className="bid-option"><label>Enter Amount</label><input type="number" value={curBid ? parseFloat(curBid).toFixed(2) : ''} onChange={e => { setCurBid(e.target.value); setUsePre(false); }} min={isTie ? hi : 0} step="0.01" onFocus={() => setUsePre(false)} placeholder={isTie ? hi.toFixed(2) : "0.00"} /></div>
                     <button className="btn btn-blue" style={{ padding: '14px 28px', fontSize: '16px' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
                   </div>
                   {bidErr && <div className="bid-error">{bidErr}</div>}
@@ -1839,7 +1845,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.3.0</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.0</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
