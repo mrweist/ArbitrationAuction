@@ -439,7 +439,7 @@ function App() {
   const [renderTrigger, setRenderTrigger] = useState(0); // Force re-render trigger
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // Mobile off-canvas left sidebar
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false); // Mobile off-canvas right sidebar
-  const [modifiedPreBids, setModifiedPreBids] = useState({}); // Track auto-modified pre-bids
+  // modifiedPreBids removed - using originalPreBids instead
   const abbreviateName = (name) => { if (!name) return ''; const parts = name.split(' '); if (parts.length === 1) return name; return parts[0].charAt(0) + '. ' + parts.slice(1).join(' '); };
   const sKey = auctionId || 'x';
 
@@ -1245,7 +1245,7 @@ function App() {
                     <td style={{textAlign:'center'}}>{p.owner}</td>
                     <td style={{textAlign:'center'}}><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                     {viewMode !== 'mobile' && <td style={{textAlign:'center'}}>{fmt(p.fantasyPoints)}</td>}
-                    <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}>{modifiedPreBids[i] && <span style={{color:'var(--espn-blue)'}} title="Auto-reduced">📉</span>}<input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                    <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                   </tr>
                 ); })}
               </tbody>
@@ -1286,7 +1286,7 @@ function App() {
                         <td>{p.owner}</td>
                         <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                         <td>{fmt(p.fantasyPoints)}</td>
-                        <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}>{modifiedPreBids[i] && <span style={{color:'var(--espn-blue)'}} title="Auto-reduced">📉</span>}<input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                        <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" value={preBids[i] || ''} onChange={e => updPre(i, e.target.value)} min="0" style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal' }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                       </tr>
                     );
                   })}
@@ -1697,11 +1697,11 @@ function App() {
                     {!done && !own && <div className="prebid-input">{(() => {
                       const mx = maxBid(auction?.teams?.[userTeamId]);
                       const currentBid = preBids[p.idx] || 0;
-                      const originalBid = originalPreBids[p.idx] || currentBid;
-                      const isCapped = originalBid > mx && currentBid === mx;
+                      const originalBid = originalPreBids[p.idx];
+                      const isCapped = originalBid && originalBid > currentBid;
                       return (
                         <>
-                          {isCapped && <span style={{color:'var(--espn-orange)',marginRight:'4px'}} title={`Original bid $${fmt(originalBid)} capped to max $${fmt(mx)}`}>⚠️</span>}
+                          {isCapped && <span style={{color:'var(--espn-orange)',marginRight:'4px'}} title={`Capped to max $${fmt(mx)}`}>⚠️</span>}
                           <span style={{fontSize:'12px',marginRight:'4px'}}>$</span>
                           <input 
                             type="number" 
