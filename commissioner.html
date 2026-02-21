@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v3.7.0</title>
+  <title>Arbitration Auction - Commissioner Setup v3.8.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -335,6 +335,7 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
           if(d.sheetsConfig){setScriptUrl(d.sheetsConfig.scriptUrl||'');setSheetUrl(d.sheetsConfig.sheetUrl||'');setSheetId(d.sheetsConfig.sheetId||'')}
           const ph=d.phase||'created';
           setPhase(ph);
+          if(ph==='building'){if(d.buildingStep)setStep(d.buildingStep);if(d.buildingDone)setDone(d.buildingDone)}
           if(ph!=='building'){setAucId(leagueId);setCreated(true);setStep(6)}
         }
       });
@@ -364,15 +365,21 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
     // Auto-fetch Google Sheets URL from web app
     if(finalUrl&&finalUrl.includes('script.google.com')){
       try{
+        console.log('🔵 Fetching sheets URL from:', finalUrl+'?action=getSheetUrl');
         const response=await fetch(finalUrl+'?action=getSheetUrl');
+        console.log('📥 Response status:', response.status);
         const data=await response.json();
+        console.log('📦 Response data:', data);
         if(data.sheetUrl){
+          console.log('✅ Auto-filled sheets URL:', data.sheetUrl);
           setSheetUrl(data.sheetUrl);
           const id=extractSheetId(data.sheetUrl);
           if(id)setSheetId(id);
+        }else{
+          console.log('⚠️ No sheetUrl in response');
         }
       }catch(e){
-        console.log('Could not auto-fetch sheets URL:',e.message);
+        console.log('❌ Could not auto-fetch sheets URL:',e.message);
       }
     }
   };
@@ -472,7 +479,9 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
       players:sorted.map((p,i)=>({...p,status:'pending',order:i})),
       hittingScoring:hitScore,
       pitchingScoring:pitScore,
-      sheetsConfig:sheetsCfg
+      sheetsConfig:sheetsCfg,
+      buildingStep:step,
+      buildingDone:done
     });
     await db.ref(`admins/${admin.username}/leagues/${id}`).update({name:league,sheetsUrl:sheetUrl||null});
     console.log('✅ autoSave complete. Teams:', Object.keys(tObj).length, 'Players:', sorted.length, 'Sheets:', !!sheetsCfg);
