@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arbitration Auction - Commissioner Setup v3.0.0</title>
+  <title>Arbitration Auction - Commissioner Setup v3.1.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -519,6 +519,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
             <div className="form-group"><label>Auction Type</label><select value={auctionType} onChange={e=>setAuctionType(e.target.value)}><option value="standard">Standard</option><option value="vickrey">Vickrey</option><option value="vickrey-modified">Vickrey Modified</option></select><div className="form-hint">{auctionType==='standard'?'Highest bid for all prices':auctionType==='vickrey'?'2nd highest for all prices':'2nd highest for Keep/Self-stick, highest for Stick'}</div></div>
           </div>
         <div style={{display:'flex',gap:'16px',marginTop:'24px'}}><button className="btn btn-primary" onClick={()=>finish(1)} disabled={!league||!leagueCode||!commCode}>Continue →</button></div>
+        </div></div>
       </>}
 
       {step===2&&<><div className="page-header"><h1 className="page-title">Teams</h1><p className="page-subtitle">Configure team settings</p></div>
@@ -606,10 +607,12 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
           <p style={{fontSize:'13px',color:'var(--espn-text-muted)'}}>Only for commissioners</p></div>
         </div></div>
         <div className="card"><div className="card-header">League Summary</div><div className="card-body">
-          <div className="form-row"><div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Teams:</p><p style={{fontSize:'1.2rem',fontWeight:'600'}}>{teams.length}</p></div>
-          <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Players:</p><p style={{fontSize:'1.2rem',fontWeight:'600'}}>{players.length}</p></div></div>
-          <div className="form-row" style={{marginTop:'16px'}}><div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Timer:</p><p style={{fontSize:'1.2rem',fontWeight:'600'}}>{timer}s</p></div>
-          <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px'}}>Google Sheets:</p><p style={{fontSize:'1.2rem',fontWeight:'600'}}>{scriptUrl?'✓ Configured':'Not configured'}</p></div></div>
+          <div className="form-row"><div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Teams:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{teams.length}</p></div>
+          <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Players:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{players.length}</p></div></div>
+          <div className="form-row" style={{marginTop:'16px'}}><div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Timer:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{timer}s</p></div>
+          <div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Auction Type:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center',textTransform:'capitalize'}}>{auctionType.replace('-',' ')}</p></div></div>
+          <div className="form-row" style={{marginTop:'16px'}}><div><p style={{fontSize:'13px',color:'var(--espn-text-secondary)',marginBottom:'4px',textAlign:'center'}}>Google Sheets:</p><p style={{fontSize:'1.2rem',fontWeight:'600',textAlign:'center'}}>{scriptUrl?'✓ Configured':'Not configured'}</p></div>
+          <div></div></div>
         </div></div>
         {(phase==='active'||phase==='completed')&&<div className="card"><div className="card-header">Results</div><div className="card-body">
           <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>View auction results:</p>
