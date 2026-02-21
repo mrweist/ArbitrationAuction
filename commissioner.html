@@ -257,7 +257,7 @@ function LeagueDashboard({admin,onSelectLeague,onCreateNew,onLogout}){
 }
 
 // Commissioner Setup Component (existing functionality)
-function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
+function CommissionerSetup({admin,onComplete,onBack,onLogout}){
   const[step,setStep]=useState(1);
   const[done,setDone]=useState([]);
   const[db,setDb]=useState(null);
@@ -300,6 +300,7 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
   const[fetching,setFetching]=useState(false);
   const[fetchProg,setFetchProg]=useState({c:0,t:0});
   const[aucId,setAucId]=useState(null);
+  const[leagueId,setLeagueId]=useState(null);
   const[created,setCreated]=useState(false);
   const[copied,setCopied]=useState(false);
   const[phase,setPhase]=useState('building');
@@ -347,12 +348,27 @@ function CommissionerSetup({admin,leagueId,onComplete,onBack,onLogout}){
 
   const copyScript=()=>{navigator.clipboard.writeText(APPS_SCRIPT_CODE);setCopied(true);setTimeout(()=>setCopied(false),2000)};
   
-  const handleScriptUrlChange=(val)=>{
+  const handleScriptUrlChange=async(val)=>{
+    let finalUrl=val;
     // If user pastes just the deployment ID (no slashes), construct full URL
     if(val&&!val.includes('/')&&val.length>20){
-      setScriptUrl(`https://script.google.com/macros/s/${val}/exec`);
-    } else {
-      setScriptUrl(val);
+      finalUrl=`https://script.google.com/macros/s/${val}/exec`;
+    }
+    setScriptUrl(finalUrl);
+    
+    // Auto-fetch Google Sheets URL from web app
+    if(finalUrl&&finalUrl.includes('script.google.com')){
+      try{
+        const response=await fetch(finalUrl+'?action=getSheetUrl');
+        const data=await response.json();
+        if(data.sheetUrl){
+          setSheetUrl(data.sheetUrl);
+          const id=extractSheetId(data.sheetUrl);
+          if(id)setSheetId(id);
+        }
+      }catch(e){
+        console.log('Could not auto-fetch sheets URL:',e.message);
+      }
     }
   };
   
