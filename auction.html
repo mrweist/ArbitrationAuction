@@ -1304,7 +1304,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.13</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.14</div>
       </>
     );
   }
@@ -1414,7 +1414,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.13</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.14</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1594,7 +1594,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.13</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.14</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1716,13 +1716,16 @@ function App() {
                               onBlur={e => {
                                 let v = parseFloat(e.target.value) || 0;
                                 if (v > 0 && v < 1) v = 1;
+                                if (v > mx) v = mx;
                                 updPre(p.idx, v.toString());
                                 e.target.value = v.toFixed(2);
                               }}
                               onKeyDown={e => {
+                                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                  e.preventDefault();
+                                }
                                 const val = parseFloat(e.target.value) || 0;
                                 if (e.key === 'ArrowUp') {
-                                  e.preventDefault();
                                   if (val < 1) {
                                     e.target.value = '1.00';
                                     updPre(p.idx, '1');
@@ -1733,7 +1736,6 @@ function App() {
                                   }
                                 }
                                 if (e.key === 'ArrowDown') {
-                                  e.preventDefault();
                                   if (val <= 1) {
                                     e.target.value = '0.00';
                                     updPre(p.idx, '0');
@@ -1874,7 +1876,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.13</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.14</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
