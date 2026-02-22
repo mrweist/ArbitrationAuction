@@ -729,7 +729,7 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
           <p style={{marginBottom:'16px',color:'var(--espn-text-secondary)'}}>View auction results:</p>
           <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>{sheetUrl&&<button className="btn btn-secondary" onClick={()=>window.open(sheetUrl,'_blank')} style={{flex:'1'}}>📊 Google Sheet</button>}<button className="btn btn-secondary" onClick={()=>downloadCSV(players.map(p=>`${p.name},${p.team||''},${p.position||''},${p.owner||''},${p.arbYear||''},${p.winner||''},${p.decision||''},${p.price||''},${p.years||''},${p.highBid||''},${p.highBidder||''}`).join('\n'),'results.csv')} style={{flex:'1'}}>📅 Download CSV</button></div>
         </div></div>}
-</>}
+</>}</>}
       <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v4.4.2</div>
     </main>
   </>;
