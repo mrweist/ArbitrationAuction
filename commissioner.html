@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Commissioner Setup v4.4.2</title>
+  <title>Commissioner Setup v4.4.3</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -414,6 +414,8 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
   
   const getStepStatus=(s)=>{
     // Returns: 'valid' (green), 'invalid' (gray), 'warning' (orange), or 'incomplete' (not done yet)
+    // Special case: Step 6 should be green if phase='created', regardless of done array
+    if(s===6&&phase==='created')return 'valid';
     if(!done.includes(s))return 'incomplete';
     if(s===1)return isStep1Valid()?'valid':'invalid';
     if(s===2)return isStep2Valid()?'valid':'invalid';
@@ -730,7 +732,7 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
           <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>{sheetUrl&&<button className="btn btn-secondary" onClick={()=>window.open(sheetUrl,'_blank')} style={{flex:'1'}}>📊 Google Sheet</button>}<button className="btn btn-secondary" onClick={()=>downloadCSV(players.map(p=>`${p.name},${p.team||''},${p.position||''},${p.owner||''},${p.arbYear||''},${p.winner||''},${p.decision||''},${p.price||''},${p.years||''},${p.highBid||''},${p.highBidder||''}`).join('\n'),'results.csv')} style={{flex:'1'}}>📅 Download CSV</button></div>
         </div></div>}
 </>}</>}
-      <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v4.4.2</div>
+      <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v4.4.3</div>
     </main>
   </>;
 }
