@@ -1304,7 +1304,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.8</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.9</div>
       </>
     );
   }
@@ -1414,7 +1414,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.8</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.9</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1594,7 +1594,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.8</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.9</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1695,6 +1695,9 @@ function App() {
                 const own = auction?.teams?.[userTeamId]?.name === p.owner;
                 const won = p.result?.winnerId === userTeamId;
                 const done = p.status === 'completed';
+                const mx = maxBid(auction?.teams?.[userTeamId]);
+                const originalBid = originalPreBids[p.idx];
+                const isCapped = originalBid && originalBid > (preBids[p.idx] || 0);
                 let cn = 'player-queue-item'; if (cur) cn += ' current'; else if (own && !done) cn += ' own-player'; if (won) cn += ' won-player'; if (done && !cur) cn += ' completed';
                 return (
                   <div key={p.idx} className={cn}>
@@ -1703,12 +1706,7 @@ function App() {
                       <div className="player-queue-name">{p.name}</div>
                       <div className="player-queue-details">{p.owner}</div>
                     </div>
-                    {!done && !own && (() => {
-                      const mx = maxBid(auction?.teams?.[userTeamId]);
-                      const originalBid = originalPreBids[p.idx];
-                      const isCapped = originalBid && originalBid > (preBids[p.idx] || 0);
-                      return (
-                        <div className="prebid-input">
+                    {!done && !own && <div className="prebid-input">
                           {isCapped && <span style={{color:'var(--espn-orange)',marginRight:'4px'}} title={`Capped to max $${fmt(mx)}`}>⚠️</span>}
                           <span style={{fontSize:'12px',marginRight:'4px'}}>$</span>
                             <input 
@@ -1752,9 +1750,7 @@ function App() {
                               style={isCapped ? {color:'var(--espn-error)',fontWeight:'bold'} : {}} 
                               disabled={own} 
                             />
-                        </div>
-                      );
-                    })()}
+                    </div>}
                     {p.result && <div style={{display:'flex',flexDirection:'column',justifyContent:'center',gap:'4px'}}><div className={'result-badge ' + p.result.decision}>{p.result.decision.toUpperCase()} ${fmt(p.result.price)}</div>{isComm && <button className="undo-btn" onClick={() => undo(p.idx)}>Undo</button>}</div>}
                   </div>
                 );
@@ -1878,7 +1874,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.8</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.9</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
