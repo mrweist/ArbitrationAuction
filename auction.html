@@ -561,6 +561,23 @@ function App() {
         else setError('Auction not found');
         setLoading(false);
       });
+
+      // Dedicated listener: keep local preBids state in sync with Firebase
+      // This ensures capping by validateAndReducePreBids is reflected locally
+      if (userTeamId) {
+        database.ref('auctions/' + auctionId + '/preBids/' + userTeamId).on('value', snap => {
+          const fb = snap.val();
+          if (fb) setPreBids(prev => {
+            // Only update keys that differ to avoid triggering re-renders on every keystroke
+            const merged = { ...prev };
+            let changed = false;
+            Object.entries(fb).forEach(([k, v]) => {
+              if (merged[k] !== v) { merged[k] = v; changed = true; }
+            });
+            return changed ? merged : prev;
+          });
+        });
+      }
     } catch (e) { setError('Connection failed'); setLoading(false); }
   }, [auctionId, urlRole]);
 
@@ -991,28 +1008,39 @@ function App() {
   };
 
 
-  const validateAndReducePreBids = async (winnerId) => {
+  const validateAndReducePreBids = async (updatedTeams) => {
     if (!db || !auction?.teams) return;
+    const teams = updatedTeams || auction.teams;
     const updates = {};
-    let hasChanges = false;
-    
-    // Only validate winning team's pre-bids
-    const winningTeam = auction.teams[winnerId];
-    if (!winningTeam) return;
-    
-    const teamPreBids = auction.preBids?.[winnerId] || {};
-    const maxBid = parseFloat(Math.max(0, (winningTeam.currentSalary !== undefined ? winningTeam.cap - winningTeam.currentSalary : winningTeam.cap - (winningTeam.sal || 0)) - (winningTeam.spotsAvailable !== undefined ? winningTeam.spotsAvailable : winningTeam.spots || 28) + 1).toFixed(2));
-    
-    Object.entries(teamPreBids).forEach(([playerId, bidAmount]) => {
-      if (bidAmount > maxBid) {
-        updates[`preBids/${winnerId}/${playerId}`] = maxBid;
-        hasChanges = true;
-        // originalPreBids NOT modified - stays as user entered
-      }
+
+    // Repass ALL teams' pre-bids against their current max
+    Object.entries(teams).forEach(([tid, team]) => {
+      const mx = parseFloat(Math.max(0,
+        (team.currentSalary !== undefined ? team.cap - team.currentSalary : team.cap - (team.sal || 0))
+        - (team.spotsAvailable !== undefined ? team.spotsAvailable : team.spots || 28)
+        + 1
+      ).toFixed(2));
+      const teamPreBids = auction.preBids?.[tid] || {};
+      Object.entries(teamPreBids).forEach(([playerId, bidAmount]) => {
+        if (parseFloat(bidAmount) > mx) {
+          updates[\`preBids/\${tid}/\${playerId}\`] = mx;
+        }
+      });
     });
-    
-    if (hasChanges) {
+
+    if (Object.keys(updates).length > 0) {
       await db.ref('auctions/' + auctionId).update(updates);
+      // Also update local preBids state if this is the current user's team
+      if (userTeamId && teams[userTeamId]) {
+        const userUpdates = Object.fromEntries(
+          Object.entries(updates)
+            .filter(([k]) => k.startsWith(\`preBids/\${userTeamId}/\`))
+            .map(([k, v]) => [k.split('/')[2], v])
+        );
+        if (Object.keys(userUpdates).length > 0) {
+          setPreBids(prev => ({ ...prev, ...userUpdates }));
+        }
+      }
     }
   };
   const finalize = async (d, winner, wid, price, years, hb) => {
@@ -1042,7 +1070,7 @@ function App() {
     }));
     if (db) await db.ref('auctions/' + auctionId).update(upd);
     syncToSheets('sync', { player: { name: p.name, team: p.team, position: p.position, owner: p.owner, arbYear: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids } });
-    await validateAndReducePreBids(wid);
+    await validateAndReducePreBids({ ...auction.teams, [wid]: { ...auction.teams[wid], currentSalary: newSal, spotsAvailable: newSpots } });
     setCeleb({ d, player: p.name, winner, price, years, hiBidder: hb?.teamName || 'None' });
     setTimeout(async () => {
       setCeleb(null); const nx = auction.currentPlayerIndex + 1;
@@ -1385,7 +1413,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.35</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.37</div>
       </>
     );
   }
@@ -1494,7 +1522,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.35</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.37</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1674,7 +1702,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.35</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.37</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -2031,7 +2059,7 @@ function App() {
               )}
             </div>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.35</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.37</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
