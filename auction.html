@@ -608,6 +608,7 @@ function App() {
       setPreBids(recapped);
       savePre(recapped);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auction?.teams?.[userTeamId]?.currentSalary, auction?.teams?.[userTeamId]?.spotsAvailable, auction?.teams?.[userTeamId]?.sal, auction?.teams?.[userTeamId]?.spots]);
 
   // Device detection and view mode
@@ -857,7 +858,16 @@ function App() {
 
   const submitBid = async () => {
     setBidErr('');
-    const amt = usePre ? (preBids[auction.currentPlayerIndex] || 0) : parseFloat(curBid) || 0;
+    const t = auction?.teams?.[userTeamId];
+    const mx = t ? Math.max(0, (t.currentSalary !== undefined ? t.cap - t.currentSalary : t.cap - (t.sal || 0)) - (t.spotsAvailable !== undefined ? t.spotsAvailable : t.spots || 28) + 1) : 999;
+    const rawPb = preBids[auction.currentPlayerIndex] || 0;
+    const clampedPb = Math.min(rawPb, mx);
+    if (usePre && rawPb > 0 && clampedPb !== rawPb) {
+      const nb = { ...preBids, [auction.currentPlayerIndex]: clampedPb };
+      setPreBids(nb);
+      savePre(nb);
+    }
+    const amt = usePre ? clampedPb : parseFloat(curBid) || 0;
     const isTiebreaker = auction?.phase === 'tiebreaker';
     if (isTiebreaker) {
       const _secondHi = get2ndHighestBid(auction?.revealedBids);
@@ -1375,7 +1385,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.34</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.35</div>
       </>
     );
   }
@@ -1484,7 +1494,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.34</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.35</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1664,7 +1674,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.34</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.35</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1846,19 +1856,17 @@ function App() {
                     {auction.phase === 'waiting' && <>
                       {isComm ? <>
                         {viewMode === 'mobile'
-                          ? <div style={{display:'flex',alignItems:'center',gap:'12px',width:'100%',height:'100%'}}>
-                              <div className="timer-display" style={{flex:'0 0 auto'}}>{fmtTime(auction.timerDuration)}</div>
-                              <div style={{flex:1,display:'flex',flexDirection:'column',gap:'8px'}}>
-                                <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',flexWrap:'wrap'}}>
-                                  <label style={{fontSize:'12px',fontWeight:600,color:'var(--espn-text-secondary)'}}>Timer:</label>
-                                  <input type="number" value={timerMinutes} onChange={(e)=>{setTimerMinutes(e.target.value);const total=parseInt(e.target.value||0)*60+parseInt(timerSeconds||0);if(db)db.ref('auctions/'+auctionId+'/timerDuration').set(total)}} min="0" style={{width:'46px',padding:'6px',fontSize:'13px',borderRadius:'6px',border:'1px solid var(--espn-border)',textAlign:'center'}} placeholder="0"/>
-                                  <span style={{fontSize:'12px',color:'var(--espn-text-secondary)'}}>m</span>
-                                  <input type="number" value={timerSeconds} onChange={(e)=>{setTimerSeconds(e.target.value);const total=parseInt(timerMinutes||0)*60+parseInt(e.target.value||0);if(db)db.ref('auctions/'+auctionId+'/timerDuration').set(total)}} min="0" max="59" style={{width:'46px',padding:'6px',fontSize:'13px',borderRadius:'6px',border:'1px solid var(--espn-border)',textAlign:'center'}} placeholder="0"/>
-                                  <span style={{fontSize:'12px',color:'var(--espn-text-secondary)'}}>s</span>
-                                </div>
-                                <button className="btn btn-primary" style={{width:'100%',padding:'10px'}} onClick={startBid}>▶ Start Bidding</button>
+                          ? <>
+                              <div className="timer-display">{fmtTime(auction.timerDuration)}</div>
+                              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',flexWrap:'wrap',margin:'8px 0'}}>
+                                <label style={{fontSize:'12px',fontWeight:600,color:'var(--espn-text-secondary)'}}>Timer:</label>
+                                <input type="number" value={timerMinutes} onChange={(e)=>{setTimerMinutes(e.target.value);const total=parseInt(e.target.value||0)*60+parseInt(timerSeconds||0);if(db)db.ref('auctions/'+auctionId+'/timerDuration').set(total)}} min="0" style={{width:'46px',padding:'6px',fontSize:'13px',borderRadius:'6px',border:'1px solid var(--espn-border)',textAlign:'center'}} placeholder="0"/>
+                                <span style={{fontSize:'12px',color:'var(--espn-text-secondary)'}}>m</span>
+                                <input type="number" value={timerSeconds} onChange={(e)=>{setTimerSeconds(e.target.value);const total=parseInt(timerMinutes||0)*60+parseInt(e.target.value||0);if(db)db.ref('auctions/'+auctionId+'/timerDuration').set(total)}} min="0" max="59" style={{width:'46px',padding:'6px',fontSize:'13px',borderRadius:'6px',border:'1px solid var(--espn-border)',textAlign:'center'}} placeholder="0"/>
+                                <span style={{fontSize:'12px',color:'var(--espn-text-secondary)'}}>s</span>
                               </div>
-                            </div>
+                              <button className="btn btn-primary" style={{width:'100%'}} onClick={startBid}>▶ Start Bidding</button>
+                            </>
                           : <>
                               <div className="timer-display">{fmtTime(auction.timerDuration)}</div>
                               <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginTop:'16px',marginBottom:'16px',flexWrap:'wrap'}}>
@@ -2023,7 +2031,7 @@ function App() {
               )}
             </div>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.34</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.35</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
