@@ -111,6 +111,14 @@
     .your-bid-section{background:var(--espn-bg-card);border:3px solid var(--espn-blue);border-radius:8px;padding:20px;height:100%;box-shadow:0 2px 6px rgba(0,0,0,.07)}
     .your-bid-section.submitted{border-color:var(--espn-success)}
     .your-bid-section h3{font-family:'Roboto Condensed',sans-serif;font-size:1.1rem;text-transform:uppercase;color:var(--espn-blue);margin-bottom:12px}
+    .flip-card{width:100%;height:100%;min-height:220px;perspective:1000px;cursor:pointer;border-radius:8px}
+    .flip-card-inner{position:relative;width:100%;height:100%;min-height:220px;transition:transform 0.5s ease;transform-style:preserve-3d}
+    .flip-card.revealed .flip-card-inner{transform:rotateY(180deg)}
+    .flip-card-front,.flip-card-back{position:absolute;width:100%;height:100%;min-height:220px;backface-visibility:hidden;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+    .flip-card-front{background:#f0faf5;border:2px solid var(--espn-success)}
+    .flip-card-back{background:#f0faf5;border:2px solid var(--espn-success);transform:rotateY(180deg)}
+    .flip-hint{font-size:12px;color:var(--espn-text-muted);margin-top:12px}
+    .view-mobile .flip-card,.view-mobile .flip-card-inner,.view-mobile .flip-card-front,.view-mobile .flip-card-back{min-height:140px}
     .your-bid-section.submitted h3{color:var(--espn-success)}
     .bid-options{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
     .bid-option{flex:1;min-width:100px}
@@ -135,13 +143,13 @@
     .price-box .price-value{font-family:'Roboto Condensed',sans-serif;font-size:1.8rem;font-weight:700}
     .price-box.keep .price-value{color:var(--espn-success)}
     .price-box.stick .price-value{color:var(--espn-blue)}
-    .decision-buttons{display:flex;gap:12px;width:100%}
+    .decision-buttons{display:flex;gap:12px;width:100%;min-height:180px}
     .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;font-size:14px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .btn:disabled{opacity:.4;cursor:not-allowed}
     .btn-primary{background:var(--espn-red);color:#fff}
     .btn-secondary{background:var(--espn-bg-table-header);color:var(--espn-text-primary);border:1px solid var(--espn-border)}
     .btn-blue{background:var(--espn-blue);color:#fff}
-    .btn-decision{flex:1;padding:22px 14px;flex-direction:column;gap:6px;font-size:20px}
+    .btn-decision{flex:1;padding:22px 14px;flex-direction:column;gap:6px;font-size:20px;align-self:stretch}
     .btn-keep{background:var(--espn-success);color:#fff}
     .btn-stick{background:var(--espn-blue);color:#fff}
     .btn-self-stick{background:#6f42c1;color:#fff}
@@ -185,8 +193,10 @@
     @keyframes popIn{0%{transform:scale(0)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
     .confetti{position:absolute;width:12px;height:12px;animation:confettiFall 3s ease-out forwards;z-index:5}
     @keyframes confettiFall{0%{transform:translateY(-100vh) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
-    .blood-drip{position:absolute;top:-10px;background:linear-gradient(180deg,#660000 0%,#990000 30%,#cc0000 60%,#ff0000 100%);border-radius:0 0 50% 50%;animation:drip 2.5s ease-in forwards;z-index:5;box-shadow:0 0 15px rgba(255,0,0,.6)}
-    @keyframes drip{0%{height:0}50%{height:35vh}100%{height:105vh}}
+    .blood-drip{position:absolute;top:0;background:linear-gradient(180deg,#4a0000 0%,#7a0000 20%,#8b0000 50%,#a00000 80%,#6b0000 100%);border-radius:0 0 40% 40%;animation:drip var(--drip-dur,2.8s) cubic-bezier(.2,.0,.4,1) forwards;z-index:5}
+    .blood-drip::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:calc(100% + 4px);height:16px;background:#8b0000;border-radius:50%;animation:dripHead var(--drip-dur,2.8s) cubic-bezier(.2,.0,.4,1) forwards}
+    @keyframes drip{0%{height:0;opacity:1}15%{height:8px}60%{height:40vh}85%{height:70vh}100%{height:110vh;opacity:.85}}
+    @keyframes dripHead{0%{transform:translateX(-50%) scaleX(1)}40%{transform:translateX(-50%) scaleX(1.3)}70%{transform:translateX(-50%) scaleX(.9)}100%{transform:translateX(-50%) scaleX(.7)}}
     .tiebreaker-banner{background:var(--espn-orange);color:#fff;padding:16px;text-align:center;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:1.1rem;text-transform:uppercase;max-width:800px;margin:0 auto 24px;border-radius:8px}
     .loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-size:18px}
     .loading-spinner{width:40px;height:40px;border:4px solid var(--espn-border);border-top-color:var(--espn-red);border-radius:50%;animation:spin .8s linear infinite}
@@ -227,7 +237,8 @@
     .view-mobile .bid-option input{padding:var(--space-4);font-size:var(--text-xl)}
     .view-mobile .nav-tabs{display:none}
     .view-mobile .bottom-nav{display:flex}
-    .view-mobile .reveal-card{padding:16px}
+    .view-mobile .reveal-card{padding:16px;min-height:120px}
+    .view-mobile .flip-card,.view-mobile .flip-card-inner,.view-mobile .flip-card-front,.view-mobile .flip-card-back{min-height:120px}
     .view-mobile .reveal-amount{font-size:2.5rem;margin:4px 0}
     .view-mobile .reveal-label{font-size:11px}
     .view-mobile .reveal-bidder{font-size:13px}
@@ -415,6 +426,7 @@ function App() {
   const [curBid, setCurBid] = useState('');
   const [usePre, setUsePre] = useState(true);
   const [bidOk, setBidOk] = useState(false);
+  const [bidRevealed, setBidRevealed] = useState(false);
   const [bidErr, setBidErr] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef(null);
@@ -535,7 +547,7 @@ function App() {
   // Keep phaseRef current so timer callbacks always read the latest phase
   useEffect(() => { phaseRef.current = auction?.phase; }, [auction?.phase]);
 
-  useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); }, [auction?.currentPlayerIndex]);
+  useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); setBidRevealed(false); }, [auction?.currentPlayerIndex]);
 
   // Device detection and view mode
   useEffect(() => {
@@ -1050,7 +1062,12 @@ function App() {
   const canTieBid = () => auction?.tiebreakerTeams?.includes(userTeamId);
 
   const confetti = () => ['#00703c', '#f7a500', '#6f42c1', '#0b6ebd'].flatMap((c, i) => Array.from({ length: 12 }).map((_, j) => <div key={i + '-' + j} className="confetti" style={{ left: (Math.random() * 100) + '%', background: c, animationDelay: (Math.random() * 0.5) + 's', borderRadius: Math.random() > 0.5 ? '50%' : '0' }} />));
-  const bloodDrips = () => Array.from({ length: 20 }).map((_, i) => <div key={i} className="blood-drip" style={{ left: (2 + i * 5) + '%', animationDelay: (Math.random() * 1.2) + 's', width: (18 + Math.random() * 25) + 'px' }} />);
+  const bloodDrips = () => Array.from({ length: 20 }).map((_, i) => {
+    const w = 8 + Math.random() * 22;
+    const dur = 2.2 + Math.random() * 1.8;
+    const delay = Math.random() * 1.4;
+    return <div key={i} className="blood-drip" style={{ left: (1 + i * 4.8) + '%', width: w + 'px', animationDelay: delay + 's', '--drip-dur': dur + 's', borderRadius: `0 0 ${30 + Math.random()*30}% ${30 + Math.random()*30}%` }} />;
+  });
 
   const HitStats = ({ p }) => {
     const s = p?.hittingStats; if (!s) return null; const sc = auction?.hittingScoring || {};
@@ -1302,7 +1319,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.26</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.27</div>
       </>
     );
   }
@@ -1411,7 +1428,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.26</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.27</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1591,7 +1608,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.26</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.27</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1827,25 +1844,34 @@ function App() {
                     </div>
                   )}
                   {auction.phase === 'reveal' && (
-                    <div className="your-bid-section" style={{borderColor:'var(--espn-success)',background:'#f0faf5',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',padding:'32px 24px',gap:'0'}}>
-                      {canBid && (() => {
-                        const myRevealedBid = auction?.revealedBids?.[userTeamId];
-                        const myAmt = myRevealedBid?.amount ?? null;
-                        // Fall back to local state when revealedBids not yet written (during reveal phase)
-                        const localAmt = bidOk ? (usePre && pb ? pb : parseFloat(curBid) || 0) : null;
-                        const displayAmt = myAmt !== null ? myAmt : localAmt;
-                        const didBid = displayAmt !== null && displayAmt > 0;
-                        return <>
-                          <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'var(--espn-success)',marginBottom:'16px'}}>✓ Bidding Closed</div>
-                          <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.5px',color:'var(--espn-text-muted)',marginBottom:'6px'}}>Your Bid</div>
-                          <div style={{fontFamily:'Roboto Condensed',fontSize:'3.5rem',fontWeight:700,color:didBid?'var(--espn-text-primary)':'var(--espn-text-muted)',lineHeight:1,marginBottom:'16px'}}>{didBid ? `$${fmt(displayAmt)}` : 'PASS'}</div>
-                          <div style={{fontSize:'12px',color:'var(--espn-text-muted)'}}>{didBid ? 'High bidder revealed after decision' : 'You passed on this player'}</div>
-                        </>;
-                      })()}
-                      {!canBid && <>
-                        <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'var(--espn-success)',marginBottom:'12px'}}>✓ Bidding Closed</div>
-                        <div style={{fontSize:'15px',color:'var(--espn-text-muted)'}}>{cpOwn ? 'You own this player' : 'Waiting for commissioner to reveal bids...'}</div>
-                      </>}
+                    <div className={`flip-card${bidRevealed ? ' revealed' : ''}`} onClick={() => canBid && setBidRevealed(r => !r)}>
+                      <div className="flip-card-inner">
+                        {/* FRONT: hidden state */}
+                        <div className="flip-card-front">
+                          <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'var(--espn-success)',marginBottom:'12px'}}>✓ Bidding Closed</div>
+                          {canBid
+                            ? <><div style={{fontSize:'28px',marginBottom:'8px'}}>👁</div><div style={{fontSize:'13px',color:'var(--espn-text-muted)',textAlign:'center'}}>Click to reveal your bid</div></>
+                            : <div style={{fontSize:'15px',color:'var(--espn-text-muted)',textAlign:'center'}}>{cpOwn ? 'You own this player' : 'Waiting for commissioner to reveal bids...'}</div>
+                          }
+                        </div>
+                        {/* BACK: revealed state */}
+                        <div className="flip-card-back">
+                          {canBid && (() => {
+                            const myRevealedBid = auction?.revealedBids?.[userTeamId];
+                            const myAmt = myRevealedBid?.amount ?? null;
+                            const localAmt = bidOk ? (usePre && pb ? pb : parseFloat(curBid) || 0) : null;
+                            const displayAmt = myAmt !== null ? myAmt : localAmt;
+                            const didBid = displayAmt !== null && displayAmt > 0;
+                            return <>
+                              <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'var(--espn-success)',marginBottom:'8px'}}>✓ Bidding Closed</div>
+                              <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.5px',color:'var(--espn-text-muted)',marginBottom:'6px'}}>Your Bid</div>
+                              <div style={{fontFamily:'Roboto Condensed',fontSize:'3.5rem',fontWeight:700,color:didBid?'var(--espn-text-primary)':'var(--espn-text-muted)',lineHeight:1,marginBottom:'8px'}}>{didBid ? `$${fmt(displayAmt)}` : 'PASS'}</div>
+                              <div style={{fontSize:'12px',color:'var(--espn-text-muted)',marginBottom:'8px'}}>{didBid ? 'High bidder revealed after decision' : 'You passed on this player'}</div>
+                              <div className="flip-hint">Click to hide</div>
+                            </>;
+                          })()}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1920,7 +1946,7 @@ function App() {
               )}
             </>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.26</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.27</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
