@@ -838,8 +838,18 @@ function App() {
           updates[`teams/${tid}/spotsAvailable`] = commSpots;
         });
       }
+      // Restore all preBids from originalPreBids before running validate
+      const freshSnap = await db.ref('auctions/' + auctionId).once('value');
+      const freshData = freshSnap.val();
+      if (freshData?.originalPreBids) {
+        Object.entries(freshData.originalPreBids).forEach(([tid, origBids]) => {
+          updates['preBids/' + tid] = origBids;
+        });
+      }
       await db.ref('auctions/' + auctionId).update(updates);
-      alert('Auction restarted. Pre-bids preserved.');
+      // Re-validate all pre-bids against restored (original) team values
+      await validateAndReducePreBids();
+      alert('Auction restarted. Pre-bids restored to original values.');
     }
   };
 
@@ -1057,7 +1067,7 @@ function App() {
     }));
     if (db) await db.ref('auctions/' + auctionId).update(upd);
     syncToSheets('sync', { player: { name: p.name, team: p.team, position: p.position, owner: p.owner, arbYear: p.arbYear, winner, decision: d, price, years, highBid: hb?.amount || 0, highBidder: hb?.teamName || 'None', bids: allBids } });
-    await validateAndReducePreBids({ ...auction.teams, [wid]: { ...auction.teams[wid], currentSalary: newSal, spotsAvailable: newSpots } });
+    await validateAndReducePreBids();
     setCeleb({ d, player: p.name, winner, price, years, hiBidder: hb?.teamName || 'None' });
     setTimeout(async () => {
       setCeleb(null); const nx = auction.currentPlayerIndex + 1;
@@ -1400,7 +1410,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.42</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.43</div>
       </>
     );
   }
@@ -1509,7 +1519,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.42</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.43</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1689,7 +1699,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.42</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.43</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -2046,7 +2056,7 @@ function App() {
               )}
             </div>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.42</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.43</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
