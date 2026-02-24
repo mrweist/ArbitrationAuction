@@ -122,7 +122,7 @@
     .max-bid-info{background:#e3f2fd;border-radius:6px;padding:10px;margin-top:12px;font-size:13px;color:var(--espn-blue);text-align:center}
     .bid-error{color:var(--espn-error);font-size:13px;margin-top:10px;text-align:center}
     .reveal-section{margin:0 0 24px}
-    .reveal-card{background:var(--espn-bg-card);border:3px solid var(--espn-red);border-radius:8px;padding:24px;text-align:center;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,.07)}
+    .reveal-card{background:var(--espn-bg-card);border:3px solid var(--espn-red);border-radius:8px;padding:24px;text-align:center;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,.07);min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center}
     .reveal-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase;letter-spacing:.5px}
     .reveal-amount{font-family:'Roboto Condensed',sans-serif;font-size:3.5rem;font-weight:700;color:var(--espn-red);margin:8px 0}
     .reveal-bidder{font-size:15px;color:var(--espn-text-secondary)}
@@ -535,7 +535,7 @@ function App() {
   // Keep phaseRef current so timer callbacks always read the latest phase
   useEffect(() => { phaseRef.current = auction?.phase; }, [auction?.phase]);
 
-  useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); }, [auction?.currentPlayerIndex, auction?.phase]);
+  useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); }, [auction?.currentPlayerIndex]);
 
   // Device detection and view mode
   useEffect(() => {
@@ -856,7 +856,19 @@ function App() {
     const decoded = {}; let mx = 0;
     const currentPlayer = auction?.players?.[auction.currentPlayerIndex];
     const ownerTeamId = currentPlayer ? Object.entries(auction.teams || {}).find(([_, t]) => t.name === currentPlayer.owner)?.[0] : null;
-    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; if (tid !== ownerTeamId && b.amount > mx) mx = b.amount; } });
+    if (auction.bids) Object.entries(auction.bids).forEach(([tid, e]) => { const b = dec(e, sKey); if (b) { decoded[tid] = b; } });
+    // Apply floor to all tiebreaker teams - no passing allowed
+    const _secondHi = get2ndHighestBid(decoded);
+    const _auctionType = auction?.auctionType || 'standard';
+    const tieFloor = Math.max(1, getStickPrice(auction?.highestBid?.amount || 0, _secondHi, _auctionType));
+    const tieBidders = auction?.tiebreakerTeams || [];
+    tieBidders.forEach(tid => {
+      if (!decoded[tid] || decoded[tid].amount < tieFloor) {
+        const tName = auction?.teams?.[tid]?.name || tid;
+        decoded[tid] = { teamId: tid, teamName: tName, amount: tieFloor, ts: Date.now(), status: 'forced' };
+      }
+    });
+    Object.entries(decoded).forEach(([tid, b]) => { if (tid !== ownerTeamId && b.amount > mx) mx = b.amount; });
     const top = Object.entries(decoded).filter(([tid, b]) => tid !== ownerTeamId && b.amount === mx);
     if (top.length === 1) { const w = top[0][1]; await doStick(w.teamId, w.teamName, w.amount); }
     else { const tied = top.map(([id, b]) => ({ id, name: b.teamName, amount: b.amount })); if (db) await db.ref('auctions/' + auctionId).update({ phase: 'tie-resolution', tiedTeams: tied, revealedBids: decoded }); setTieModal(true); }
@@ -1290,7 +1302,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.25</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.26</div>
       </>
     );
   }
@@ -1399,7 +1411,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.25</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.26</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1579,7 +1591,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.25</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.26</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1734,8 +1746,6 @@ function App() {
             </div>
           )}
 
-          {auction?.phase === 'lobby' && <div style={{textAlign:'center',padding:'8px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.25</div>}
-
           {cp && auction?.phase !== 'lobby' && (
             <>
               <div className="player-card" style={isTie ? {borderTop:'4px solid var(--espn-orange)'} : {}}>
@@ -1821,11 +1831,14 @@ function App() {
                       {canBid && (() => {
                         const myRevealedBid = auction?.revealedBids?.[userTeamId];
                         const myAmt = myRevealedBid?.amount ?? null;
-                        const didBid = myAmt !== null && myAmt > 0;
+                        // Fall back to local state when revealedBids not yet written (during reveal phase)
+                        const localAmt = bidOk ? (usePre && pb ? pb : parseFloat(curBid) || 0) : null;
+                        const displayAmt = myAmt !== null ? myAmt : localAmt;
+                        const didBid = displayAmt !== null && displayAmt > 0;
                         return <>
                           <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'var(--espn-success)',marginBottom:'16px'}}>✓ Bidding Closed</div>
                           <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.5px',color:'var(--espn-text-muted)',marginBottom:'6px'}}>Your Bid</div>
-                          <div style={{fontFamily:'Roboto Condensed',fontSize:'3.5rem',fontWeight:700,color:didBid?'var(--espn-text-primary)':'var(--espn-text-muted)',lineHeight:1,marginBottom:'16px'}}>{didBid ? `$${fmt(myAmt)}` : 'PASS'}</div>
+                          <div style={{fontFamily:'Roboto Condensed',fontSize:'3.5rem',fontWeight:700,color:didBid?'var(--espn-text-primary)':'var(--espn-text-muted)',lineHeight:1,marginBottom:'16px'}}>{didBid ? `$${fmt(displayAmt)}` : 'PASS'}</div>
                           <div style={{fontSize:'12px',color:'var(--espn-text-muted)'}}>{didBid ? 'High bidder revealed after decision' : 'You passed on this player'}</div>
                         </>;
                       })()}
@@ -1898,8 +1911,6 @@ function App() {
                 </div>
               )}
 
-              <div style={{textAlign:'center',padding:'8px 0 16px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.25</div>
-
               {auction.phase === 'complete' && (
                 <div style={{ textAlign: 'center', padding: '48px', background: '#fff', borderRadius: '8px' }}>
                   <h2 style={{ color: 'var(--espn-success)', fontSize: '2rem', marginBottom: '20px' }}>🏆 Auction Complete!</h2>
@@ -1909,6 +1920,7 @@ function App() {
               )}
             </>
           )}
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.26</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
