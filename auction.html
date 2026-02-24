@@ -87,9 +87,11 @@
     .points-box{background:linear-gradient(135deg,var(--espn-success),#009944);border-radius:6px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;color:#fff;margin-top:16px}
     .points-label{font-family:'Roboto Condensed',sans-serif;font-size:16px;text-transform:uppercase;font-weight:600}
     .points-value{font-family:'Roboto Condensed',sans-serif;font-size:2.4rem;font-weight:700}
-    .action-row{display:flex;gap:16px;margin:0 0 24px;align-items:stretch}
+    .action-row{display:flex;gap:16px;margin:0 0 24px;align-items:stretch;min-height:220px}
     .action-left{flex:0 0 35%;min-width:0;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:24px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.07)}
     .action-right{flex:1;min-width:0;display:flex;flex-direction:column}
+    .view-mobile .action-row{flex-direction:column;min-height:unset}
+    .view-mobile .action-left{flex:none;width:100%;box-shadow:none}
     .timer-section{text-align:center;background:transparent;border:none;border-radius:0;padding:0;margin:0}
     .timer-display{font-family:'Roboto Condensed',sans-serif;font-size:3rem;font-weight:700}
     .timer-display.warning{color:var(--espn-orange)}
@@ -109,7 +111,6 @@
     .your-bid-section{background:var(--espn-bg-card);border:3px solid var(--espn-blue);border-radius:8px;padding:20px;height:100%;box-shadow:0 2px 6px rgba(0,0,0,.07)}
     .your-bid-section.submitted{border-color:var(--espn-success)}
     .your-bid-section h3{font-family:'Roboto Condensed',sans-serif;font-size:1.1rem;text-transform:uppercase;color:var(--espn-blue);margin-bottom:12px}
-    .your-bid-section{min-height:180px}
     .your-bid-section.submitted h3{color:var(--espn-success)}
     .bid-options{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
     .bid-option{flex:1;min-width:100px}
@@ -1276,7 +1277,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.21</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.23</div>
       </>
     );
   }
@@ -1385,7 +1386,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.21</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.23</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1565,7 +1566,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.21</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.23</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1720,6 +1721,8 @@ function App() {
             </div>
           )}
 
+          {auction?.phase === 'lobby' && <div style={{textAlign:'center',padding:'8px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.23</div>}
+
           {isTie && <div className="tiebreaker-banner">⚠️ TIE-BREAKER ROUND: {auction.tiedTeams?.map(t => t.name).join(' vs ')}</div>}
 
           {cp && auction?.phase !== 'lobby' && (
@@ -1803,12 +1806,23 @@ function App() {
                     </div>
                   )}
                   {auction.phase === 'reveal' && (
-                    <div className="your-bid-section" style={{borderColor:'var(--espn-success)',background:'#f0faf5'}}>
-                      <h3 style={{color:'var(--espn-success)'}}>✓ Bidding Closed</h3>
-                      {canBid && bidOk && <div style={{fontSize:'2rem',fontWeight:700,fontFamily:'Roboto Condensed',color:'var(--espn-text-primary)',margin:'12px 0'}}>${fmt(usePre && pb ? pb : parseFloat(curBid) || 0)}</div>}
-                      {canBid && bidOk && <p style={{color:'var(--espn-text-muted)',fontSize:'14px'}}>Your bid has been recorded.<br/>High bidder revealed after decision.</p>}
-                      {canBid && !bidOk && <p style={{color:'var(--espn-text-muted)',fontSize:'14px',marginTop:'8px'}}>You passed on this player.</p>}
-                      {!canBid && <p style={{color:'var(--espn-text-muted)',fontSize:'14px',marginTop:'8px'}}>{cpOwn ? 'You own this player.' : 'Waiting for reveal...'}</p>}
+                    <div className="your-bid-section" style={{borderColor:'var(--espn-success)',background:'#f0faf5',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',padding:'32px 24px',gap:'0'}}>
+                      {canBid && bidOk && <>
+                        <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'var(--espn-success)',marginBottom:'16px'}}>✓ Bidding Closed</div>
+                        <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.5px',color:'var(--espn-text-muted)',marginBottom:'6px'}}>Your Bid</div>
+                        <div style={{fontFamily:'Roboto Condensed',fontSize:'3.5rem',fontWeight:700,color:'var(--espn-text-primary)',lineHeight:1,marginBottom:'16px'}}>${fmt(usePre && pb ? pb : parseFloat(curBid) || 0)}</div>
+                        <div style={{fontSize:'12px',color:'var(--espn-text-muted)'}}>High bidder revealed after decision</div>
+                      </>}
+                      {canBid && !bidOk && <>
+                        <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'var(--espn-success)',marginBottom:'16px'}}>✓ Bidding Closed</div>
+                        <div style={{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.5px',color:'var(--espn-text-muted)',marginBottom:'6px'}}>Your Bid</div>
+                        <div style={{fontFamily:'Roboto Condensed',fontSize:'3.5rem',fontWeight:700,color:'var(--espn-text-muted)',lineHeight:1,marginBottom:'16px'}}>PASS</div>
+                        <div style={{fontSize:'12px',color:'var(--espn-text-muted)'}}>You passed on this player</div>
+                      </>}
+                      {!canBid && <>
+                        <div style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'1.5px',color:'var(--espn-success)',marginBottom:'12px'}}>✓ Bidding Closed</div>
+                        <div style={{fontSize:'15px',color:'var(--espn-text-muted)'}}>{cpOwn ? 'You own this player' : 'Waiting for commissioner to reveal bids...'}</div>
+                      </>}
                     </div>
                   )}
                 </div>
@@ -1838,8 +1852,6 @@ function App() {
                   </div>
                 </div>
               )}
-              {(auction.phase === 'bidding' || auction.phase === 'reveal' || isTie) && <div style={{textAlign:'center',padding:'6px 0 16px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.21</div>}
-
               {(auction.phase === 'decision' || auction.phase === 'tie-resolution') && auction.highestBid && (
                 <div className="reveal-section">
                   <div className="reveal-card">
@@ -1875,6 +1887,8 @@ function App() {
                   ) : auction.phase === 'tie-resolution' ? <p style={{ textAlign: 'center', color: 'var(--espn-text-muted)', fontSize: '16px' }}>Commissioner resolving tie...</p> : null}
                 </div>
               )}
+
+              <div style={{textAlign:'center',padding:'8px 0 16px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.23</div>
 
               {auction.phase === 'complete' && (
                 <div style={{ textAlign: 'center', padding: '48px', background: '#fff', borderRadius: '8px' }}>
