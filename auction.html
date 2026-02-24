@@ -66,7 +66,7 @@
     .result-badge.self-stick{background:#f8d7da;color:#721c24}
     .undo-btn{font-size:10px;padding:3px 8px;background:var(--espn-text-muted);color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px}
     .main-stage{padding:24px;background:var(--espn-bg-page);overflow-y:auto}
-    .main-stage > *{max-width:900px;margin-left:auto;margin-right:auto}
+    .stage-content{max-width:900px;margin:0 auto;width:100%;box-sizing:border-box}
     .phase-fade{animation:phaseFadeIn .15s ease-in}
     @keyframes phaseFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     .player-card{background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;margin:0 0 24px;box-shadow:0 2px 6px rgba(0,0,0,.07)}
@@ -221,7 +221,7 @@
     .view-mobile .sidebar.open{display:block !important}
     .view-mobile .sidebar-right.open{display:block !important}
     .view-mobile .main-stage{padding:0;padding-bottom:120px !important}
-    .view-mobile .player-card,.view-mobile .timer-section,.view-mobile .bid-status,.view-mobile .your-bid-section{max-width:100%;margin-bottom:8px}
+    
     
     .view-mobile .player-card-header{padding:12px !important;min-height:64px;align-items:center}
     .view-mobile .player-headshot{width:48px;height:48px}
@@ -261,9 +261,7 @@
     /* Desktop Optimized (1920x1200) */
     .view-desktop .app-container{max-width:100%;margin:0;grid-template-columns:320px 1fr 320px;gap:0;padding:0}
     .view-desktop .main-stage{padding:var(--space-8)}
-    .view-desktop .player-card,.view-desktop .timer-section,.view-desktop .bid-status,.view-desktop .your-bid-section{max-width:100%}
     .view-desktop .player-headshot{width:120px;height:120px}
-    .view-desktop .player-card-header .player-name{font-size:var(--text-2xl)}
     .view-desktop .timer-display{font-size:3rem}
     .view-desktop body{font-size:18px}
     .view-desktop .sidebar{width:320px}
@@ -324,7 +322,7 @@
       .mobile-header-line2{height:36px;font-size:12px}
       .header-title{font-size:1rem}
       .view-mobile .app-container{padding:8px}
-      .view-mobile .player-card,.view-mobile .action-left,.view-mobile .your-bid-section,.view-mobile .flip-card{margin-bottom:10px}
+      
     .view-mobile .decision-buttons{height:220px;min-height:unset}
       .view-mobile .player-card-header{padding:12px 16px}
       .view-mobile .player-headshot{width:50px;height:50px}
@@ -347,9 +345,34 @@
     
     /* Responsive Breakpoints (Auto-detect fallback) */    @media (max-width:768px){
       .mobile-header-line2{display:flex}
-      .header{height:60px}body:not(.view-desktop){display:block}body:not(.view-desktop) .app-container{display:flex;flex-direction:column;padding:var(--space-4)}body:not(.view-desktop) .sidebar,body:not(.view-desktop) .sidebar-right{display:none}body:not(.view-desktop) .main-stage{padding:0}body:not(.view-desktop) .bid-status-grid{grid-template-columns:repeat(2,1fr)}body:not(.view-desktop) .nav-tabs{display:none}body:not(.view-desktop) .bottom-nav{display:flex}}
-    @media(min-width:1920px){body:not(.view-mobile) .app-container{max-width:1400px;margin:0 auto;gap:var(--space-12);padding:var(--space-8)}body:not(.view-mobile) .main-stage{padding:var(--space-8)}body:not(.view-mobile) body{font-size:18px}}
-  </style>
+      .header{height:60px}body:not(.view-desktop){display:block}body:not(.view-desktop) .nav-tabs{display:none}body:not(.view-desktop) .bottom-nav{display:flex}}
+    @media(min-width:1920px){}
+  
+    /* ── MOBILE LAYOUT CONSISTENCY (authoritative, do not add rules above) ── */
+    .view-mobile .stage-content{width:100%;box-sizing:border-box;padding:0}
+    .view-mobile .player-card,
+    .view-mobile .action-left,
+    .view-mobile .your-bid-section,
+    .view-mobile .flip-card,
+    .view-mobile .reveal-card,
+    .view-mobile .decision-buttons,
+    .view-mobile .bid-status{
+      width:100% !important;
+      box-sizing:border-box !important;
+      margin-left:0 !important;
+      margin-right:0 !important;
+    }
+    .view-mobile .player-card,
+    .view-mobile .action-left,
+    .view-mobile .your-bid-section,
+    .view-mobile .flip-card{margin-bottom:10px !important}
+    .view-mobile .bid-status{margin-bottom:0 !important}
+    /* ── DESKTOP APP CONTAINER (full viewport, sidebars pin to edges) ── */
+    .view-desktop .app-container{display:grid;grid-template-columns:320px 1fr 320px;max-width:100%;width:100%;margin:0;padding:0;gap:0}
+    .view-desktop .sidebar,.view-desktop .sidebar-right{display:block}
+    .view-desktop .main-stage{padding:24px}
+    .view-desktop .bid-status-grid{grid-template-columns:repeat(4,1fr)}
+    </style>
 </head>
 <body>
   <div id="root"></div>
@@ -1332,7 +1355,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.31</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.33</div>
       </>
     );
   }
@@ -1441,7 +1464,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.31</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.33</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1621,7 +1644,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.31</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.33</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1766,6 +1789,7 @@ function App() {
 
         <div className="main-stage">
           {auction?.phase === 'lobby' && (
+            <div className="stage-content">
             <div className="lobby-info phase-fade">
               <div className="lobby-status">⏳ Waiting for Auction to Begin</div>
               <p style={{ color: 'var(--espn-text-secondary)', marginBottom: '20px' }}>The commissioner will start the auction shortly.</p>
@@ -1774,10 +1798,11 @@ function App() {
                 {isComm && <button className="btn btn-primary" onClick={startAuc}>Start Auction</button>}
               </div>
             </div>
+            </div>
           )}
 
           {cp && auction?.phase !== 'lobby' && (
-            <>
+            <div className="stage-content">
               <div className="player-card" style={isTie ? {borderTop:'4px solid var(--espn-orange)'} : {}}>
                 <div className="player-card-header">
                   {getPlayerImage(cp) && <img src={getPlayerImage(cp)} alt={cp.name} className="player-headshot" onError={(e) => e.target.style.display = 'none'} />}
@@ -1801,7 +1826,7 @@ function App() {
                     {auction.phase === 'waiting' && <>
                       {isComm ? <>
                         {viewMode === 'mobile'
-                          ? <div style={{display:'flex',alignItems:'center',gap:'12px',width:'100%'}}>
+                          ? <div style={{display:'flex',alignItems:'center',gap:'12px',width:'100%',height:'100%'}}>
                               <div className="timer-display" style={{flex:'0 0 auto'}}>{fmtTime(auction.timerDuration)}</div>
                               <div style={{flex:1,display:'flex',flexDirection:'column',gap:'8px'}}>
                                 <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',flexWrap:'wrap'}}>
@@ -1976,9 +2001,9 @@ function App() {
                   {hasSheets && <div style={{ display: 'flex', justifyContent: 'center' }}><button className="btn btn-blue" onClick={openSheet}>📊 Open Sheet</button></div>}
                 </div>
               )}
-            </>
+            </div>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.31</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.33</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
