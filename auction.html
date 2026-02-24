@@ -66,6 +66,8 @@
     .result-badge.self-stick{background:#f8d7da;color:#721c24}
     .undo-btn{font-size:10px;padding:3px 8px;background:var(--espn-text-muted);color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px}
     .main-stage{padding:24px;background:var(--espn-bg-page);overflow-y:auto}
+    .phase-fade{animation:phaseFadeIn .15s ease-in}
+    @keyframes phaseFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     .player-card{background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;max-width:800px;margin:0 auto 24px}
     .player-card-header{background:linear-gradient(135deg,var(--espn-nav-dark),#3a3a3a);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-radius:8px 8px 0 0;gap:20px}
     .player-headshot{width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1)}
@@ -85,12 +87,15 @@
     .points-box{background:linear-gradient(135deg,var(--espn-success),#009944);border-radius:6px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;color:#fff;margin-top:16px}
     .points-label{font-family:'Roboto Condensed',sans-serif;font-size:16px;text-transform:uppercase;font-weight:600}
     .points-value{font-family:'Roboto Condensed',sans-serif;font-size:2.4rem;font-weight:700}
-    .timer-section{text-align:center;max-width:800px;margin:0 auto 24px;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:16px}
+    .action-row{display:flex;gap:16px;margin:0 0 24px;align-items:flex-start}
+    .action-left{flex:0 0 35%;min-width:0;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:24px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .action-right{flex:1;min-width:0}
+    .timer-section{text-align:center;background:transparent;border:none;border-radius:0;padding:0;margin:0}
     .timer-display{font-family:'Roboto Condensed',sans-serif;font-size:3rem;font-weight:700}
     .timer-display.warning{color:var(--espn-orange)}
     .timer-display.danger{color:var(--espn-red);animation:pulse .5s infinite}
     @keyframes pulse{50%{opacity:.5}}
-    .bid-status{max-width:800px;margin:0 auto 24px;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px}
+    .bid-status{margin:0 0 24px;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px}
     .bid-status-header{background:var(--espn-bg-table-header);padding:12px 20px;font-size:13px;font-weight:700;text-transform:uppercase;color:var(--espn-text-secondary);border-bottom:1px solid var(--espn-border);letter-spacing:0.5px}
     .bid-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--espn-border)}
     .bid-status-item{background:var(--espn-bg-card);padding:12px;text-align:center;font-size:14px;font-weight:600}
@@ -101,7 +106,7 @@
     .bid-status-item.clickable{cursor:pointer}
     .bid-status-item.clickable:hover{background:#f0f0f0;transition:background .2s}
     .bid-status-item .checkmark{color:var(--espn-success);font-weight:700}
-    .your-bid-section{max-width:800px;margin:0 auto 24px;background:var(--espn-bg-card);border:3px solid var(--espn-blue);border-radius:8px;padding:20px}
+    .your-bid-section{background:var(--espn-bg-card);border:3px solid var(--espn-blue);border-radius:8px;padding:20px;height:100%}
     .your-bid-section.submitted{border-color:var(--espn-success)}
     .your-bid-section h3{font-family:'Roboto Condensed',sans-serif;font-size:1.1rem;text-transform:uppercase;color:var(--espn-blue);margin-bottom:12px}
     .your-bid-section.submitted h3{color:var(--espn-success)}
@@ -114,28 +119,31 @@
     .prebid-value.selected{border-color:var(--espn-blue)}
     .max-bid-info{background:#e3f2fd;border-radius:6px;padding:10px;margin-top:12px;font-size:13px;color:var(--espn-blue);text-align:center}
     .bid-error{color:var(--espn-error);font-size:13px;margin-top:10px;text-align:center}
-    .reveal-section{max-width:800px;margin:0 auto 24px}
+    .reveal-section{margin:0 0 24px}
     .reveal-card{background:var(--espn-bg-card);border:3px solid var(--espn-red);border-radius:8px;padding:24px;text-align:center;margin-bottom:16px}
-    .reveal-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase}
+    .reveal-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase;letter-spacing:.5px}
     .reveal-amount{font-family:'Roboto Condensed',sans-serif;font-size:3.5rem;font-weight:700;color:var(--espn-red);margin:8px 0}
     .reveal-bidder{font-size:15px;color:var(--espn-text-secondary)}
+    .reveal-dual{display:flex;align-items:center;justify-content:center;gap:0}
+    .reveal-col{flex:1;text-align:center;padding:8px 24px}
+    .reveal-divider{width:2px;background:var(--espn-border);align-self:stretch;margin:8px 0}
     .prices-row{display:flex;justify-content:center;gap:40px;margin-top:20px;padding-top:20px;border-top:1px solid var(--espn-border)}
     .price-box{text-align:center}
     .price-box .price-label{font-size:12px;color:var(--espn-text-muted);text-transform:uppercase}
     .price-box .price-value{font-family:'Roboto Condensed',sans-serif;font-size:1.8rem;font-weight:700}
     .price-box.keep .price-value{color:var(--espn-success)}
     .price-box.stick .price-value{color:var(--espn-blue)}
-    .decision-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .decision-buttons{display:flex;gap:12px;width:100%}
     .btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;font-size:14px;font-weight:600;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;font-family:'Roboto Condensed',sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     .btn:disabled{opacity:.4;cursor:not-allowed}
     .btn-primary{background:var(--espn-red);color:#fff}
     .btn-secondary{background:var(--espn-bg-table-header);color:var(--espn-text-primary);border:1px solid var(--espn-border)}
     .btn-blue{background:var(--espn-blue);color:#fff}
-    .btn-decision{flex:1;max-width:160px;padding:18px 14px;flex-direction:column;gap:4px;font-size:16px}
+    .btn-decision{flex:1;padding:22px 14px;flex-direction:column;gap:6px;font-size:20px}
     .btn-keep{background:var(--espn-success);color:#fff}
     .btn-stick{background:var(--espn-blue);color:#fff}
     .btn-self-stick{background:#6f42c1;color:#fff}
-    .btn-years{font-size:11px;opacity:.8}
+    .btn-years{font-size:13px;opacity:.85;font-family:'Roboto',sans-serif;font-weight:500;text-transform:none}
     .sidebar-right{background:var(--espn-bg-card);border-left:1px solid var(--espn-border);overflow-y:auto;height:calc(100vh - 110px);position:sticky;top:0}
     .budget-item{padding:12px;border-bottom:1px solid var(--espn-border);font-size:12px;min-height:56px;display:flex;flex-direction:column;justify-content:center}
     .budget-item.current-user{background:#e3f2fd}
@@ -181,7 +189,7 @@
     .loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;font-size:18px}
     .loading-spinner{width:40px;height:40px;border:4px solid var(--espn-border);border-top-color:var(--espn-red);border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .lobby-info{max-width:800px;margin:0 auto;background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:32px;text-align:center;display:block}
+    .lobby-info{background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;padding:48px 32px;text-align:center}
     .lobby-status{font-size:1.5rem;font-family:'Roboto Condensed',sans-serif;margin-bottom:16px}
     /* View Mode Classes */
     .view-mobile .app-container{display:flex;flex-direction:column;padding:var(--space-4);position:relative}
@@ -1267,7 +1275,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.19</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.20</div>
       </>
     );
   }
@@ -1376,7 +1384,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.19</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.20</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1556,7 +1564,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.19</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.20</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1701,7 +1709,7 @@ function App() {
 
         <div className="main-stage">
           {auction?.phase === 'lobby' && (
-            <div className="lobby-info" style={{ textAlign: 'center', margin: '0 auto' }}>
+            <div className="lobby-info phase-fade">
               <div className="lobby-status">⏳ Waiting for Auction to Begin</div>
               <p style={{ color: 'var(--espn-text-secondary)', marginBottom: '20px' }}>The commissioner will start the auction shortly.</p>
               <div style={{display:'flex',gap:'12px',justifyContent:'center',margin:'0 auto'}}>
@@ -1732,31 +1740,78 @@ function App() {
                 </div>
               </div>
 
-              <div className="timer-section">
-                {auction.phase === 'waiting' && <><div className="timer-display">{fmtTime(auction.timerDuration)}</div>{isComm ? <><div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'12px',marginTop:'16px',marginBottom:'16px'}}><label style={{fontSize:'14px',fontWeight:600,color:'var(--espn-text-secondary)'}}>Bid Timer:</label><input type="number" value={timerMinutes} onChange={(e)=>{setTimerMinutes(e.target.value);const total=parseInt(e.target.value||0)*60+parseInt(timerSeconds||0);if(db)db.ref('auctions/'+auctionId+'/timerDuration').set(total)}} min="0" style={{width:'60px',padding:'8px',fontSize:'14px',borderRadius:'6px',border:'1px solid var(--espn-border)',textAlign:'center'}} placeholder="0"/><span style={{fontSize:'14px',color:'var(--espn-text-secondary)'}}>min</span><input type="number" value={timerSeconds} onChange={(e)=>{setTimerSeconds(e.target.value);const total=parseInt(timerMinutes||0)*60+parseInt(e.target.value||0);if(db)db.ref('auctions/'+auctionId+'/timerDuration').set(total)}} min="0" max="59" style={{width:'60px',padding:'8px',fontSize:'14px',borderRadius:'6px',border:'1px solid var(--espn-border)',textAlign:'center'}} placeholder="0"/><span style={{fontSize:'14px',color:'var(--espn-text-secondary)'}}>sec</span></div><button className="btn btn-primary" onClick={startBid}>Start Bidding</button></> : <p style={{ color: 'var(--espn-text-muted)', marginTop: '12px' }}>Waiting for commissioner to start bidding...</p>}</>}
-                {(auction.phase === 'bidding' || isTie) && <><div className={'timer-display ' + timerCls()}>{fmtTime(timeLeft)}</div>{isComm && <button className="btn btn-secondary" onClick={isTie ? endTie : endBid}>{isTie ? 'End Tiebreaker' : 'End Bidding'}</button>}</>}
-                {auction.phase === 'reveal' && isComm && <div style={{display:'flex',gap:'12px',justifyContent:'center'}}><button className="btn btn-secondary" onClick={restartClock}>⏱️ Restart Clock</button><button className="btn btn-primary" style={{ fontSize: '18px', padding: '18px 36px' }} onClick={reveal}>🎯 Reveal All Bids</button></div>}
-                {auction.phase === 'tie-resolution' && isComm && <button className="btn btn-primary" onClick={() => setTieModal(true)}>Resolve Tie</button>}
-              </div>
-
-              {(auction.phase === 'bidding' || isTie) && canBid && (
-                <div className={'your-bid-section' + (bidOk ? ' submitted' : '')}>
-                  <h3>{bidOk ? '✓ Bid Submitted' : 'Enter Your Bid'}{isTie ? ' (Tiebreaker Round)' : ''}</h3>
-                  <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong>{isTie ? ` • Minimum Bid: $${fmt(hi)}` : ' • Enter $0.00 to pass'}</div>
-                  <div className="bid-options" style={{ marginTop: '14px' }}>
-                    {pb > 0 && !isTie && <div className="bid-option"><label>Use Pre-Bid</label><div className={'prebid-value' + (usePre ? ' selected' : '')} onClick={() => setUsePre(true)}>${fmt(pb)}</div></div>}
-                    <div className="bid-option"><label>Enter Amount</label><input type="number" key={curBid} defaultValue={(curBid||0) ? parseFloat(curBid).toFixed(2) : ''} onChange={e => setUsePre(false)} onBlur={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;setCurBid(v.toString());e.target.value=v.toFixed(2)}} min={isTie ? hi : 0} step="0.01" onFocus={() => setUsePre(false)} placeholder={isTie ? hi.toFixed(2) : "0.00"} /></div>
-                    <button className="btn btn-blue" style={{ padding: '14px 28px', fontSize: '16px' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
+              <div className={"action-row phase-fade"} key={auction.phase}>
+                <div className="action-left">
+                  <div className="timer-section">
+                    {auction.phase === 'waiting' && <>
+                      <div className="timer-display">{fmtTime(auction.timerDuration)}</div>
+                      {isComm ? <>
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginTop:'16px',marginBottom:'16px',flexWrap:'wrap'}}>
+                          <label style={{fontSize:'13px',fontWeight:600,color:'var(--espn-text-secondary)'}}>Bid Timer:</label>
+                          <input type="number" value={timerMinutes} onChange={(e)=>{setTimerMinutes(e.target.value);const total=parseInt(e.target.value||0)*60+parseInt(timerSeconds||0);if(db)db.ref('auctions/'+auctionId+'/timerDuration').set(total)}} min="0" style={{width:'56px',padding:'8px',fontSize:'14px',borderRadius:'6px',border:'1px solid var(--espn-border)',textAlign:'center'}} placeholder="0"/>
+                          <span style={{fontSize:'13px',color:'var(--espn-text-secondary)'}}>min</span>
+                          <input type="number" value={timerSeconds} onChange={(e)=>{setTimerSeconds(e.target.value);const total=parseInt(timerMinutes||0)*60+parseInt(e.target.value||0);if(db)db.ref('auctions/'+auctionId+'/timerDuration').set(total)}} min="0" max="59" style={{width:'56px',padding:'8px',fontSize:'14px',borderRadius:'6px',border:'1px solid var(--espn-border)',textAlign:'center'}} placeholder="0"/>
+                          <span style={{fontSize:'13px',color:'var(--espn-text-secondary)'}}>sec</span>
+                        </div>
+                        <button className="btn btn-primary" style={{width:'100%'}} onClick={startBid}>Start Bidding</button>
+                      </> : <p style={{color:'var(--espn-text-muted)',marginTop:'16px',fontSize:'14px'}}>Waiting for commissioner<br/>to start bidding...</p>}
+                    </>}
+                    {(auction.phase === 'bidding' || isTie) && <>
+                      <div className={'timer-display ' + timerCls()}>{fmtTime(timeLeft)}</div>
+                      {isComm && <button className="btn btn-secondary" style={{marginTop:'16px',width:'100%'}} onClick={isTie ? endTie : endBid}>{isTie ? 'End Tiebreaker' : 'End Bidding'}</button>}
+                    </>}
+                    {auction.phase === 'reveal' && <>
+                      <div className="timer-display" style={{color:'var(--espn-text-muted)',fontSize:'2rem'}}>⏰</div>
+                      {isComm ? <div style={{display:'flex',flexDirection:'column',gap:'10px',marginTop:'16px',width:'100%'}}>
+                        <button className="btn btn-primary" style={{width:'100%',fontSize:'16px',padding:'16px'}} onClick={reveal}>🎯 Reveal All Bids</button>
+                        <button className="btn btn-secondary" style={{width:'100%'}} onClick={restartClock}>⏱️ Restart Clock</button>
+                      </div> : <p style={{color:'var(--espn-text-muted)',marginTop:'16px',fontSize:'14px'}}>Waiting for commissioner<br/>to reveal bids...</p>}
+                    </>}
+                    {auction.phase === 'tie-resolution' && isComm && <button className="btn btn-primary" style={{marginTop:'16px',width:'100%'}} onClick={() => setTieModal(true)}>Resolve Tie</button>}
                   </div>
-                  {bidErr && <div className="bid-error">{bidErr}</div>}
                 </div>
-              )}
 
-              {(auction.phase === 'bidding' || isTie) && !canBid && (
-                <div className="your-bid-section" style={{ borderColor: '#ccc', background: '#f9f9f9', textAlign: 'center' }}>
-                  <p style={{ color: 'var(--espn-text-muted)', fontSize: '16px' }}>{cpOwn ? 'You own this player - waiting for bids' : isTie ? 'You are not in the tiebreaker' : 'Waiting...'}</p>
+                <div className="action-right">
+                  {(auction.phase === 'bidding' || isTie) && canBid && (
+                    <div className={'your-bid-section' + (bidOk ? ' submitted' : '')}>
+                      <h3>{bidOk ? '✓ Bid Submitted' : 'Enter Your Bid'}{isTie ? ' (Tiebreaker Round)' : ''}</h3>
+                      <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong>{isTie ? ` • Minimum Bid: $${fmt(hi)}` : ' • Enter $0.00 to pass'}</div>
+                      <div className="bid-options" style={{ marginTop: '14px' }}>
+                        {pb > 0 && !isTie && <div className="bid-option"><label>Use Pre-Bid</label><div className={'prebid-value' + (usePre ? ' selected' : '')} onClick={() => setUsePre(true)}>${fmt(pb)}</div></div>}
+                        <div className="bid-option"><label>Enter Amount</label><input type="number" key={curBid} defaultValue={(curBid||0) ? parseFloat(curBid).toFixed(2) : ''} onChange={e => setUsePre(false)} onBlur={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;setCurBid(v.toString());e.target.value=v.toFixed(2)}} min={isTie ? hi : 0} step="0.01" onFocus={() => setUsePre(false)} placeholder={isTie ? hi.toFixed(2) : "0.00"} /></div>
+                        <button className="btn btn-blue" style={{ padding: '14px 28px', fontSize: '16px' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
+                      </div>
+                      {bidErr && <div className="bid-error">{bidErr}</div>}
+                    </div>
+                  )}
+                  {(auction.phase === 'bidding' || isTie) && !canBid && (
+                    <div className="your-bid-section" style={{ borderColor: '#ccc', background: '#f9f9f9', textAlign: 'center' }}>
+                      <p style={{ color: 'var(--espn-text-muted)', fontSize: '16px' }}>{cpOwn ? 'You own this player - waiting for bids' : isTie ? 'You are not in the tiebreaker' : 'Waiting...'}</p>
+                    </div>
+                  )}
+                  {auction.phase === 'waiting' && (
+                    <div className="your-bid-section" style={{borderColor:'var(--espn-border)',background:'var(--espn-bg-card)'}}>
+                      <h3 style={{color:'var(--espn-text-secondary)'}}>Enter Your Bid</h3>
+                      <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong> • Enter $0.00 to pass</div>
+                      <div className="bid-options" style={{marginTop:'14px',opacity:0.5,pointerEvents:'none'}}>
+                        {pb > 0 && <div className="bid-option"><label>Use Pre-Bid</label><div className="prebid-value">${fmt(pb)}</div></div>}
+                        <div className="bid-option"><label>Enter Amount</label><input type="number" disabled placeholder="0.00"/></div>
+                        <button className="btn btn-blue" disabled>Submit $0.00</button>
+                      </div>
+                      <p style={{textAlign:'center',color:'var(--espn-text-muted)',fontSize:'13px',marginTop:'12px'}}>Bidding opens when commissioner starts the clock</p>
+                    </div>
+                  )}
+                  {auction.phase === 'reveal' && (
+                    <div className="your-bid-section" style={{borderColor:'var(--espn-success)',background:'#f0faf5'}}>
+                      <h3 style={{color:'var(--espn-success)'}}>✓ Bidding Closed</h3>
+                      {canBid && bidOk && <div style={{fontSize:'2rem',fontWeight:700,fontFamily:'Roboto Condensed',color:'var(--espn-text-primary)',margin:'12px 0'}}>${fmt(usePre && pb ? pb : parseFloat(curBid) || 0)}</div>}
+                      {canBid && bidOk && <p style={{color:'var(--espn-text-muted)',fontSize:'14px'}}>Your bid has been recorded.<br/>High bidder revealed after decision.</p>}
+                      {canBid && !bidOk && <p style={{color:'var(--espn-text-muted)',fontSize:'14px',marginTop:'8px'}}>You passed on this player.</p>}
+                      {!canBid && <p style={{color:'var(--espn-text-muted)',fontSize:'14px',marginTop:'8px'}}>{cpOwn ? 'You own this player.' : 'Waiting for reveal...'}</p>}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               {(auction.phase === 'bidding' || auction.phase === 'reveal' || isTie) && (
                 <div className="bid-status">
@@ -1786,9 +1841,25 @@ function App() {
               {(auction.phase === 'decision' || auction.phase === 'tie-resolution') && auction.highestBid && (
                 <div className="reveal-section">
                   <div className="reveal-card">
-                    <div className="reveal-label">Highest Bid{(auctionType === 'vickrey' || auctionType === 'vickrey-modified') && secondHi > 0 ? ' | 2nd Highest Bid' : ''}</div>
-                    <div className="reveal-amount">${fmt(hi)}{(auctionType === 'vickrey' || auctionType === 'vickrey-modified') && secondHi > 0 ? ` | $${fmt(secondHi)}` : ''}</div>
-                    <div className="reveal-bidder">{allZero ? 'All teams passed' : 'High bidder revealed after decision'}</div>
+                    {(auctionType === 'vickrey' || auctionType === 'vickrey-modified') && secondHi > 0 ? (
+                      <div className="reveal-dual">
+                        <div className="reveal-col">
+                          <div className="reveal-label">Highest Bid</div>
+                          <div className="reveal-amount">${fmt(hi)}</div>
+                        </div>
+                        <div className="reveal-divider"/>
+                        <div className="reveal-col">
+                          <div className="reveal-label">2nd Highest Bid</div>
+                          <div className="reveal-amount">${fmt(secondHi)}</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="reveal-label">Highest Bid</div>
+                        <div className="reveal-amount">${fmt(hi)}</div>
+                      </>
+                    )}
+                    <div className="reveal-bidder" style={{marginTop:'12px'}}>{allZero ? 'All teams passed' : 'High bidder revealed after decision'}</div>
                   </div>
                   {auction.phase === 'decision' ? (
                     <>
@@ -1813,7 +1884,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.19</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.20</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
