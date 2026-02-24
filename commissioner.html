@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Commissioner Setup v4.4.4</title>
+  <title>Commissioner Setup v4.4.5</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -485,7 +485,7 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
     console.log('🔵 autoSave called, id:', id, 'db:', !!db);
     if(!id||!db){console.log('❌ autoSave aborted: no id or db'); return;}
     const tObj={};
-    teams.forEach((t,i)=>{tObj[`team_${i+1}`]={...t,joined:false,claimedBy:null,passwordHash:''}});
+    teams.forEach((t,i)=>{tObj[`team_${t.id}`]={...t,joined:false,claimedBy:null,passwordHash:''}});
     const sorted=[...players].sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);
     const sheetsCfg=scriptUrl?{scriptUrl,sheetUrl,sheetId}:null;
     await db.ref(`auctions/${id}`).update({
@@ -530,7 +530,7 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
     // No commissioner password needed - using access codes only
     const sorted=[...players].sort((a,b)=>b.arbYear!==a.arbYear?b.arbYear-a.arbYear:b.fantasyPoints-a.fantasyPoints);
     const tObj={};
-    teams.forEach((t,i)=>{tObj[`team_${i+1}`]={...t,joined:false,claimedBy:null,passwordHash:''}});
+    teams.forEach((t,i)=>{tObj[`team_${t.id}`]={...t,joined:false,claimedBy:null,passwordHash:''}});
     const sheetsCfg=scriptUrl?{scriptUrl,sheetUrl,sheetId}:null;
     const data={
       leagueName:league,
