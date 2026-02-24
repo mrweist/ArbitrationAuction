@@ -422,14 +422,13 @@ function App() {
   const [syncStatus, setSyncStatus] = useState('ok');
   const getInitialViewMode = () => {
     const auctionId = getParams().auctionId;
-    const saved = localStorage.getItem('auction_session_' + auctionId);
-    if (saved) {
-      try {
-        const session = JSON.parse(saved);
-        if (session.viewMode) return session.viewMode;
-      } catch {}
-    }
-    return window.innerWidth <= 768 ? 'mobile' : 'desktop';
+    const ua = navigator.userAgent;
+    const isMobileUA = /iPhone|iPod|Android.*Mobile|Opera Mini/i.test(ua);
+    const isTabletUA = /iPad|Android(?!.*Mobile)/i.test(ua);
+    const autoDetected = (isMobileUA || (window.innerWidth <= 768 && !isTabletUA)) ? 'mobile' : 'desktop';
+    const deviceKey = 'viewMode_' + auctionId + '_device_' + autoDetected;
+    const stored = localStorage.getItem(deviceKey);
+    return (stored === 'mobile' || stored === 'desktop') ? stored : autoDetected;
   };
   const [viewMode, setViewMode] = useState(getInitialViewMode()); // 'auto', 'mobile', 'desktop'
   const [queueCollapsed, setQueueCollapsed] = useState(true); // Player Queue collapsed by default on mobile
@@ -547,29 +546,29 @@ function App() {
 
   // Device detection and view mode
   useEffect(() => {
-    const detectDevice = () => {
-      const ua = navigator.userAgent;
-      const isMobileUA = /iPhone|iPod|Android.*Mobile/i.test(ua);
-      const isTabletUA = /iPad|Android(?!.*Mobile)/i.test(ua);
-      const width = window.innerWidth;
-      return isMobileUA || (width <= 768 && !isTabletUA) ? 'mobile' : 'desktop';
-    };
-    const stored = localStorage.getItem('viewMode_' + auctionId + '_' + (userTeamId || 'guest'));
-    if (stored && (stored === 'mobile' || stored === 'desktop')) {
-      setViewMode(stored);
-      document.body.className = 'view-' + stored;
-    } else {
-      const detected = detectDevice();
-      setViewMode(detected);
-      document.body.className = 'view-' + detected;
-    }
+    const ua = navigator.userAgent;
+    const isMobileUA = /iPhone|iPod|Android.*Mobile|Opera Mini/i.test(ua);
+    const isTabletUA = /iPad|Android(?!.*Mobile)/i.test(ua);
+    const width = window.innerWidth;
+    const autoDetected = (isMobileUA || (width <= 768 && !isTabletUA)) ? 'mobile' : 'desktop';
+    // Key by physical device type so phone prefs stay on phone, desktop prefs stay on desktop
+    const deviceKey = 'viewMode_' + auctionId + '_device_' + autoDetected;
+    const stored = localStorage.getItem(deviceKey);
+    const mode = (stored === 'mobile' || stored === 'desktop') ? stored : autoDetected;
+    setViewMode(mode);
+    document.body.className = 'view-' + mode;
   }, [auctionId]);
 
   const toggleView = () => {
     const newMode = viewMode === 'mobile' ? 'desktop' : 'mobile';
     setViewMode(newMode);
     document.body.className = 'view-' + newMode;
-    localStorage.setItem('viewMode_' + auctionId + '_' + (userTeamId || 'guest'), newMode);
+    // Store preference keyed by the auto-detected device type so it stays per-device
+    const ua = navigator.userAgent;
+    const isMobileUA = /iPhone|iPod|Android.*Mobile|Opera Mini/i.test(ua);
+    const isTabletUA = /iPad|Android(?!.*Mobile)/i.test(ua);
+    const autoDetected = (isMobileUA || (window.innerWidth <= 768 && !isTabletUA)) ? 'mobile' : 'desktop';
+    localStorage.setItem('viewMode_' + auctionId + '_device_' + autoDetected, newMode);
   };
 
   const save = (tid, tn, pb = {}, ic = false) => { localStorage.setItem('auction_' + auctionId, JSON.stringify({ tid, tn, pb, ic })); };
@@ -1316,7 +1315,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.17</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.18</div>
       </>
     );
   }
@@ -1425,7 +1424,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.17</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.18</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1587,7 +1586,7 @@ function App() {
                             {viewMode !== 'mobile' && <>
                               <input type="file" accept=".csv" id={`upload-${id}`} style={{display:'none'}} onChange={(e)=>uploadPreBidsForTeam(id,e)} />
                               <button className="btn btn-secondary" onClick={()=>document.getElementById(`upload-${id}`).click()} style={{padding:'4px 8px',fontSize:'12px'}}>📁 {hasPrebids?'Overwrite':'Upload'}</button>
-                              {hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?'))db.ref('auctions/'+auctionId+'/preBids/'+id).remove()}} style={{padding:'4px 8px',fontSize:'12px'}}>🗑️ Delete</button>}
+                              {hasPrebids&&<button className="btn btn-secondary" onClick={()=>{if(confirm('Delete all pre-bids for '+t.name+'?')){db.ref('auctions/'+auctionId+'/preBids/'+id).remove();db.ref('auctions/'+auctionId+'/originalPreBids/'+id).remove()}}} style={{padding:'4px 8px',fontSize:'12px'}}>🗑️ Delete</button>}
                             </>}
                           </div>
                         </td>
@@ -1605,7 +1604,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.17</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.18</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1862,7 +1861,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.17</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.18</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
