@@ -408,6 +408,7 @@ function App() {
   const [bidErr, setBidErr] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef(null);
+  const phaseRef = useRef(null);
   const [celeb, setCeleb] = useState(null);
   const [tieModal, setTieModal] = useState(false);
   const [tieMethod, setTieMethod] = useState('random');
@@ -463,29 +464,7 @@ function App() {
   };
 
   // Attach native event listeners to expand buttons when they appear in DOM
-  useEffect(() => {
-    const attachListeners = () => {
-      const historyBtn = document.getElementById('expand-history-btn');
-      const usersBtn = document.getElementById('expand-users-btn');
-      
-      if (historyBtn && !historyBtn.dataset.listenerAttached) {
-        historyBtn.addEventListener('click', () => {
-          if (window.openExpandModal) window.openExpandModal('history', 'landscape');
-        });
-        historyBtn.dataset.listenerAttached = 'true';
-      }
-      
-      if (usersBtn && !usersBtn.dataset.listenerAttached) {
-        usersBtn.addEventListener('click', () => {
-          if (window.openExpandModal) window.openExpandModal('users', 'landscape');
-        });
-        usersBtn.dataset.listenerAttached = 'true';
-      }
-    };
-    
-    // Attach listeners after a short delay to ensure DOM is ready
-    setTimeout(attachListeners, 100);
-  }, [activeTab]);
+  // Expand modal is now triggered via React onClick — no DOM listener needed
 
   useEffect(() => {
     if (!auctionId) { setError('No auction ID'); setLoading(false); return; }
@@ -530,7 +509,8 @@ function App() {
           clearInterval(timerRef.current);
           // Auto-reveal after 2 second delay
           setTimeout(async () => {
-            if (db && auction.phase === 'bidding') {
+            // Use phaseRef.current (not closure value) to get the live phase at fire time
+            if (db && phaseRef.current === 'bidding') {
               await db.ref('auctions/' + auctionId).update({ phase: 'reveal', timerEndTime: null });
             }
           }, 2000);
@@ -541,6 +521,9 @@ function App() {
       return () => clearInterval(timerRef.current);
     }
   }, [auction?.timerEndTime, auction?.phase, db, auctionId]);
+
+  // Keep phaseRef current so timer callbacks always read the latest phase
+  useEffect(() => { phaseRef.current = auction?.phase; }, [auction?.phase]);
 
   useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); }, [auction?.currentPlayerIndex, auction?.phase]);
 
@@ -1097,62 +1080,31 @@ function App() {
 
   // Global function to show/hide modal using direct DOM manipulation (bypasses broken React state)
   // MUST be before conditional returns so it runs for all screens
-  useEffect(() => {
-    // Define global function for opening modal
-    window.openExpandModal = (table, orientation) => {
-      const modal = document.getElementById('expanded-table-modal');
-      const modalContent = document.getElementById('modal-content');
-      const modalTitle = document.getElementById('modal-title');
-      const historyTable = document.getElementById('modal-table-history');
-      const usersTable = document.getElementById('modal-table-users');
-      const prebidTable = document.getElementById('modal-table-prebid');
-      
-      if (!modal) return;
-      
-      // Update title
-      if (modalTitle) {
-        modalTitle.textContent = table === 'history' ? 'Bid History' : table === 'users' ? 'User Management' : 'Set Your Pre-Bids';
-      }
-      
-      // Update orientation class
-      if (modalContent) {
-        modalContent.className = `expanded-table-content ${orientation}`;
-      }
-      
-      // Show correct table
-      if (historyTable) historyTable.style.display = table === 'history' ? 'block' : 'none';
-      if (usersTable) usersTable.style.display = table === 'users' ? 'block' : 'none';
-      if (prebidTable) prebidTable.style.display = table === 'prebid' ? 'block' : 'none';
-      
-      // Show modal
-      modal.style.display = 'flex';
-      
-      // Also update React state for data rendering (but don't rely on it for visibility)
-      setExpandedTable(table);
-      setExpandOrientation(orientation);
-    };
-    
-    // Define global function for closing modal
-    window.closeExpandModal = () => {
-      const modal = document.getElementById('expanded-table-modal');
-      if (modal) {
-        modal.style.display = 'none';
-      }
-      setExpandedTable(null);
-    };
-    
-    // Attach close button listener
-    const closeBtn = document.getElementById('modal-close-btn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', window.closeExpandModal);
-    }
-    
-    // Cleanup
-    return () => {
-      delete window.openExpandModal;
-      delete window.closeExpandModal;
-    };
-  }, []);
+  // Modal open/close handled via React onClick (openModal/closeModal helpers above)
+
+  // React-callable modal opener — no setTimeout, no race condition
+  const openModal = (table, orientation = 'landscape') => {
+    const modal = document.getElementById('expanded-table-modal');
+    const modalContent = document.getElementById('modal-content');
+    const modalTitle = document.getElementById('modal-title');
+    const historyTable = document.getElementById('modal-table-history');
+    const usersTable = document.getElementById('modal-table-users');
+    const prebidTable = document.getElementById('modal-table-prebid');
+    if (!modal) return;
+    if (modalTitle) modalTitle.textContent = table === 'history' ? 'Bid History' : table === 'users' ? 'User Management' : 'Set Your Pre-Bids';
+    if (modalContent) modalContent.className = 'expanded-table-content ' + orientation;
+    if (historyTable) historyTable.style.display = table === 'history' ? 'block' : 'none';
+    if (usersTable) usersTable.style.display = table === 'users' ? 'block' : 'none';
+    if (prebidTable) prebidTable.style.display = table === 'prebid' ? 'block' : 'none';
+    modal.style.display = 'flex';
+    setExpandedTable(table);
+    setExpandOrientation(orientation);
+  };
+  const closeModal = () => {
+    const modal = document.getElementById('expanded-table-modal');
+    if (modal) modal.style.display = 'none';
+    setExpandedTable(null);
+  };
 
   if (loading) return <div className="loading-screen"><div className="loading-spinner"></div><div>Loading auction...</div></div>;
   if (error) return <div className="loading-screen"><div style={{ color: 'var(--espn-error)', fontSize: '20px' }}>⚠️ {error}</div></div>;
@@ -1288,7 +1240,7 @@ function App() {
         <div id="expanded-table-modal" className="expanded-table-overlay" style={{display: 'none'}}>
           <div className="expanded-table-header">
             <h3 id="modal-title">Set Your Pre-Bids</h3>
-            <button id="modal-close-btn" className="expanded-table-close" onClick={() => window.closeExpandModal()}>×</button>
+            <button id="modal-close-btn" className="expanded-table-close" onClick={closeModal}>×</button>
           </div>
           <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
             <div id="modal-table-prebid" style={{display: 'block'}}>
@@ -1315,7 +1267,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.18</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.19</div>
       </>
     );
   }
@@ -1392,7 +1344,7 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem' }}>Bid History ({hist.length} players)</h2>
             <div style={{display:'flex',gap:'8px'}}>
-              {viewMode === 'mobile' && <button id="expand-history-btn" className="btn btn-secondary" style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+              {viewMode === 'mobile' && <button className="btn btn-secondary" style={{padding:'8px 16px',fontSize:'18px'}} onClick={() => openModal('history', 'landscape')}>⛶</button>}
               {viewMode === 'desktop' && hist.length > 0 && <button className="btn btn-secondary" onClick={exportCSV}>📥 Export CSV</button>}
               {hasSheets && <button className="btn btn-blue" onClick={openSheet}>📊 Open Google Sheet</button>}
             </div>
@@ -1424,7 +1376,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.18</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.19</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1448,7 +1400,7 @@ function App() {
         <div id="expanded-table-modal" className="expanded-table-overlay" style={{display: 'none'}}>
           <div className="expanded-table-header">
             <h3 id="modal-title">Bid History</h3>
-            <button id="modal-close-btn" className="expanded-table-close" onClick={() => window.closeExpandModal()}>×</button>
+            <button id="modal-close-btn" className="expanded-table-close" onClick={closeModal}>×</button>
           </div>
           <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
             <div id="modal-table-history" style={{display: 'block'}}>
@@ -1556,7 +1508,7 @@ function App() {
         <div className="history-container" style={viewMode === 'mobile' ? {paddingBottom: '100px'} : {}}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <h2 style={{ fontFamily: 'Roboto Condensed', fontSize: '1.6rem', margin: 0 }}>User Management</h2>
-            {viewMode === 'mobile' && <button id="expand-users-btn" className="btn btn-secondary" style={{padding:'8px 16px',fontSize:'18px'}}>⛶</button>}
+            {viewMode === 'mobile' && <button className="btn btn-secondary" style={{padding:'8px 16px',fontSize:'18px'}} onClick={() => openModal('users', 'landscape')}>⛶</button>}
           </div>
           
           <div className="card">
@@ -1604,7 +1556,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.18</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.19</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1629,7 +1581,7 @@ function App() {
         <div id="expanded-table-modal" className="expanded-table-overlay" style={{display: 'none'}}>
           <div className="expanded-table-header">
             <h3 id="modal-title">User Management</h3>
-            <button id="modal-close-btn" className="expanded-table-close" onClick={() => window.closeExpandModal()}>×</button>
+            <button id="modal-close-btn" className="expanded-table-close" onClick={closeModal}>×</button>
           </div>
           <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
             <div id="modal-table-users" style={{display: 'block'}}>
@@ -1861,7 +1813,7 @@ function App() {
             </>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.18</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.19</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
@@ -1984,7 +1936,7 @@ function App() {
       <div id="expanded-table-modal" className="expanded-table-overlay" style={{display: 'none'}}>
           <div className="expanded-table-header">
             <h3 id="modal-title">{expandedTable === 'history' ? 'Bid History' : expandedTable === 'users' ? 'User Management' : 'Set Your Pre-Bids'}</h3>
-            <button id="modal-close-btn" className="expanded-table-close" onClick={() => window.closeExpandModal()}>×</button>
+            <button id="modal-close-btn" className="expanded-table-close" onClick={closeModal}>×</button>
           </div>
           <div id="modal-content" className={`expanded-table-content ${expandOrientation}`}>
             <div id="modal-table-history" style={{display: expandedTable === 'history' ? 'block' : 'none'}}>
