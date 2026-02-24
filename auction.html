@@ -349,6 +349,7 @@
     @media(min-width:1920px){}
   
     /* ── MOBILE LAYOUT CONSISTENCY (authoritative, do not add rules above) ── */
+    .view-mobile .timer-section{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
     .view-mobile .stage-content{width:100%;box-sizing:border-box;padding:0}
     .view-mobile .player-card,
     .view-mobile .action-left,
@@ -588,7 +589,26 @@ function App() {
   // Keep phaseRef current so timer callbacks always read the latest phase
   useEffect(() => { phaseRef.current = auction?.phase; }, [auction?.phase]);
 
-  useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); setBidRevealed(false); }, [auction?.currentPlayerIndex]);
+  useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); setBidRevealed(false); }, [auction?.currentPlayerIndex])
+
+  // Re-validate all pre-bids whenever team budget changes (after each decision)
+  useEffect(() => {
+    if (!auction?.teams?.[userTeamId] || !preBids || Object.keys(preBids).length === 0) return;
+    const t = auction.teams[userTeamId];
+    const mx = t ? Math.max(0, (t.currentSalary !== undefined ? t.cap - t.currentSalary : t.cap - (t.sal || 0)) - (t.spotsAvailable !== undefined ? t.spotsAvailable : t.spots || 28) + 1) : 999;
+    let changed = false;
+    const recapped = Object.fromEntries(
+      Object.entries(preBids).map(([k, v]) => {
+        const capped = Math.min(parseFloat(v) || 0, mx);
+        if (capped !== parseFloat(v)) changed = true;
+        return [k, capped];
+      })
+    );
+    if (changed) {
+      setPreBids(recapped);
+      savePre(recapped);
+    }
+  }, [auction?.teams?.[userTeamId]?.currentSalary, auction?.teams?.[userTeamId]?.spotsAvailable, auction?.teams?.[userTeamId]?.sal, auction?.teams?.[userTeamId]?.spots]);
 
   // Device detection and view mode
   useEffect(() => {
@@ -1355,7 +1375,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.33</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.34</div>
       </>
     );
   }
@@ -1464,7 +1484,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.33</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.34</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1644,7 +1664,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.33</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.34</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -2003,7 +2023,7 @@ function App() {
               )}
             </div>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.33</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.34</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
