@@ -1290,7 +1290,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.24</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.25</div>
       </>
     );
   }
@@ -1399,7 +1399,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.24</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.25</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1579,7 +1579,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.24</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.25</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1734,7 +1734,7 @@ function App() {
             </div>
           )}
 
-          {auction?.phase === 'lobby' && <div style={{textAlign:'center',padding:'8px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.24</div>}
+          {auction?.phase === 'lobby' && <div style={{textAlign:'center',padding:'8px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.25</div>}
 
           {cp && auction?.phase !== 'lobby' && (
             <>
@@ -1756,7 +1756,7 @@ function App() {
               </div>
 
               {(auction.phase !== 'decision' && auction.phase !== 'tie-resolution') && <div className={"action-row phase-fade"} key={auction.phase}>
-                {true && <div className="action-left">
+                <div className="action-left">
                   <div className="timer-section">
                     {auction.phase === 'waiting' && <>
                       <div className="timer-display">{fmtTime(auction.timerDuration)}</div>
@@ -1898,7 +1898,7 @@ function App() {
                 </div>
               )}
 
-              <div style={{textAlign:'center',padding:'8px 0 16px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.24</div>
+              <div style={{textAlign:'center',padding:'8px 0 16px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.25</div>
 
               {auction.phase === 'complete' && (
                 <div style={{ textAlign: 'center', padding: '48px', background: '#fff', borderRadius: '8px' }}>
