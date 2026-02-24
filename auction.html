@@ -612,7 +612,7 @@ function App() {
   useEffect(() => {
     if (!auction?.teams?.[userTeamId] || !preBids || Object.keys(preBids).length === 0) return;
     const t = auction.teams[userTeamId];
-    const mx = t ? Math.max(0, (t.currentSalary !== undefined ? t.cap - t.currentSalary : t.cap - (t.sal || 0)) - (t.spotsAvailable !== undefined ? t.spotsAvailable : t.spots || 28) + 1) : 999;
+    const mx = maxBid(t);
     let changed = false;
     const recapped = Object.fromEntries(
       Object.entries(preBids).map(([k, v]) => {
@@ -736,7 +736,7 @@ function App() {
       return;
     }
     const t = auction?.teams?.[userTeamId];
-    const mx = t ? Math.max(0, (t.currentSalary !== undefined ? t.cap - t.currentSalary : t.cap - (t.sal || 0)) - (t.spotsAvailable !== undefined ? t.spotsAvailable : t.spots || 28) + 1) : 999;
+    const mx = maxBid(t);
     const originalVal = parseFloat(v) || 0;
     const cappedVal = Math.min(originalVal, mx);
     const nb = { ...preBids, [i]: cappedVal };
@@ -763,7 +763,7 @@ function App() {
         if (playerIdx === -1 || bidIdx === -1) return alert('CSV must have PlayerName and Bid columns');
         const players = auction?.players || [];
         const t = auction?.teams?.[userTeamId];
-        const mx = t ? Math.max(0, (t.currentSalary !== undefined ? t.cap - t.currentSalary : t.cap - (t.sal || 0)) - (t.spotsAvailable !== undefined ? t.spotsAvailable : t.spots || 28) + 1) : 999;
+        const mx = maxBid(t);
         const newBids = { ...preBids };
         const newOriginals = { ...originalPreBids };
         let count = 0;
@@ -876,7 +876,7 @@ function App() {
   const submitBid = async () => {
     setBidErr('');
     const t = auction?.teams?.[userTeamId];
-    const mx = t ? Math.max(0, (t.currentSalary !== undefined ? t.cap - t.currentSalary : t.cap - (t.sal || 0)) - (t.spotsAvailable !== undefined ? t.spotsAvailable : t.spots || 28) + 1) : 999;
+    const mx = maxBid(t);
     const rawPb = preBids[auction.currentPlayerIndex] || 0;
     const clampedPb = Math.min(rawPb, mx);
     if (usePre && rawPb > 0 && clampedPb !== rawPb) {
@@ -1007,38 +1007,27 @@ function App() {
 
 
   const validateAndReducePreBids = async (updatedTeams) => {
-    if (!db || !auction?.teams) return;
-    const teams = updatedTeams || auction.teams;
+    if (!db) return;
+    // Read teams and preBids fresh from Firebase to avoid stale closure
+    const snap = await db.ref('auctions/' + auctionId).once('value');
+    const fresh = snap.val();
+    if (!fresh) return;
+    const teams = updatedTeams || fresh.teams;
+    const allPreBids = fresh.preBids || {};
     const updates = {};
 
-    // Repass ALL teams' pre-bids against their current max
     Object.entries(teams).forEach(([tid, team]) => {
-      const mx = parseFloat(Math.max(0,
-        (team.currentSalary !== undefined ? team.cap - team.currentSalary : team.cap - (team.sal || 0))
-        - (team.spotsAvailable !== undefined ? team.spotsAvailable : team.spots || 28)
-        + 1
-      ).toFixed(2));
-      const teamPreBids = auction.preBids?.[tid] || {};
+      const mx = maxBid(team);
+      const teamPreBids = allPreBids[tid] || {};
       Object.entries(teamPreBids).forEach(([playerId, bidAmount]) => {
         if (parseFloat(bidAmount) > mx) {
-          updates[`preBids/${tid}/${playerId}`] = mx;
+          updates['preBids/' + tid + '/' + playerId] = mx;
         }
       });
     });
 
     if (Object.keys(updates).length > 0) {
       await db.ref('auctions/' + auctionId).update(updates);
-      // Also update local preBids state if this is the current user's team
-      if (userTeamId && teams[userTeamId]) {
-        const userUpdates = Object.fromEntries(
-          Object.entries(updates)
-            .filter(([k]) => k.startsWith(`preBids/${userTeamId}/`))
-            .map(([k, v]) => [k.split('/')[2], v])
-        );
-        if (Object.keys(userUpdates).length > 0) {
-          setPreBids(prev => ({ ...prev, ...userUpdates }));
-        }
-      }
     }
   };
   const finalize = async (d, winner, wid, price, years, hb) => {
@@ -1411,7 +1400,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.40</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.42</div>
       </>
     );
   }
@@ -1520,7 +1509,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.40</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.42</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1700,7 +1689,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.40</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.42</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -2057,7 +2046,7 @@ function App() {
               )}
             </div>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.40</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.42</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
