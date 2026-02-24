@@ -66,6 +66,7 @@
     .result-badge.self-stick{background:#f8d7da;color:#721c24}
     .undo-btn{font-size:10px;padding:3px 8px;background:var(--espn-text-muted);color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:6px}
     .main-stage{padding:24px;background:var(--espn-bg-page);overflow-y:auto}
+    .main-stage > *{max-width:900px;margin-left:auto;margin-right:auto}
     .phase-fade{animation:phaseFadeIn .15s ease-in}
     @keyframes phaseFadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
     .player-card{background:var(--espn-bg-card);border:1px solid var(--espn-border);border-radius:8px;margin:0 0 24px;box-shadow:0 2px 6px rgba(0,0,0,.07)}
@@ -118,7 +119,7 @@
     .flip-card-front{background:#f0faf5;border:2px solid var(--espn-success)}
     .flip-card-back{background:#f0faf5;border:2px solid var(--espn-success);transform:rotateY(180deg)}
     .flip-hint{font-size:12px;color:var(--espn-text-muted);margin-top:12px}
-    .view-mobile .flip-card,.view-mobile .flip-card-inner,.view-mobile .flip-card-front,.view-mobile .flip-card-back{min-height:140px}
+    
     .your-bid-section.submitted h3{color:var(--espn-success)}
     .bid-options{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
     .bid-option{flex:1;min-width:100px}
@@ -221,7 +222,7 @@
     .view-mobile .sidebar-right.open{display:block !important}
     .view-mobile .main-stage{padding:0;padding-bottom:120px !important}
     .view-mobile .player-card,.view-mobile .timer-section,.view-mobile .bid-status,.view-mobile .your-bid-section{max-width:100%;margin-bottom:8px}
-    .view-mobile .player-card{margin-bottom:6px}
+    
     .view-mobile .player-card-header{padding:12px !important;min-height:64px;align-items:center}
     .view-mobile .player-headshot{width:48px;height:48px}
     .view-mobile .player-card-header .player-name{font-size:1.1rem;line-height:1.2}
@@ -229,12 +230,12 @@
     .view-mobile .info-row{padding:10px 0}
     .view-mobile .info-value{font-size:16px}
     .view-mobile .stats-line{padding:8px 12px;margin-top:8px}
-    .view-mobile .your-bid-section{padding:12px;margin-bottom:6px}
-    .view-mobile .bid-status{margin-bottom:6px}
+    
+    
     .view-mobile .points-box{display:none !important}
     .points-box{display:none !important}
     .player-card-body{padding:16px 24px}
-    .view-mobile .bid-status{margin-bottom:8px}
+    
     .view-mobile .bid-status-header{padding:8px 12px;font-size:11px}
     .view-mobile .bid-status-item{padding:8px;font-size:12px;min-height:auto}
     .view-mobile .timer-display{font-size:var(--text-5xl)}
@@ -246,10 +247,10 @@
     .view-mobile .bid-option input{padding:var(--space-4);font-size:var(--text-xl)}
     .view-mobile .nav-tabs{display:none}
     .view-mobile .bottom-nav{display:flex}
-    .view-mobile .reveal-card{padding:12px;min-height:160px}
-    .view-mobile .flip-card{min-height:180px}
-    .view-mobile .flip-card-inner{min-height:180px}
-    .view-mobile .flip-card-front,.view-mobile .flip-card-back{min-height:180px;padding:12px 16px}
+    .view-mobile .reveal-card{padding:12px;height:200px;overflow:hidden}
+    .view-mobile .flip-card{height:220px}
+    .view-mobile .flip-card-inner{height:220px}
+    .view-mobile .flip-card-front,.view-mobile .flip-card-back{height:220px;padding:10px 16px}
     .view-mobile .reveal-amount{font-size:2.5rem;margin:4px 0}
     .view-mobile .reveal-label{font-size:11px}
     .view-mobile .reveal-bidder{font-size:13px}
@@ -323,13 +324,14 @@
       .mobile-header-line2{height:36px;font-size:12px}
       .header-title{font-size:1rem}
       .view-mobile .app-container{padding:8px}
-      .view-mobile .player-card,.view-mobile .timer-section,.view-mobile .bid-status,.view-mobile .your-bid-section{margin-bottom:12px}
+      .view-mobile .player-card,.view-mobile .action-left,.view-mobile .your-bid-section,.view-mobile .flip-card{margin-bottom:10px}
+    .view-mobile .decision-buttons{height:220px;min-height:unset}
       .view-mobile .player-card-header{padding:12px 16px}
       .view-mobile .player-headshot{width:50px;height:50px}
       .view-mobile .player-card-header .player-name{font-size:1.2rem}
       .view-mobile .timer-display{font-size:2.5rem}
-    .view-mobile .action-left{min-height:160px;padding:12px 16px}
-    .view-mobile .your-bid-section{min-height:180px;padding:12px}
+    .view-mobile .action-left{height:200px;padding:12px 16px;overflow:hidden}
+    .view-mobile .your-bid-section{height:220px;padding:12px;overflow:hidden}
     .view-mobile .timer-section-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%}
     .view-mobile .timer-section-inner .timer-display{font-size:2.2rem;flex:0 0 auto}
     .view-mobile .timer-section-inner .timer-controls{display:flex;flex-direction:column;gap:8px;flex:1}
@@ -1330,7 +1332,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.30</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.31</div>
       </>
     );
   }
@@ -1439,7 +1441,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.30</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.31</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1619,7 +1621,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.30</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.31</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1976,7 +1978,7 @@ function App() {
               )}
             </>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.30</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.31</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
