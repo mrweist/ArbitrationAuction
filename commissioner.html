@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Commissioner Setup v4.4.3</title>
+  <title>Commissioner Setup v4.4.4</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root{--espn-red:#d00;--espn-red-dark:#a00;--espn-nav-dark:#282828;--espn-blue:#0b6ebd;--espn-text-primary:#333;--espn-text-secondary:#666;--espn-text-muted:#999;--espn-bg-page:#eaeaea;--espn-bg-card:#fff;--espn-bg-table-header:#f9f9f9;--espn-border:#e0e0e0;--espn-orange:#f7a500;--espn-success:#00703c;--espn-error:#c41e3a}
@@ -441,7 +441,9 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
 
   const downloadTeamsCSV=()=>{let csv='Name,Commissioner,Cap,Salary,Spots\n';teams.forEach(t=>{csv+=`"${t.name}",${t.isComm?'Yes':'No'},${t.cap},${t.sal},${t.spots}\n`});downloadCSV(csv,'teams.csv')};
 
-  const handleTeamsFile=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const txt=ev.target.result;const lines=txt.trim().split('\n');if(lines.length<2)return alert('CSV must have header and at least one team');const hdrs=lines[0].toLowerCase().split(',').map(h=>h.trim());const nameIdx=hdrs.findIndex(h=>h.includes('name'));const commIdx=hdrs.findIndex(h=>h.includes('comm'));const capIdx=hdrs.findIndex(h=>h.includes('cap'));const salIdx=hdrs.findIndex(h=>h.includes('sal'));const spotsIdx=hdrs.findIndex(h=>h.includes('spot'));if(nameIdx===-1)return alert('CSV must have Name column');const newTeams=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(',').map(v=>v.trim().replace(/^"|"$/g,''));if(vals.length<2)continue;newTeams.push({id:genId(),name:vals[nameIdx]||`Team ${i}`,isComm:commIdx!==-1&&(vals[commIdx].toLowerCase()==='yes'||vals[commIdx]==='true'),cap:capIdx!==-1?parseFloat(vals[capIdx])||DEFAULT_CAP:DEFAULT_CAP,sal:salIdx!==-1?parseFloat(vals[salIdx])||DEFAULT_SAL:DEFAULT_SAL,spots:spotsIdx!==-1?parseInt(vals[spotsIdx])||DEFAULT_SPOTS:DEFAULT_SPOTS})}if(newTeams.length>0){setTeams(newTeams);alert(`Imported ${newTeams.length} teams`)}}catch(err){alert('Error parsing CSV: '+err.message)}};r.readAsText(f)};
+  const updTeam=(id,field,val)=>{setTeams(prev=>prev.map(t=>t.id===id?{...t,[field]:field==='cap'||field==='sal'?parseFloat(val)||0:field==='spots'?parseInt(val)||1:val}:t))};
+
+  const handleTeamsFile=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const txt=ev.target.result;const lines=txt.trim().split('\n');if(lines.length<2)return alert('CSV must have header and at least one team');const hdrs=lines[0].toLowerCase().split(',').map(h=>h.trim());const nameIdx=hdrs.findIndex(h=>h.includes('name'));const commIdx=hdrs.findIndex(h=>h.includes('comm'));const capIdx=hdrs.findIndex(h=>h.includes('cap'));const salIdx=hdrs.findIndex(h=>h.includes('sal'));const spotsIdx=hdrs.findIndex(h=>h.includes('spot'));if(nameIdx===-1)return alert('CSV must have Name column');const newTeams=[];for(let i=1;i<lines.length;i++){const vals=lines[i].split(',').map(v=>v.trim().replace(/^"|"$/g,''));if(vals.length<2)continue;newTeams.push({id:i,name:vals[nameIdx]||`Team ${i}`,isComm:commIdx!==-1&&(vals[commIdx].toLowerCase()==='yes'||vals[commIdx]==='true'),cap:capIdx!==-1?parseFloat(vals[capIdx])||DEFAULT_CAP:DEFAULT_CAP,sal:salIdx!==-1?parseFloat(vals[salIdx])||DEFAULT_SAL:DEFAULT_SAL,spots:spotsIdx!==-1?parseInt(vals[spotsIdx])||DEFAULT_SPOTS:DEFAULT_SPOTS})}if(newTeams.length>0){setTeams(newTeams);alert(`Imported ${newTeams.length} teams`)}}catch(err){alert('Error parsing CSV: '+err.message)}};r.readAsText(f)};
 
   const fetchESPN=async pl=>{try{const sr=await fetch(`https://site.api.espn.com/apis/common/v3/search?query=${encodeURIComponent(pl.name)}&limit=5&region=us&lang=en&type=player&sport=baseball`);const sd=await sr.json();if(!sd.results?.length)return null;const match=sd.results.find(r=>r.athlete?.displayName?.toLowerCase()===pl.name.toLowerCase())||sd.results[0];if(!match?.athlete?.id)return null;return{espnId:match.athlete.id}}catch(e){return null}};
 
@@ -732,7 +734,7 @@ function CommissionerSetup({admin,leagueId:propLeagueId,onComplete,onBack,onLogo
           <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>{sheetUrl&&<button className="btn btn-secondary" onClick={()=>window.open(sheetUrl,'_blank')} style={{flex:'1'}}>📊 Google Sheet</button>}<button className="btn btn-secondary" onClick={()=>downloadCSV(players.map(p=>`${p.name},${p.team||''},${p.position||''},${p.owner||''},${p.arbYear||''},${p.winner||''},${p.decision||''},${p.price||''},${p.years||''},${p.highBid||''},${p.highBidder||''}`).join('\n'),'results.csv')} style={{flex:'1'}}>📅 Download CSV</button></div>
         </div></div>}
 </>}</>}
-      <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v4.4.3</div>
+      <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v4.4.4</div>
     </main>
   </>;
 }
