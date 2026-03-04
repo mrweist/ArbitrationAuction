@@ -953,7 +953,6 @@ function App() {
     if (amt > mx) return setBidErr('Max $' + fmt(mx));
     const bid = { teamId: userTeamId, teamName: userTeamName, amount: amt, ts: Date.now(), status: usePre ? 'prebid' : 'manual' };
     if (db) { await db.ref('auctions/' + auctionId + '/bids/' + userTeamId).set(enc(bid, sKey)); await db.ref('auctions/' + auctionId + '/bidStatuses/' + userTeamId).set(usePre ? 'prebid' : 'submitted'); }
-    setThinkingMode(false);
     setBidOk(true);
   };
 
@@ -1449,7 +1448,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.56</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.57</div>
       </>
     );
   }
@@ -1558,7 +1557,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.56</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.57</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1739,7 +1738,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.56</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.57</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1984,7 +1983,7 @@ function App() {
                       <div className="bid-options" style={{ marginTop: '14px' }}>
                         {pb > 0 && !isTie && <div className="bid-option"><label>Use Pre-Bid</label><div className={'prebid-value' + (usePre ? ' selected' : '')} onClick={() => setUsePre(true)}>${fmt(pb)}</div></div>}
                         <div className="bid-option"><label>Enter Amount</label><input type="number" key={curBid} defaultValue={(curBid||0) ? parseFloat(curBid).toFixed(2) : ''} onChange={e => setUsePre(false)} onBlur={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;setCurBid(v.toString());e.target.value=v.toFixed(2)}} min={isTie ? hi : 0} step="0.01" onFocus={() => setUsePre(false)} placeholder={isTie ? hi.toFixed(2) : "0.00"} /></div>
-                        <button className="btn btn-blue" style={{ padding: '0 28px', fontSize: '16px', alignSelf: 'flex-end', height: '54px' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
+                        <button className="btn btn-blue" style={{ padding: '14px 28px', fontSize: '16px', alignSelf: 'flex-end' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
                       </div>
                       {bidErr && <div className="bid-error">{bidErr}</div>}
                     </div>
@@ -2109,7 +2108,7 @@ function App() {
               )}
             </div>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.56</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.57</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
