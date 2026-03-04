@@ -417,8 +417,8 @@ const getStickPrice = (highBid, secondBid, auctionType) => {
 };
 
 const getSelfStickPrice = (highBid, secondBid, auctionType) => {
-  if (auctionType === 'standard') return Math.max(1, highBid);
-  return Math.max(1, secondBid); // vickrey or vickrey-modified
+  if (auctionType === 'vickrey') return Math.max(1, secondBid);
+  return Math.max(1, highBid); // standard or vickrey-modified
 };
 
 
@@ -613,6 +613,18 @@ function App() {
   useEffect(() => { phaseRef.current = auction?.phase; }, [auction?.phase]);
 
   useEffect(() => { setBidOk(false); setCurBid(''); setUsePre(true); setBidErr(''); setBidRevealed(false); }, [auction?.currentPlayerIndex])
+
+  // Show celebration animation on ALL clients when phase becomes 'celebration'
+  useEffect(() => {
+    if (auction?.phase === 'celebration' && !celeb) {
+      const hist = auction?.bidHistory;
+      if (hist && hist.length > 0) {
+        const last = hist[hist.length - 1];
+        setCeleb({ d: last.decision, player: last.player, winner: last.winner, price: last.price, years: last.years, hiBidder: last.highBidder || 'None' });
+      }
+    }
+    if (auction?.phase !== 'celebration') setCeleb(null);
+  }, [auction?.phase])
 
   // Re-validate all pre-bids whenever team budget changes (after each decision)
   useEffect(() => {
@@ -882,8 +894,8 @@ function App() {
       if (currentPlayer && t.name === currentPlayer.owner) return;
       const teamPreBids = auction?.preBids?.[tid] || {};
       const preBid = teamPreBids[curIdx];
-      if (preBid && preBid > 0) {
-        const bid = { teamId: tid, teamName: t.name, amount: preBid, ts: Date.now(), status: 'prebid' };
+      if (preBid !== undefined && preBid !== null) {
+        const bid = { teamId: tid, teamName: t.name, amount: parseFloat(preBid) || 0, ts: Date.now(), status: 'prebid' };
         bids[tid] = enc(bid, sKey);
         statuses[tid] = 'prebid';
       }
@@ -1376,7 +1388,7 @@ function App() {
                     <td style={{textAlign:'center'}}>{p.owner}</td>
                     <td style={{textAlign:'center'}}><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                     {viewMode !== 'mobile' && <td style={{textAlign:'center'}}>{fmt(p.fantasyPoints)}</td>}
-                    <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" key={preBids[i]} value={(preBids[i]||0) ? parseFloat((preBids[i]).toFixed(2)) : ''} onChange={e => {const v=e.target.value;setPreBids(prev=>({...prev,[i]:parseFloat(v)||0}))}} onBlur={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;updPre(i,v.toString())}} min="0" step="0.01" placeholder="0.00" disabled={['bidding','reveal','decision','tiebreaker','celebration','tie-resolution'].includes(auction?.phase) && i===auction?.currentPlayerIndex} style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal', opacity: (['bidding','reveal','decision','tiebreaker','celebration','tie-resolution'].includes(auction?.phase) && i===auction?.currentPlayerIndex) ? 0.5 : 1 }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                    <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" key={preBids[i]} value={(preBids[i] && preBids[i] !== 0) ? Number(preBids[i]).toFixed(2) : ''} onChange={e => {const v=e.target.value;setPreBids(prev=>({...prev,[i]:parseFloat(v)||0}))}} onBlur={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;updPre(i,v.toString())}} min="0" step="0.01" placeholder="0.00" disabled={['bidding','reveal','decision','tiebreaker','celebration','tie-resolution'].includes(auction?.phase) && i===auction?.currentPlayerIndex} style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal', opacity: (['bidding','reveal','decision','tiebreaker','celebration','tie-resolution'].includes(auction?.phase) && i===auction?.currentPlayerIndex) ? 0.5 : 1 }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                   </tr>
                 ); })}
               </tbody>
@@ -1417,7 +1429,7 @@ function App() {
                         <td>{p.owner}</td>
                         <td><span className={'arb-badge arb-' + p.arbYear}>{p.arbYear}</span></td>
                         <td>{fmt(p.fantasyPoints)}</td>
-                        <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" key={preBids[i]} value={(preBids[i]||0) ? parseFloat((preBids[i]).toFixed(2)) : ''} onChange={e => {const v=e.target.value;setPreBids(prev=>({...prev,[i]:parseFloat(v)||0}))}} onBlur={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;updPre(i,v.toString())}} min="0" step="0.01" placeholder="0.00" disabled={['bidding','reveal','decision','tiebreaker','celebration','tie-resolution'].includes(auction?.phase) && i===auction?.currentPlayerIndex} style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal', opacity: (['bidding','reveal','decision','tiebreaker','celebration','tie-resolution'].includes(auction?.phase) && i===auction?.currentPlayerIndex) ? 0.5 : 1 }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
+                        <td style={{textAlign:'center'}}>{!own && !done ? <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}><input type="number" key={preBids[i]} value={(preBids[i] && preBids[i] !== 0) ? Number(preBids[i]).toFixed(2) : ''} onChange={e => {const v=e.target.value;setPreBids(prev=>({...prev,[i]:parseFloat(v)||0}))}} onBlur={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;updPre(i,v.toString())}} min="0" step="0.01" placeholder="0.00" disabled={['bidding','reveal','decision','tiebreaker','celebration','tie-resolution'].includes(auction?.phase) && i===auction?.currentPlayerIndex} style={{ width: '80px', padding: '8px', fontSize: '14px', textAlign: 'center', color: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'var(--espn-error)' : 'inherit', fontWeight: (originalPreBids[i] && originalPreBids[i] > preBids[i]) ? 'bold' : 'normal', opacity: (['bidding','reveal','decision','tiebreaker','celebration','tie-resolution'].includes(auction?.phase) && i===auction?.currentPlayerIndex) ? 0.5 : 1 }} /></div> : own ? <span style={{ color: 'var(--espn-text-muted)' }}>Owner</span> : ''}</td>
                       </tr>
                     );
                   })}
@@ -1427,7 +1439,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.49</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.51</div>
       </>
     );
   }
@@ -1536,7 +1548,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.49</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.51</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1717,7 +1729,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.49</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.51</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1835,7 +1847,7 @@ function App() {
                             <input 
                               type="number" 
                               key={`prebid-${p.idx}`} 
-                              value={(preBids[p.idx]||0) ? parseFloat((preBids[p.idx]).toFixed(2)) : ''}
+                              value={(preBids[p.idx] && preBids[p.idx] !== 0) ? Number(preBids[p.idx]).toFixed(2) : ''}
                               onChange={e => {const v=e.target.value;setPreBids(prev=>({...prev,[p.idx]:parseFloat(v)||0}))}}
                               onBlur={e => {
                                 let v = parseFloat(e.target.value) || 0;
@@ -1892,7 +1904,7 @@ function App() {
                 </div>
               </div>
 
-              {(auction.phase !== 'decision' && auction.phase !== 'tie-resolution') && <div className={"action-row phase-fade"} key={auction.phase}>
+              {(auction.phase !== 'decision' && auction.phase !== 'tie-resolution' && auction.phase !== 'complete') && <div className={"action-row phase-fade"} key={auction.phase}>
                 <div className="action-left">
                   <div className="timer-section">
                     {auction.phase === 'waiting' && <>
@@ -1987,9 +1999,9 @@ function App() {
                           {canBid && (() => {
                             const myRevealedBid = auction?.revealedBids?.[userTeamId];
                             const myAmt = myRevealedBid?.amount ?? null;
-                            const localAmt = bidOk ? (usePre && pb ? pb : parseFloat(curBid) || 0) : null;
+                            const localAmt = usePre ? (pb !== undefined && pb !== null ? pb : 0) : (bidOk ? parseFloat(curBid) || 0 : null);
                             const displayAmt = myAmt !== null ? myAmt : localAmt;
-                            const didBid = displayAmt !== null && displayAmt > 0;
+                            const didBid = displayAmt !== null;
                             return <>
                               <div style={{fontSize:'10px',textTransform:'uppercase',letterSpacing:'.5px',color:'var(--espn-text-muted)',marginBottom:'4px'}}>Your Bid</div>
                               <div style={{fontFamily:'Roboto Condensed',fontSize:'2.8rem',fontWeight:700,color:didBid?'var(--espn-text-primary)':'var(--espn-text-muted)',lineHeight:1,marginBottom:'6px'}}>{didBid ? `$${fmt(displayAmt)}` : 'PASS'}</div>
@@ -2073,7 +2085,7 @@ function App() {
               )}
             </div>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.49</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.51</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
