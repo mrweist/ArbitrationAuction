@@ -105,7 +105,8 @@
     .bid-status-item.submitted{background:#d4edda}
     .bid-status-item.owner{background:#e0e0e0}
     .bid-status-item.tied{background:#fff3cd}
-    .bid-status-item.forced{background:#fff9c4}
+    .bid-status-item.thinking{background:#fff9c4}
+    .bid-status-item.forced{background:#ffe0b2}
     .bid-status-item.clickable{cursor:pointer}
     .bid-status-item.clickable:hover{background:#f0f0f0;transition:background .2s}
     .bid-status-item .checkmark{color:var(--espn-success);font-weight:700}
@@ -121,7 +122,7 @@
     .flip-hint{font-size:12px;color:var(--espn-text-muted);margin-top:12px}
     
     .your-bid-section.submitted h3{color:var(--espn-success)}
-    .bid-options{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+    .bid-options{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap}
     .bid-option{flex:1;min-width:100px}
     .bid-option label{display:block;font-size:11px;color:var(--espn-text-muted);text-transform:uppercase;margin-bottom:6px}
     .bid-option input{width:100%;padding:14px;font-size:1.3rem;font-family:'Roboto Condensed',sans-serif;font-weight:700;text-align:center;border:1px solid var(--espn-border);border-radius:6px}
@@ -1440,7 +1441,7 @@ function App() {
           </div>
         </div>
         {/* Version Footer */}
-        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.54</div>
+        <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.55</div>
       </>
     );
   }
@@ -1549,7 +1550,7 @@ function App() {
             </div>
           )}
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.54</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.55</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1730,7 +1731,7 @@ function App() {
             </div>
           </div>
           {/* Version Footer */}
-          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.54</div>
+          <div style={{textAlign:'center',padding:'20px 0',color:'var(--espn-text-muted)',fontSize:'11px',marginTop:'20px'}}>v2.7.55</div>
         </div>
         
         {/* Bottom Navigation (Mobile Only) */}
@@ -1959,12 +1960,12 @@ function App() {
                 <div className="action-right">
                   {(auction.phase === 'bidding' || isTie) && canBid && (
                     <div className={'your-bid-section' + (bidOk ? ' submitted' : '')}>
-                      <h3>{bidOk ? '✓ Bid Submitted' : 'Enter Your Bid'}{isTie ? ' (Tiebreaker Round)' : ''}</h3>
+                      <h3 style={{display:'flex',justifyContent:'space-between',alignItems:'center',margin:0}}><span>{bidOk ? '✓ Bid Submitted' : 'Enter Your Bid'}{isTie ? ' (Tiebreaker Round)' : ''}</span>{!bidOk && auction?.phase === 'bidding' && !isTie && <button onClick={()=>db&&db.ref('auctions/'+auctionId+'/bidStatuses/'+userTeamId).set('thinking')} title="Signal you're thinking" style={{background:'none',border:'none',cursor:'pointer',fontSize:'1.1rem',lineHeight:1,padding:'0 0 0 8px',opacity:0.6}}>{auction?.bidStatuses?.[userTeamId]==='thinking'?'💡':'🔅'}</button>}</h3>
                       <div className="max-bid-info">Your Max Bid: <strong>${fmt(mx)}</strong>{isTie ? ` • Minimum Bid: $${fmt(hi)}` : ' • Enter $0.00 to pass'}</div>
                       <div className="bid-options" style={{ marginTop: '14px' }}>
                         {pb > 0 && !isTie && <div className="bid-option"><label>Use Pre-Bid</label><div className={'prebid-value' + (usePre ? ' selected' : '')} onClick={() => setUsePre(true)}>${fmt(pb)}</div></div>}
                         <div className="bid-option"><label>Enter Amount</label><input type="number" key={curBid} defaultValue={(curBid||0) ? parseFloat(curBid).toFixed(2) : ''} onChange={e => setUsePre(false)} onBlur={e => {let v=parseFloat(e.target.value)||0;if(v>0&&v<1)v=1;setCurBid(v.toString());e.target.value=v.toFixed(2)}} min={isTie ? hi : 0} step="0.01" onFocus={() => setUsePre(false)} placeholder={isTie ? hi.toFixed(2) : "0.00"} /></div>
-                        <button className="btn btn-blue" style={{ padding: '14px 28px', fontSize: '16px' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
+                        <button className="btn btn-blue" style={{ padding: '14px 28px', fontSize: '16px', alignSelf: 'stretch', height: 'auto' }} onClick={submitBid}>{bidOk ? 'Update Bid' : 'Submit'} ${fmt(usePre && pb && !isTie ? pb : parseFloat(curBid) || 0)}</button>
                       </div>
                       {bidErr && <div className="bid-error">{bidErr}</div>}
                     </div>
@@ -2035,9 +2036,10 @@ function App() {
                       const tied = auction.tiedTeams?.some(x => x.id === id);
                       const status = auction.bidStatuses?.[id];
                       const isForced = status === 'forced';
-                      const icon = status === 'prebid' ? ' 🎯' : status === 'submitted' ? ' ✅' : isForced ? ' ⚡' : '';
+                      const isThinking = status === 'thinking';
+                      const icon = status === 'prebid' ? ' 🎯' : status === 'submitted' ? ' ✅' : isForced ? ' ⚡' : isThinking ? ' 💡' : '';
                       const clickable = isComm && !own && (auction.phase === 'bidding' || auction.phase === 'reveal' || isTie);
-                      const cls = 'bid-status-item ' + (isForced ? 'forced ' : status && !isForced ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied ' : '') + (clickable ? 'clickable' : '');
+                      const cls = 'bid-status-item ' + (isForced ? 'forced ' : isThinking ? 'thinking ' : status && !isForced && !isThinking ? 'submitted ' : '') + (own ? 'owner ' : '') + (tied ? 'tied ' : '') + (clickable ? 'clickable' : '');
                       return <div key={id} className={cls} style={isTie && !inTie ? { opacity: 0.3 } : {}} onClick={clickable ? () => openForceBid(id, t.name) : undefined}>{t.name}{own ? ' 👤' : icon}</div>;
                     })}
                   </div>
@@ -2088,7 +2090,7 @@ function App() {
               )}
             </div>
           )}
-          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.54</div>
+          <div style={{textAlign:'center',padding:'12px 0 4px',color:'var(--espn-text-muted)',fontSize:'11px'}}>v2.7.55</div>
         </div>
 
         <div className={`sidebar-right${viewMode === 'mobile' && rightSidebarOpen ? ' open' : ''}`}>        <div className="sidebar-title">
